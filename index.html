@@ -4814,7 +4814,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v71";
+const APP_VER = "v72";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -4965,7 +4965,7 @@ function micMini(target, st, key, onNext){
     ${m.url && azCfg() ? `<button class="btn btn-line" id="mmAz">${m.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
     ${m.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(m.az)}</div>` : ""}
     ${m.url && gmKey() ? `<button class="btn btn-line" id="mmGm">${m.gmBusy?"A IA está ouvindo…":"🤖 Avaliação da IA que ouve você"}</button>` : ""}
-    ${m.coach ? `<div class="feedback good"><b>Treinador de IA</b><div class="tips" style="white-space:pre-wrap">${esc(m.coach)}</div></div>` : ""}
+    ${m.coach ? coachCard(m.coach) : ""}
     ${m.msg?`<p class="sub" style="font-size:12.5px">${esc(m.msg)}</p>`:""}
     ${m.url && !r && !m.az && !m.coach ? (m.self ? `<p class="sub" style="font-size:13px"><b>${m.self==="3"?"Ótimo!":m.self==="2"?"Quase lá.":"Tudo bem."}</b> ${m.self==="3"?"Registrei como acerto.":"Ouça de novo o modelo, depois sua voz, e tente mais uma vez. Foque no ritmo e nas vogais."}</p>` : `<div class="eyebrow" style="margin-top:2px">Como foi? (autoavaliação)</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button class="btn btn-line" data-self="1">😕 Travei</button><button class="btn btn-line" data-self="2">🙂 Quase</button><button class="btn btn-line" data-self="3">😀 Soou bem</button></div>`) + (!azCfg() && !gmKey() ? `<button class="link" id="mmKeys" style="align-self:flex-start">Quer nota automática? Ative a avaliação por IA</button>` : "") : ""}
     ${m.url && onNext ? `<button class="btn btn-dark" id="mmNext">Continuar <span class="arr">→</span></button>` : ""}
@@ -5115,11 +5115,11 @@ function azCard(r){
 /* ---- IA que escuta (Gemini, faixa gratuita; chave do próprio usuário) ---- */
 function gmKey(){ try{ return localStorage.getItem("nb-gm") || ""; }catch(e){ return ""; } }
 const GM_MODELS = ["gemini-flash-latest","gemini-3.8-flash","gemini-3.6-flash","gemini-flash-lite-latest","gemini-3.5-flash-lite"];
-async function gmCall(parts, maxTok){
+async function gmCall(parts, maxTok, json){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
   for(const m of GM_MODELS){
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents:[{role:"user", parts}], generationConfig:{temperature:0.3, maxOutputTokens:maxTok||900}})});
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents:[{role:"user", parts}], generationConfig:Object.assign({temperature:0.3, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {})})});
     if(res.status===404 || res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error(res.status===404 ? "model" : "busy"); await new Promise(r => setTimeout(r, 700)); continue; }
     if(res.status===400 || res.status===403){ const t = await res.text(); throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http"+res.status); }
     if(res.status===429) throw new Error("quota");
@@ -5135,15 +5135,35 @@ async function gmCoach(url, ref, az){
   const wav = await azWav(url), b64 = await blobB64(wav), lg = LANGS[state.lang].name;
   const azTxt = az ? `\nDados do Azure Speech para este áudio (precisão ${az.acc}, fluência ${az.flu}, completude ${az.comp}). Palavras: ${az.words.map(w => w.w+" "+w.acc+(w.ph.filter(p=>p.acc<60).length ? " (sons fracos: "+w.ph.filter(p=>p.acc<60).map(p=>p.p).join(",")+")" : "")).join("; ")}.` : "";
   const prompt = `Você é professor de pronúncia de ${lg} para brasileiros. O aluno tentou dizer: "${ref}". Ouça o áudio.${azTxt}
-Responda em português do Brasil, em até 170 palavras, neste formato:
-1) O que você ouviu (transcreva literalmente).
-2) O que ficou bom.
-3) Até 3 pontos a melhorar, cada um com o erro típico de brasileiros e como corrigir (língua, lábios, par de palavras para treinar).
-4) Um exercício de 2 minutos.
-Seja honesto e cauteloso: você não é um medidor calibrado de sotaque. Se o áudio estiver curto, ruidoso ou sem fala, diga isso. Não dê nota numérica de sotaque.`;
-  const txt = await gmCall([{text:prompt}, {inlineData:{mimeType:"audio/wav", data:b64}}], 800);
-  const lgg = L(); (lgg.coachLog = lgg.coachLog || []).push({t:ref, ts:Date.now(), x:txt}); if(lgg.coachLog.length > 30) lgg.coachLog.splice(0, lgg.coachLog.length-30);
-  addXp(2); persist(); return txt;
+Responda SOMENTE com JSON válido, em português do Brasil, neste formato exato:
+{"heard":"o que você ouviu, literal","level":"otimo|bom|treinar","words":[{"w":"palavra da frase de referência","s":"ok|meh|bad","tip":"dica curta (até 10 palavras) só se s não for ok, senão vazio"}],"good":"uma frase curta sobre o que ficou bom","drill":"um exercício de 1 minuto, uma frase"}
+Regras: "words" deve seguir a frase de referência palavra por palavra, na ordem. Marque "bad" só quando a palavra soou claramente errada ou faltou; "meh" quando soou fraca ou com sotaque forte. Dicas: erro típico de brasileiros e como corrigir (ex.: não coloque i no final, th com a língua entre os dentes). Seja honesto e cauteloso: você não mede sotaque com exatidão. Se o áudio estiver curto, ruidoso ou sem fala, use level "treinar", words todas "meh" e explique em "good". Sem markdown, sem nota numérica.`;
+  const raw = await gmCall([{text:prompt}, {inlineData:{mimeType:"audio/wav", data:b64}}], 2500, true);
+  let out; try{ out = JSON.parse(raw.replace(/^```json\s*|```$/g,"").trim()); if(!out || !Array.isArray(out.words)) throw 0; }catch(e){ out = {raw: raw.replace(/\*\*/g,"").replace(/#+\s*/g,"")}; }
+  const lgg = L(); (lgg.coachLog = lgg.coachLog || []).push({t:ref, ts:Date.now(), x:coachText(out)}); if(lgg.coachLog.length > 30) lgg.coachLog.splice(0, lgg.coachLog.length-30);
+  addXp(2); persist(); return out;
+}
+function coachText(c){
+  if(typeof c === "string") return c.replace(/\*\*/g,"");
+  if(c.raw) return c.raw;
+  const bad = (c.words||[]).filter(w => w.s && w.s!=="ok" && w.tip).map(w => w.w+": "+w.tip);
+  return [c.heard ? "Ouvi: "+c.heard : "", c.good||"", bad.join("\n"), c.drill ? "Treino: "+c.drill : ""].filter(Boolean).join("\n");
+}
+function coachCard(c){
+  if(typeof c === "string") c = {raw:c.replace(/\*\*/g,"")};
+  if(c.raw) return `<div class="feedback good"><b>Treinador de IA</b><div class="tips" style="white-space:pre-wrap">${esc(c.raw)}</div></div>`;
+  const lv = {otimo:["Muito bom","var(--ok)"], bom:["Bom, quase lá","var(--gold,#b8892b)"], treinar:["Vale treinar mais","var(--bad)"]}[c.level] || ["Resultado","var(--ink-2,#555)"];
+  const col = {ok:"var(--ok)", meh:"var(--gold,#b8892b)", bad:"var(--bad)"};
+  const words = (c.words||[]).map(w => `<span style="color:${col[w.s]||col.ok};${w.s==="bad"?"text-decoration:underline wavy;text-underline-offset:5px;":w.s==="meh"?"text-decoration:underline dotted;text-underline-offset:5px;":""}">${esc(w.w)}</span>`).join(" ");
+  const tips = (c.words||[]).filter(w => w.s && w.s!=="ok" && w.tip).slice(0,3).map(w => `<div style="display:flex;gap:8px;align-items:baseline"><b style="color:${col[w.s]}">${esc(w.w)}</b><span class="sub" style="font-size:13px">${esc(w.tip)}</span></div>`).join("");
+  return `<div class="card" style="background:var(--paper-2,#f4f1ea);display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:${lv[1]}"></span><b>${lv[0]}</b></div>
+    <div style="font-size:20px;line-height:1.5;font-weight:600">${words}</div>
+    ${c.heard ? `<div class="sub" style="font-size:12.5px">A IA ouviu: “${esc(c.heard)}”</div>` : ""}
+    ${c.good ? `<div style="font-size:14px">👍 ${esc(c.good)}</div>` : ""}
+    ${tips ? `<div style="display:flex;flex-direction:column;gap:6px">${tips}</div>` : ""}
+    ${c.drill ? `<div class="sub" style="font-size:13px">🎯 ${esc(c.drill)}</div>` : ""}
+  </div>`;
 }
 function gmErrMsg(e){
   const m = e && e.message;
@@ -5255,7 +5275,7 @@ function viewPron(){
       ${o.rec && azCfg() ? `<button class="btn btn-line" id="mmAz2">${o.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
       ${o.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(o.az)}</div>` : ""}
       ${o.rec && gmKey() ? `<button class="btn btn-line" id="mmGm2">${o.gmBusy?"A IA está ouvindo…":"🤖 Avaliação da IA que ouve você"}</button>` : ""}
-      ${o.coach ? `<div class="feedback good"><b>Treinador de IA</b><div class="tips" style="white-space:pre-wrap">${esc(o.coach)}</div></div>` : ""}
+      ${o.coach ? coachCard(o.coach) : ""}
       ${o.micMsg?`<p class="sub" style="font-size:12.5px">${esc(o.micMsg)}</p>`:""}
     </section>`);
     const gm2 = $("#mmGm2",mic);
