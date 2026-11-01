@@ -3041,7 +3041,7 @@ function viewLesson(){
         el.appendChild(cx);
       }
       if(o.spk!==vid){ o.spk = vid; setTimeout(()=>speak(v.t), 150); }
-      { const mm = micMini(v.t, o, "mm"+o.vi); if(mm) el.appendChild(mm); }
+      { const mm = micMini(v.t, o, "mm"+o.vi, () => { stopAudio(); seqToken++; o.vw = true; render(); scrollTo(0,0); }); if(mm) el.appendChild(mm); }
       const row = h(`<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px"></div>`);
       const back = h(`<button class="btn btn-line" ${o.vi===0?"disabled":""}>‹</button>`);
       back.addEventListener("click", () => { o.vi--; o.wr = null; render(); });
@@ -4814,7 +4814,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v69";
+const APP_VER = "v70";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -4950,7 +4950,7 @@ async function pronAI(st){
   const j = await res.json(); return (j.content||[]).map(c=>c.text||"").join("").trim();
 }
 /* mini bloco de fala (lições): grava, mostra palavras reconhecidas e compara com o modelo */
-function micMini(target, st, key){
+function micMini(target, st, key, onNext){
   if(!micOK()) return null;
   const m = st[key] || (st[key] = {});
   const r = m.result;
@@ -4967,7 +4967,16 @@ function micMini(target, st, key){
     ${m.url && gmKey() ? `<button class="btn btn-line" id="mmGm">${m.gmBusy?"A IA está ouvindo…":"🤖 Avaliação da IA que ouve você"}</button>` : ""}
     ${m.coach ? `<div class="feedback good"><b>Treinador de IA</b><div class="tips" style="white-space:pre-wrap">${esc(m.coach)}</div></div>` : ""}
     ${m.msg?`<p class="sub" style="font-size:12.5px">${esc(m.msg)}</p>`:""}
+    ${m.url && !r && !m.az && !m.coach ? (m.self ? `<p class="sub" style="font-size:13px"><b>${m.self==="3"?"Ótimo!":m.self==="2"?"Quase lá.":"Tudo bem."}</b> ${m.self==="3"?"Registrei como acerto.":"Ouça de novo o modelo, depois sua voz, e tente mais uma vez. Foque no ritmo e nas vogais."}</p>` : `<div class="eyebrow" style="margin-top:2px">Como foi? (autoavaliação)</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button class="btn btn-line" data-self="1">😕 Travei</button><button class="btn btn-line" data-self="2">🙂 Quase</button><button class="btn btn-line" data-self="3">😀 Soou bem</button></div>`) + (!azCfg() && !gmKey() ? `<button class="link" id="mmKeys" style="align-self:flex-start">Quer nota automática? Ative a avaliação por IA</button>` : "") : ""}
+    ${m.url && onNext ? `<button class="btn btn-dark" id="mmNext">Continuar <span class="arr">→</span></button>` : ""}
   </section>`);
+  box.querySelectorAll("[data-self]").forEach(b => b.addEventListener("click", () => {
+    m.self = b.dataset.self; const pc = {1:35, 2:65, 3:92}[m.self];
+    const lg = L(); (lg.pronLog = lg.pronLog || []).push({t:target, h:"(autoavaliação)", p:pc, m:[], ts:Date.now()}); if(lg.pronLog.length>300) lg.pronLog.splice(0, lg.pronLog.length-300);
+    if(m.self==="3"){ addXp(2); sfx.right(); } persist(); render();
+  }));
+  const kb = $("#mmKeys",box); if(kb) kb.addEventListener("click", () => { stopAudio(); open({type:"prep"}); });
+  const nb = $("#mmNext",box); if(nb) nb.addEventListener("click", onNext);
   const gmb = $("#mmGm",box);
   if(gmb) gmb.addEventListener("click", async () => { if(m.gmBusy) return; m.gmBusy = true; m.msg = ""; render(); try{ m.coach = await gmCoach(m.url, target, m.az); }catch(e){ m.msg = gmErrMsg(e); } m.gmBusy = false; render(); });
   const az = $("#mmAz",box);
