@@ -2494,8 +2494,24 @@ function viewCinema(){
     const setS = t => { $("#sS", stat).textContent = t; };
     const turn = async (secs, tok) => { const b = $("#sB", stat); b.style.transition = "none"; b.style.width = "0"; void b.offsetWidth; b.style.transition = "width " + secs + "s linear"; b.style.width = "100%"; await cineWait(secs*1000); if(tok === cineTok){ b.style.transition = "none"; b.style.width = "0"; } };
     let running = false;
+    if(o.useMic === undefined) o.useMic = micOK();
+    if(micOK()){
+      const tg = h(`<button class="btn btn-line btn-block">${o.useMic?"🎙️ Gravar e conferir minha fala: ligado":"🎙️ Gravar e conferir minha fala: desligado"}</button>`);
+      tg.addEventListener("click", () => { o.useMic = !o.useMic; tg.textContent = o.useMic ? "🎙️ Gravar e conferir minha fala: ligado" : "🎙️ Gravar e conferir minha fala: desligado"; });
+      bar.after(tg);
+    }
+    const turnRec = async (secs, tok, target) => {
+      if(!(o.useMic && micOK() && micS.keep)) return turn(secs, tok);
+      let res; const pr = new Promise(r => { res = r; });
+      try{ await micBegin((url, heard) => { if(url) URL.revokeObjectURL(url); res(heard); }); }catch(e){ return turn(secs, tok); }
+      await turn(secs, tok); micStop();
+      const heard = await Promise.race([pr, new Promise(r => setTimeout(() => r(""), 2500))]);
+      if(heard){ const r = scoreSpeech(target, heard); (o.recs = o.recs || []).push({t:target, heard, pct:r.pct, missed:r.missed});
+        const lg = L(); (lg.pronLog = lg.pronLog || []).push({t:target, h:heard, p:r.pct, m:r.missed, ts:Date.now()}); if(lg.pronLog.length>300) lg.pronLog.splice(0, lg.pronLog.length-300); }
+    };
     $("#sP", bar).addEventListener("click", async () => {
-      if(running){ stopAll(); running = false; $("#sP", bar).textContent = "▶ Começar"; setS("Parado"); return; }
+      if(running){ stopAll(); running = false; micStop(); micKeep(false); $("#sP", bar).textContent = "▶ Começar"; setS("Parado"); return; }
+      o.recs = []; if(o.useMic && micOK()){ if(!(await micKeep(true))) o.useMic = false; }
       stopAll(); const tok = ++cineTok; running = true; $("#sP", bar).textContent = "⏸ Parar";
       for(let i = 0; i < sc.lines.length && tok === cineTok; i++){
         const l = sc.lines[i], chs = l.ch && l.ch.length ? l.ch : [l.t];
@@ -2506,16 +2522,16 @@ function viewCinema(){
           for(let k = 0; k < chs.length && tok === cineTok; k++){
             chunkEls[i].forEach((c, j) => c.classList.toggle("on", j === k));
             setS("2) Ouça o trecho"); stg.speak(l.who); try{ await playOne(chs[k], o.rate); }catch(e){} stg.speak(null);
-            if(tok !== cineTok) break; setS("🎤 Sua vez: repita em voz alta"); await turn(clipDur(chs[k])/o.rate*1.3 + 0.8, tok);
+            if(tok !== cineTok) break; setS("🎤 Sua vez: repita em voz alta"); await turnRec(clipDur(chs[k])/o.rate*1.3 + 0.8, tok, chs[k]);
           }
           chunkEls[i].forEach(c => c.classList.remove("on"));
         }
         if(tok !== cineTok) break;
         setS("3) Agora a fala inteira"); stg.speak(l.who); try{ await playOne(l.t, o.rate); }catch(e){} stg.speak(null);
-        if(tok !== cineTok) break; setS("🎤 Sua vez: a fala toda"); await turn(clipDur(l.t)/o.rate*1.3 + 1, tok);
+        if(tok !== cineTok) break; setS("🎤 Sua vez: a fala toda"); await turnRec(clipDur(l.t)/o.rate*1.3 + 1, tok, l.t);
       }
       if(tok === cineTok){
-        running = false; lineEls.forEach(r => r.classList.remove("act"));
+        running = false; micKeep(false); lineEls.forEach(r => r.classList.remove("act"));
         const c = cineAll()[sc.id] = cineAll()[sc.id] || {}; if(!c.s || c.s.d !== today()){ c.s = {d:today()}; ensureDay().game = true; addXp(Math.max(3, sc.lines.length)); } persist();
         o.stage = "shdone"; render(); scrollTo(0,0);
       }
@@ -2524,6 +2540,10 @@ function viewCinema(){
   }
   if(o.stage === "shdone"){
     el.appendChild(head("Shadowing concluído", toMenu));
+    if(o.recs && o.recs.length){
+      const avg = Math.round(o.recs.reduce((a,x)=>a+x.pct,0)/o.recs.length);
+      el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:6px"><div class="eyebrow">Palavras reconhecidas na sua fala</div><div class="score-big"><b>${avg}%</b><span class="sub">média de ${o.recs.length} trechos</span></div><ul class="plan">${o.recs.filter(x=>x.pct<85).slice(0,6).map(x=>`<li>“${esc(x.t)}” · ${x.pct}% · não reconhecidas: ${esc(x.missed.join(", ")||"–")}</li>`).join("") || "<li>Tudo foi reconhecido. Muito bem!</li>"}</ul><p class="sub" style="font-size:12px">É o que o navegador entendeu, não uma nota de sotaque. As tentativas entram no seu relatório de pronúncia.</p></section>`));
+    }
     el.appendChild(h(`<section class="soft" style="text-align:center"><div class="eyebrow">${esc(sc.title)}</div><h1 class="headline" style="margin-top:8px">Como foi acompanhar o ritmo?</h1><p class="sub" style="margin-top:6px">O app não grava a sua voz, então esta resposta é só para você se acompanhar. A prova de verdade vem pelo ditado.</p></section>`));
     const row = h(`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"></div>`);
     [["💪","Acompanhei"],["🙂","Em parte"],["🐢","Perdi o ritmo"]].forEach(x => { const b = h(`<button class="btn btn-line" style="flex-direction:column;gap:2px"><span>${x[0]}</span><small>${x[1]}</small></button>`); b.addEventListener("click", () => { const c = cineAll()[sc.id] = cineAll()[sc.id] || {}; c.s = Object.assign(c.s || {}, {d:today(), self:x[1]}); persist(); toast(x[0] === "🐢" ? "Tente de novo em 0,8x: o ritmo vem com a repetição." : "Anotado. Confira com o ditado."); }); row.appendChild(b); });
@@ -3061,11 +3081,13 @@ function viewLesson(){
     const dl = u.dialogue, names = [...new Set(dl.lines.map(l=>l.who))];
     el.appendChild(h(`<p class="sub">${esc(dl.scene)}</p>`));
     const box = h(`<div class="dlg"></div>`);
-    dl.lines.forEach(ln => {
+    dl.lines.forEach((ln, li) => {
       const side = names.indexOf(ln.who)%2===1 ? "b" : "";
       const row = h(`<div class="line ${side}"><button class="speak sm" aria-label="Ouvir">${ICON.speak}</button><div class="bubble"><span class="who">${esc(ln.who)}</span>${esc(ln.t)}${o.showTr?`<span class="tr">${esc(ln.pt)}</span>`:""}</div></div>`);
       $(".speak",row).addEventListener("click", () => speak(ln.t));
+      if(micOK()){ const mb = h(`<button class="speak sm" aria-label="Falar esta fala" style="font-size:15px">🎙️</button>`); mb.addEventListener("click", () => { o.dmi = (o.dmi===li ? -1 : li); render(); }); row.appendChild(mb); }
       box.appendChild(row);
+      if(o.dmi===li){ const mm = micMini(ln.t, o, "dm"+li); if(mm) box.appendChild(mm); }
     });
     el.appendChild(box);
     const row = h(`<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px"></div>`);
@@ -3837,6 +3859,7 @@ function viewPlay(){
     {ic:"✍️", bg:"var(--accent-soft)", title:"Ditado", sub:"Ouça a frase e escreva o que ouviu. Mede se você entende fala real", act:startDict},
     {ic:"⌨️", bg:"var(--ok-soft)", title:"Traduza e escreva", sub:`Do português para o ${LANGS[state.lang].name}, digitando (ou falando no teclado)`, act:startTyped},
     {ic:"🔬", bg:"var(--accent-mist)", title:"Laboratório de erros", sub:"Erros típicos de brasileiros: o app vigia e confere se voltam", act:()=>openErrLab()},
+    {ic:"🎯", bg:"var(--accent-soft)", title:"Treino das palavras difíceis", sub:"As palavras e frases que você mais erra, direto para repetir", act:()=>startPronFocus(false)},
     {ic:"📈", bg:"var(--gold-soft)", title:"Meu relatório de pronúncia", sub:"Onde você mais erra, quais sons treinar e plano com IA", act:()=>open({type:"prep"})},
     {ic:"📺", bg:"var(--accent-soft)", title:"Filmes e séries", sub:"Cenas reais no player do YouTube, em loop e câmera lenta (versão site)", act:()=>startFilm()},
     {ic:"🎬", bg:"var(--gold-soft)", title:"Cenas de cinema", sub:"Escute sem legenda, acompanhe a fala e faça shadowing guiado", act:()=>startCinema()},
@@ -4785,13 +4808,14 @@ function SR_OK(){ return !!SR_CLS(); }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
 async function micBegin(done){
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const kept = micS.keep && micS.keep.active;
+  const stream = kept ? micS.keep : await navigator.mediaDevices.getUserMedia({audio:true});
   const mt = ["audio/mp4","audio/webm;codecs=opus","audio/webm"].find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
   const mr = mt ? new MediaRecorder(stream,{mimeType:mt}) : new MediaRecorder(stream);
   const chunks=[]; let heard="";
   mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
   mr.onstop = () => {
-    stream.getTracks().forEach(t=>t.stop());
+    if(!kept) stream.getTracks().forEach(t=>t.stop());
     try{ micS.sr && micS.sr.stop(); }catch(e){}
     setTimeout(() => done(URL.createObjectURL(new Blob(chunks,{type:mr.mimeType||mt||"audio/webm"})), heard.trim()), 350);
   };
@@ -4805,6 +4829,10 @@ async function micBegin(done){
   }catch(e){ micS.sr=null; }
   mr.start(); micS.mr = mr; micS.stream = stream;
   setTimeout(() => { if(micS.mr===mr && mr.state==="recording") mr.stop(); }, 20000);
+}
+async function micKeep(on){
+  if(!on){ if(micS.keep){ micS.keep.getTracks().forEach(t=>t.stop()); micS.keep = null; } return true; }
+  try{ micS.keep = await navigator.mediaDevices.getUserMedia({audio:true}); return true; }catch(e){ micS.keep = null; return false; }
 }
 function micStop(){ try{ if(micS.mr && micS.mr.state==="recording") micS.mr.stop(); }catch(e){} }
 
@@ -4879,6 +4907,18 @@ function micMini(target, st, key){
   });
   return box;
 }
+function pronFocusList(){
+  const log = L().pronLog || [], by = {};
+  log.forEach(x => { (by[x.t] = by[x.t] || []).push(x); });
+  const phr = Object.entries(by).map(([t,a]) => ({t, last:a[a.length-1].p})).filter(x => x.last < 85).sort((a,b) => a.last-b.last).slice(0,6).map(x => ({t:x.t}));
+  const words = pronStats().words.slice(0,4).map(w => ({t:w[0]}));
+  return words.concat(phr);
+}
+function startPronFocus(back){
+  const list = pronFocusList();
+  if(!list.length){ toast("Ainda não há palavras difíceis. Faça alguns treinos de pronúncia primeiro."); return; }
+  startPron(list, back ? {back:overlay} : {});
+}
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
   const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Fechar">✕</button><div style="flex:1"></div></div>`);
@@ -4890,6 +4930,7 @@ function viewPronRep(){
   el.appendChild(h(`<section class="card"><div class="eyebrow">Palavras que mais falharam</div>${li(st.words, w=>`<li><b>${esc(w[0])}</b> · ${w[1]}x</li>`)}</section>`));
   el.appendChild(h(`<section class="card"><div class="eyebrow">Trocas (esperado → reconhecido)</div>${li(st.subs, w=>`<li>${esc(w[0])} · ${w[1]}x</li>`)}<p class="sub" style="font-size:12px">Mostra o que o navegador entendeu no lugar. Pode ser ruído do microfone, não só pronúncia.</p></section>`));
   el.appendChild(h(`<section class="card"><div class="eyebrow">Sons para treinar</div>${li(st.sounds, x=>`<li><b>${esc(x.s)}</b> · ${x.n}x (ex.: ${x.ex.map(esc).join(", ")}). ${esc(x.tip)}</li>`)}</section>`));
+  const fb = h(`<button class="btn btn-dark btn-block">🎯 Treinar agora as minhas mais difíceis</button>`); fb.addEventListener("click", () => startPronFocus(true)); el.appendChild(fb);
   const ai = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Plano com IA</div>
     <div class="ai-out sub" style="white-space:pre-wrap;line-height:1.5">${o.ai?esc(o.ai):"A IA lê só o resumo em texto acima (nunca o seu áudio) e monta um plano de treino."}</div>
     ${(!window.claude && !o.hasKey && !(()=>{try{return localStorage.getItem("nb-key")}catch(e){return ""}})())?`<input id="apiKey" class="in" type="password" placeholder="Cole sua chave da API Anthropic (fica só neste aparelho)" autocomplete="off"><p class="sub" style="font-size:12px">A chave fica guardada apenas no navegador deste aparelho. Só o resumo em texto é enviado à Anthropic.</p>`:""}
