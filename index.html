@@ -2511,7 +2511,7 @@ function viewCinema(){
     };
     $("#sP", bar).addEventListener("click", async () => {
       if(running){ stopAll(); running = false; micStop(); micKeep(false); $("#sP", bar).textContent = "▶ Começar"; setS("Parado"); return; }
-      o.recs = []; if(o.useMic && micOK()){ if(!(await micKeep(true))) o.useMic = false; }
+      o.recs = []; if(o.useMic && micOK()){ if(!(await micKeep(true))){ o.useMic = false; toast(micErrMsg(micS.err)); } }
       stopAll(); const tok = ++cineTok; running = true; $("#sP", bar).textContent = "⏸ Parar";
       for(let i = 0; i < sc.lines.length && tok === cineTok; i++){
         const l = sc.lines[i], chs = l.ch && l.ch.length ? l.ch : [l.t];
@@ -4809,9 +4809,13 @@ function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigato
 const micS = {mr:null, stream:null, sr:null};
 async function micBegin(done){
   const kept = micS.keep && micS.keep.active;
-  const stream = kept ? micS.keep : await navigator.mediaDevices.getUserMedia({audio:true});
+  let stream;
+  try{ stream = kept ? micS.keep : await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e){ e.micStage = "perm"; throw e; }
   const mt = ["audio/mp4","audio/webm;codecs=opus","audio/webm"].find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
-  const mr = mt ? new MediaRecorder(stream,{mimeType:mt}) : new MediaRecorder(stream);
+  let mr;
+  try{ mr = mt ? new MediaRecorder(stream,{mimeType:mt}) : new MediaRecorder(stream); }
+  catch(e){ try{ mr = new MediaRecorder(stream); }catch(e2){ if(!kept) stream.getTracks().forEach(t=>t.stop()); e2.micStage = "rec"; throw e2; } }
   const chunks=[]; let heard="";
   mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
   mr.onstop = () => {
@@ -4832,7 +4836,16 @@ async function micBegin(done){
 }
 async function micKeep(on){
   if(!on){ if(micS.keep){ micS.keep.getTracks().forEach(t=>t.stop()); micS.keep = null; } return true; }
-  try{ micS.keep = await navigator.mediaDevices.getUserMedia({audio:true}); return true; }catch(e){ micS.keep = null; return false; }
+  try{ micS.keep = await navigator.mediaDevices.getUserMedia({audio:true}); return true; }catch(e){ micS.keep = null; micS.err = e; return false; }
+}
+function micErrMsg(e){
+  const n = (e && e.name) || "", st = e && e.micStage;
+  const standalone = (window.navigator.standalone === true) || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  if(st==="rec") return "O microfone abriu, mas este navegador não consegue gravar áudio ("+(n||"erro")+"). Tente abrir o site no Safari.";
+  if(n==="NotAllowedError" || n==="SecurityError") return (standalone ? "O iPhone bloqueou o microfone no app da tela inicial. Abra o endereço direto no Safari (não pelo ícone) e toque em Permitir. " : "O microfone está bloqueado para este site. ") + "Para liberar: toque em “aA” na barra do Safari > Ajustes do Site > Microfone > Permitir. Ou em Ajustes do iPhone > Apps > Safari > Microfone > Perguntar/Permitir.";
+  if(n==="NotFoundError") return "Não encontrei um microfone neste aparelho.";
+  if(n==="NotReadableError") return "O microfone está em uso por outro app. Feche o outro app e tente de novo.";
+  return "Não consegui acessar o microfone ("+(n||"erro desconhecido")+").";
 }
 function micStop(){ try{ if(micS.mr && micS.mr.state==="recording") micS.mr.stop(); }catch(e){} }
 
@@ -4899,7 +4912,7 @@ function micMini(target, st, key){
         render();
       });
       m.on = true; render();
-    }catch(e){ m.msg = "Não consegui acessar o microfone. Permita o acesso nas configurações do navegador."; render(); }
+    }catch(e){ m.msg = micErrMsg(e); render(); }
   });
   $("#mmCmp",box).addEventListener("click", () => {
     if(!m.url) return; speak(target);
@@ -5001,7 +5014,7 @@ function viewPron(){
           if(heard){ grade(heard); } else { o.micMsg = SR_OK() ? "Gravado. O reconhecimento não captou palavras; ouça e tente de novo." : "Gravado. Ouça e compare com o modelo."; render(); }
         });
         o.recording=true; render();
-      }catch(e){ o.micMsg = "Não consegui acessar o microfone. Permita o acesso nas configurações do navegador."; render(); }
+      }catch(e){ o.micMsg = micErrMsg(e); render(); }
     });
     $("#micCmp",mic).addEventListener("click", () => {
       if(!o.rec) return; speak(it.t);
