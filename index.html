@@ -442,6 +442,13 @@ ul.plan{margin:10px 0 0; padding-left:18px; display:flex; flex-direction:column;
 .nb-x{border:0; background:none; color:var(--ink-dim); font-size:15px; padding:8px; border-radius:50%}
 .nb-seg{align-self:flex-start; max-width:100%; overflow-x:auto}
 .nb-card{border-left:4px solid var(--gold)}
+.kst{min-height:230px; display:flex; flex-direction:column; justify-content:center; gap:12px; text-align:center; padding:18px 8px; border:1px solid var(--line); background:var(--surface); border-radius:var(--r-m)}
+.kl{font-size:27px; font-weight:700; line-height:1.3}
+.kl .w{color:var(--ink-faint); transition:color .12s}
+.kl .w.on{color:var(--accent,#3b4fa8)}
+.kl.dim{font-size:16px; font-weight:500; opacity:.55}
+.kcount{font-size:64px; font-weight:700; line-height:1}
+.kl small{display:block; font-size:13px; font-weight:500; color:var(--ink-dim); margin-top:4px}
 .pgrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
 .ptile{display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:left; border:1px solid var(--line); background:var(--surface); border-radius:var(--r-m); padding:12px; min-height:92px}
 .ptile .game-ic{width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px}
@@ -1391,7 +1398,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv};
+    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -1757,10 +1764,12 @@ function planCandidates(){
     const scs = SCENES[state.lang] || [], sc = scs.length ? scs[(L().chatTotal||0) % scs.length] : null;
     if(sc) out.chat = {key:"chat", ic:"💬", t:"Conversar: "+sc.title, s:"Conversa com a IA, correção no final", min:7, p:P("prod")-4, act:() => startScene(sc)};
   }
+  { const sg = nextSong(); if(sg) out.sing = {key:"sing", ic:"🎤", t:"Karaokê: "+sg.title, s:"Cante junto com a base · 4 min", min:4, p:P("listen")-6, act:() => startKara(sg)}; }
+  { const dp = dailyPod(); if(dp) out.pod = {key:"pod", ic:"🎧", t:"Podcast: "+dp.n, s:dp.acc+" · "+dp.len+" · escuta longa", min:8, p:P("listen")-10, act:() => startPod(dp)}; }
   return out;
 }
 function planPick(cand, mins){
-  const ord = ["learn","gram","errlab","listen","cinema","read","prod","mastery","chat","rev","check"];
+  const ord = ["learn","gram","errlab","listen","cinema","sing","pod","read","prod","mastery","chat","rev","check"];
   const fkey = {listen:"listen", read:"read", gram:"gram", vocab:cand.mastery ? "mastery" : "rev", prod:"prod"}[focusSkill().k];
   const list = Object.values(cand).sort((a,b) => b.p-a.p), keys = []; let tot = 0;
   if(cand[fkey]){ keys.push(fkey); tot += cand[fkey].min; }
@@ -4850,14 +4859,17 @@ function viewBooksTab(el){
 function libNow(){
   const out = [], ss = L().stories || {};
   const st = stories().find(x => !ss[x.id]);
-  if(st) out.push({k:"História", ic:"📖", t:st.title, s:docMinutes(st)+" min · toque nas palavras novas", act:() => startStory(st)});
-  const bk = books().find(b => !ss[b.id]);
-  if(bk) out.push({k:"Livro", ic:"📚", t:bk.title, s:bk.author+" · começo do clássico", act:() => startStory(bookDoc(bk))});
+  if(st) out.push({k:"Ler · História", ic:"📖", t:st.title, s:docMinutes(st)+" min · toque nas palavras novas", act:() => startStory(st)});
   let cn = null; try{ cn = cineNext(); }catch(e){}
-  if(cn) out.push({k:"Cena de cinema", ic:"🎬", t:cn.title, s:"Sem legenda · "+cn.genre+" · "+cn.lvl, act:() => startCinema(cn.id)});
-  if(state.lang==="en" && !window.claude) out.push({k:"Filmes e séries", ic:"📺", t:"Cenas no player", s:"Loop e câmera lenta", act:() => startFilm()});
-  const nw = news[state.lang]; if(nw && nw.items && nw.items.length) out.push({k:"Notícia da semana", ic:"📰", t:nw.items[0].title || "Notícias", s:"Leia no idioma", act:() => { newsSub = "news"; go("news"); }});
-  out.push({k:"Música", ic:"🎵", t:"Ouvir e cantar", s:"Ritmo e ligação entre palavras", act:() => { newsSub = "music"; go("news"); }});
+  if(cn) out.push({k:"Ver · Cena de cinema", ic:"🎬", t:cn.title, s:"Sem legenda · "+cn.genre+" · "+cn.lvl, act:() => startCinema(cn.id)});
+  const sg = nextSong();
+  if(sg) out.push({k:"Ouvir · Karaokê", ic:"🎤", t:sg.title, s:"Cante junto, as palavras acendem · "+sg.level, act:() => startKara(sg)});
+  const dp = dailyPod();
+  if(dp) out.push({k:"Ouvir · Podcast", ic:"🎧", t:dp.n, s:dp.acc+" · "+dp.len+" · "+dp.lv, act:() => startPod(dp)});
+  const bk = books().find(b => !ss[b.id]);
+  if(bk) out.push({k:"Ler · Livro", ic:"📚", t:bk.title, s:bk.author+" · começo do clássico", act:() => startStory(bookDoc(bk))});
+  if(state.lang==="en" && !window.claude) out.push({k:"Ver · Filmes e séries", ic:"📺", t:"Cenas no player", s:"Loop e câmera lenta", act:() => startFilm()});
+  const nw = news[state.lang]; if(nw && nw.items && nw.items.length) out.push({k:"Ler · Notícia", ic:"📰", t:nw.items[0].title || "Notícias", s:"Leia no idioma", act:() => { newsSub = "news"; go("news"); }});
   return out;
 }
 function shelfRows(list){
@@ -4866,9 +4878,9 @@ function shelfRows(list){
   return box;
 }
 function shelfCard(short){
-  const list = libNow(), sec = h(`<section><div class="sec-head"><h2>Para ler e ver</h2><button class="link" id="shAll">Biblioteca ›</button></div></section>`);
+  const list = libNow(), sec = h(`<section><div class="sec-head"><h2>Para ler, ver e ouvir</h2><button class="link" id="shAll">Biblioteca ›</button></div></section>`);
   $("#shAll",sec).addEventListener("click", () => { newsSub = "now"; go("news"); });
-  sec.appendChild(shelfRows(short ? list.slice(0,3) : list));
+  sec.appendChild(shelfRows(short ? list.slice(0,4) : list));
   return sec;
 }
 function viewVideos(el){
@@ -4886,20 +4898,23 @@ const music = () => content().music || {originals:[], recs:[]};
 function viewNews(){
   const lg = LANGS[state.lang], nw = news[state.lang];
   if(!newsInit){ newsInit = true; if(newsSub==="news") newsSub = "now"; }
-  const isMore = ["cur","places","quiz"].includes(newsSub);
-  const subs = [["now","Agora"]].concat(stories().length?[["stories","Histórias"]]:[]).concat(books().length?[["books","Livros"]]:[]).concat([["videos","Vídeos"],["news","Notícias"],["music","Música"],[isMore?newsSub:"cur","Mais"]]);
-  const moreSubs = [["cur","Curiosidades"],["places","Lugares"],["quiz","Testes"]];
-  const heads = {now:["O que ler e ver","agora"], videos:["Vídeos","para o ouvido"], news:["Leia o mundo","em "+lg.native], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","para ouvir e cantar"]};
+  const GROUPS = [["now","Agora",["now"]], ["ler","Ler",["stories","books","news","cur","places","quiz"]], ["ver","Ver",["videos"]], ["ouvir","Ouvir",["music","pods"]]];
+  const grp = GROUPS.find(g => g[2].includes(newsSub)) || GROUPS[0];
+  const sNames = {stories:"Histórias", books:"Livros", news:"Notícias", cur:"Curiosidades", places:"Lugares", quiz:"Testes", videos:"Cenas e filmes", music:"Música e karaokê", pods:"Podcasts"};
+  const avail = k => !((k==="stories" && !stories().length) || (k==="books" && !books().length) || (k==="pods" && !pods().length));
+  const heads = {now:["O que ler, ver e ouvir","agora"], videos:["Cenas","e filmes"], news:["Leia o mundo","em "+lg.native], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","e karaokê"], pods:["Podcasts","para o ouvido"]};
   const [h1, h2] = heads[newsSub];
   const el = h(`<div class="screen">
-    <div><p class="hello">Ler e ouvir · ${lg.name}</p><h1 class="headline" style="margin-top:2px">${h1} <span class="script" style="font-size:32px">${h2}</span></h1></div>
-    <div class="subtabs">${subs.map(([k,n])=>`<button data-s="${k}" class="${(n==="Mais"?isMore:newsSub===k)?"on":""}">${n}</button>`).join("")}</div>
-    ${isMore?`<div class="subtabs sub2">${moreSubs.map(([k,n])=>`<button data-s="${k}" class="${newsSub===k?"on":""}">${n}</button>`).join("")}</div>`:""}
+    <div><p class="hello">Biblioteca · ${lg.name}</p><h1 class="headline" style="margin-top:2px">${h1} <span class="script" style="font-size:32px">${h2}</span></h1></div>
+    <div class="subtabs">${GROUPS.map(g => `<button data-g="${g[0]}" class="${grp[0]===g[0]?"on":""}">${g[0]==="ler"?"📖 ":g[0]==="ver"?"🎬 ":g[0]==="ouvir"?"🎧 ":""}${g[1]}</button>`).join("")}</div>
+    ${grp[2].filter(avail).length>1 ? `<div class="subtabs sub2">${grp[2].filter(avail).map(k => `<button data-s="${k}" class="${newsSub===k?"on":""}">${sNames[k]}</button>`).join("")}</div>` : ""}
   </div>`);
-  $$(".subtabs button", el).forEach(b => b.addEventListener("click", () => { newsSub = b.dataset.s; render(); }));
+  $$("[data-g]", el).forEach(b => b.addEventListener("click", () => { const g = GROUPS.find(x => x[0]===b.dataset.g); newsSub = g[2].find(avail) || g[2][0]; render(); }));
+  $$("[data-s]", el).forEach(b => b.addEventListener("click", () => { newsSub = b.dataset.s; render(); }));
 
   if(newsSub==="now"){ el.appendChild(h(`<p class="sub">Uma sugestão de cada tipo, do jeito que o app escolheu para o seu nível.</p>`)); el.appendChild(shelfRows(libNow())); }
   else if(newsSub==="videos"){ viewVideos(el); }
+  else if(newsSub==="pods"){ viewPodsTab(el); }
   else if(newsSub==="stories"){ viewStoriesTab(el); }
   else if(newsSub==="books"){ viewBooksTab(el); }
   else if(newsSub==="news"){
@@ -4951,7 +4966,7 @@ function viewNews(){
   else if(newsSub==="music"){
     const m = music();
     el.appendChild(h(`<p class="sub">Canções curtas escritas para estudo, com voz e tradução verso a verso. Embaixo, músicas reais boas para treinar o ouvido.</p>`));
-    const sec = h(`<section class="card"><div class="eyebrow">Canções para estudar</div><div style="margin-top:2px"></div></section>`);
+    const sec = h(`<section class="card"><div class="eyebrow">Canções para cantar (karaokê)</div><div style="margin-top:2px"></div></section>`);
     m.originals.forEach(sg => {
       const b = h(`<button class="unit"><span class="u-ic">${sg.icon||"🎵"}</span><span><div class="u-title">${esc(sg.title)}</div><div class="u-sub">${esc(sg.theme)} · ${sg.lines.length} versos</div></span><span class="u-meta"><span class="pill lv">${esc(sg.level)}</span></span></button>`);
       b.addEventListener("click", () => open({type:"song", sg, showTr:false}));
@@ -4966,7 +4981,7 @@ function viewNews(){
         <p class="sub" style="margin-top:8px">${esc(r.why)}</p>
         <div class="eyebrow" style="margin-top:12px">Expressões do tema</div>
         <div class="chips-row" style="margin-top:8px">${(r.expressions||[]).map(x=>`<button class="gl" data-t="${esc(x.t)}">${esc(x.t)}<span>${esc(x.pt)}</span></button>`).join("")}</div>
-        <div class="links"><a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">▶ YouTube ↗</a><a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">♫ Spotify ↗</a></div>
+        <div class="links"><a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">▶ YouTube ↗</a><a href="https://www.youtube.com/results?search_query=${q}+karaoke+lyrics" target="_blank" rel="noopener">🎤 Karaokê ↗</a><a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">♫ Spotify ↗</a></div>
       </section>`);
       $$(".gl",c).forEach(g => g.addEventListener("click", () => speak(g.dataset.t)));
       el.appendChild(c);
@@ -5011,14 +5026,157 @@ function viewQuiz(){
   el.appendChild(exerciseCard(Object.assign({type:"mcq", _skill:"read"}, o.qs[o.i]), ok => { if(ok) o.ok++; }, () => { o.i++; render(); scrollTo(0,0); }, o.i===o.qs.length-1?"Ver resultado":"Próxima"));
   return el;
 }
+/* =========================================================
+   KARAOKÊ — canções originais com base instrumental gerada no aparelho
+   ========================================================= */
+function wavBlobFromBuffer(buf){
+  const d = buf.getChannelData(0), n = d.length, ab = new ArrayBuffer(44+n*2), v = new DataView(ab);
+  const w = (o, t) => { for(let i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4,36+n*2,true); w(8,"WAVEfmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,buf.sampleRate,true); v.setUint32(28,buf.sampleRate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++) v.setInt16(44+i*2, Math.max(-1, Math.min(1, d[i]))*32767, true);
+  return new Blob([ab], {type:"audio/wav"});
+}
+async function karaRender(nLines, bpm){
+  const beat = 60/bpm, nb = 4 + nLines*8 + 4, sr = 22050, OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if(!OC) throw new Error("sem WebAudio");
+  const ctx = new OC(1, Math.ceil(nb*beat*sr), sr), master = ctx.createGain(); master.gain.value = 0.75; master.connect(ctx.destination);
+  const chords = [[261.63,329.63,392.0],[196.0,246.94,293.66],[220.0,261.63,329.63],[174.61,220.0,261.63]], roots = [65.41,49.0,55.0,43.65];
+  const nbuf = ctx.createBuffer(1, Math.floor(sr*0.25), sr), nd = nbuf.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i] = Math.random()*2-1;
+  const tone = (f, t, d, type, g) => { const o = ctx.createOscillator(), a = ctx.createGain(); o.type = type; o.frequency.value = f; a.gain.setValueAtTime(0.0001,t); a.gain.linearRampToValueAtTime(g,t+0.015); a.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(a); a.connect(master); o.start(t); o.stop(t+d+0.05); };
+  const kick = t => { const o = ctx.createOscillator(), a = ctx.createGain(); o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(48,t+0.12); a.gain.setValueAtTime(0.9,t); a.gain.exponentialRampToValueAtTime(0.001,t+0.22); o.connect(a); a.connect(master); o.start(t); o.stop(t+0.24); };
+  const noise = (t, d, g, hp) => { const src = ctx.createBufferSource(); src.buffer = nbuf; const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; const a = ctx.createGain(); a.gain.setValueAtTime(g,t); a.gain.exponentialRampToValueAtTime(0.001,t+d); src.connect(f); f.connect(a); a.connect(master); src.start(t); src.stop(t+d); };
+  for(let b=0;b<nb;b++){
+    const t = b*beat, bar = Math.floor(b/4), pos = b%4, ch = bar%4;
+    if(b < 4){ tone(pos===0 ? 1500 : 1100, t, 0.07, "square", 0.25); continue; }
+    if(pos===0 || pos===2) kick(t);
+    if(pos===1 || pos===3) noise(t, 0.13, 0.28, 1800);
+    noise(t, 0.04, 0.12, 7000); noise(t+beat/2, 0.04, 0.08, 7000);
+    if(pos===0 || pos===2){ tone(roots[ch]*2, t, beat*0.9, "triangle", 0.4); chords[ch].forEach(f => tone(f, t, beat*1.8, "sine", 0.08)); }
+  }
+  return wavBlobFromBuffer(await ctx.startRendering());
+}
+const KARA_BPM = {72:"Lento", 90:"Normal", 108:"Rápido"};
+let karaRaf = 0, karaAud = null;
+function karaStop(o, finished){
+  cancelAnimationFrame(karaRaf); karaRaf = 0;
+  if(karaAud){ try{ karaAud.pause(); }catch(e){} karaAud = null; }
+  try{ micStop(); }catch(e){}
+  o.playing = false;
+  if(finished){ o.finished = true; addXp(5); const lg = L(); (lg.kara = lg.kara || []).push({id:o.sg.id, d:today()}); if(lg.kara.length>60) lg.kara.splice(0,lg.kara.length-60); persist(); try{ sfx.win(); }catch(e){} }
+  render();
+}
+async function karaStart(o){
+  if(o.busy) return;
+  o.busy = true; o.finished = false; o.recUrl = null; render();
+  try{
+    if(!o.urls) o.urls = {};
+    if(!o.urls[o.bpm]) o.urls[o.bpm] = URL.createObjectURL(await karaRender(o.sg.lines.length, o.bpm));
+    stopAudio();
+    let recOn = false;
+    if(o.rec && micOK()){ try{ await micBegin(url => { o.recUrl = url; if(overlay===o) render(); }); recOn = true; }catch(e){ o.msg = micErrMsg(e); } }
+    const a = new Audio(o.urls[o.bpm]); karaAud = a; o.playing = true; o.busy = false; o.lastLine = -1;
+    a.addEventListener("ended", () => { if(karaAud===a){ cancelAnimationFrame(karaRaf); try{ if(recOn) micStop(); }catch(e){} o.playing = false; o.finished = true; addXp(5); const lg = L(); (lg.kara = lg.kara || []).push({id:o.sg.id, d:today()}); persist(); try{ sfx.win(); }catch(e){} karaAud = null; if(overlay===o) render(); } });
+    await a.play(); render();
+    const beat = 60/o.bpm, tick = () => {
+      if(!karaAud || overlay!==o) return;
+      const t = a.currentTime, st = document.getElementById("kst"); if(!st){ karaRaf = requestAnimationFrame(tick); return; }
+      const rel = t - 4*beat;
+      if(rel < 0){ st.innerHTML = `<div class="sub">Prepare-se</div><div class="kcount">${Math.max(1, Math.ceil(-rel/beat))}</div><div class="kl dim">${esc(o.sg.lines[0].t)}</div>`; }
+      else {
+        const i = Math.min(o.sg.lines.length-1, Math.floor(rel/(8*beat))), f = Math.min(1, (rel - i*8*beat)/(7*beat)), ln = o.sg.lines[i], ws = ln.t.split(/\s+/);
+        if(o.guide && i !== o.lastLine){ o.lastLine = i; try{ speak(ln.t); }catch(e){} }
+        const prev = o.sg.lines[i-1], next = o.sg.lines[i+1];
+        st.innerHTML = `${prev ? `<div class="kl dim">${esc(prev.t)}</div>` : ""}<div class="kl">${ws.map((w,k) => `<span class="w${f >= k/ws.length ? " on" : ""}">${esc(w)}</span>`).join(" ")}${o.showTr ? `<small>${esc(ln.pt)}</small>` : ""}</div>${next ? `<div class="kl dim">${esc(next.t)}</div>` : ""}`;
+      }
+      karaRaf = requestAnimationFrame(tick);
+    };
+    karaRaf = requestAnimationFrame(tick);
+  }catch(e){ o.busy = false; o.playing = false; o.msg = "Não consegui tocar a base agora ("+((e && (e.name||e.message))||"erro")+"). Toque de novo."; render(); }
+}
+function viewKara(){
+  const o = overlay, sg = o.sg, el = h(`<div class="screen"></div>`);
+  if(!o.bpm) o.bpm = 90;
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1"><span class="pill lv">${esc(sg.level)}</span>Karaokê · ${esc(sg.theme)}</div></div>`);
+  $("button",head).addEventListener("click", () => { karaStop(o, false); open({type:"song", sg, showTr:false}); });
+  el.appendChild(head);
+  el.appendChild(h(`<div><h1 class="headline">${sg.icon||"🎤"} ${esc(sg.title)}</h1><p class="sub" style="margin-top:4px">A base instrumental é criada pelo app, funciona sem internet e toca mesmo no silencioso. Cante junto: as palavras acendem no ritmo.</p></div>`));
+  const seg = h(`<div class="seg">${Object.keys(KARA_BPM).map(b => `<button data-b="${b}" class="${+b===o.bpm?"on":""}">${KARA_BPM[b]}</button>`).join("")}</div>`);
+  seg.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { if(o.playing) return; o.bpm = +b.dataset.b; render(); }));
+  el.appendChild(seg);
+  const opts = h(`<div style="display:flex;flex-wrap:wrap;gap:8px"></div>`);
+  [["showTr","Tradução"],["guide","Voz guia"]].concat(micOK() ? [["rec","🎙 Gravar minha voz"]] : []).forEach(([k,n]) => { const b = h(`<button class="filter ${o[k]?"on":""}">${n}</button>`); b.addEventListener("click", () => { if(o.playing && k==="rec") return; o[k] = !o[k]; render(); }); opts.appendChild(b); });
+  el.appendChild(opts);
+  const st = h(`<div class="kst" id="kst"></div>`);
+  st.innerHTML = o.finished ? `<div class="kl">Muito bem! 🎉</div><div class="sub">+5 XP · cante de novo ou ouça sua gravação.</div>` : `<div class="kl dim">${esc(sg.lines[0].t)}</div><div class="sub">Toque em Começar. São 4 batidas de contagem.</div>`;
+  el.appendChild(st);
+  const go = h(`<button class="btn btn-dark btn-block">${o.busy ? "Preparando a base…" : o.playing ? "⏹ Parar" : o.finished ? "🔁 Cantar de novo" : "▶ Começar"}</button>`);
+  go.addEventListener("click", () => { if(o.busy) return; if(o.playing) karaStop(o, false); else karaStart(o); });
+  el.appendChild(go);
+  if(o.msg) el.appendChild(h(`<p class="sub" style="font-size:12.5px">${esc(o.msg)}</p>`));
+  if(o.recUrl) el.appendChild(h(`<section class="card"><div class="eyebrow">Sua gravação</div><audio controls src="${o.recUrl}" style="width:100%;margin-top:8px"></audio><p class="sub" style="font-size:12px;margin-top:6px">Com fones, a gravação pega só a sua voz.</p></section>`));
+  const ls = h(`<button class="btn btn-line btn-block">📖 Ver a letra e ouvir verso a verso</button>`); ls.addEventListener("click", () => { karaStop(o, false); open({type:"song", sg, showTr:false}); });
+  el.appendChild(ls);
+  return el;
+}
+function nextSong(){
+  const sgs = music().originals || [], done = (L().kara || []).map(x => x.id);
+  return sgs.find(x => !done.includes(x.id)) || sgs[(L().kara||[]).length % Math.max(1,sgs.length)] || null;
+}
+function startKara(sg){ sg = sg || nextSong(); if(!sg){ toast("Ainda não há canções neste idioma."); return; } open({type:"kara", sg, bpm:90}); }
+
+/* =========================================================
+   PODCASTS — curados, com roteiro de estudo e registro de escuta
+   ========================================================= */
+const PODS = {
+  en:[
+    {id:"p-6min", n:"6 Minute English", by:"BBC Learning English", acc:"Britânico", lv:"A2–B1", len:"6 min", d:"Dois apresentadores conversam sobre um tema do dia a dia. Termina com o vocabulário-chave explicado.", how:"Ouça uma vez sem ler. Depois leia a transcrição no site e repita as 5 expressões do final.", site:"https://www.bbc.co.uk/learningenglish/english/features/6-minute-english", q:"6 Minute English BBC"},
+    {id:"p-tews", n:"The English We Speak", by:"BBC Learning English", acc:"Britânico", lv:"A2–B1", len:"3 min", d:"Uma expressão idiomática por episódio, em diálogo curto. Ótimo para o metrô.", how:"Ouça duas vezes, tente adivinhar o sentido e confira no fim. Repita a expressão em voz alta.", site:"https://www.bbc.co.uk/learningenglish/english/features/the-english-we-speak", q:"The English We Speak BBC"},
+    {id:"p-aee", n:"All Ears English", by:"Lindsay e Michelle", acc:"Americano", lv:"B1–B2", len:"15–20 min", d:"Conversa natural sobre cultura e dia a dia nos EUA, com dicas de como os nativos realmente falam.", how:"Ouça em velocidade normal e anote 3 expressões novas. Reouça um trecho curto no dia seguinte.", site:"https://www.allearsenglish.com/", q:"All Ears English podcast"},
+    {id:"p-culips", n:"Culips ESL Podcast", by:"Culips", acc:"Vários", lv:"B1–B2", len:"15–25 min", d:"Conversas informais com expressões e gírias explicadas, com transcrição no site.", how:"Ouça sem transcrição, depois com. Foque em ligação entre palavras e gírias.", site:"https://www.culips.com/", q:"Culips ESL podcast"},
+    {id:"p-eslpod", n:"ESLPod", by:"Dr. Jeff McQuillan", acc:"Americano", lv:"A2–B1", len:"10–15 min", d:"Diálogos lentos e depois naturais, com explicação do vocabulário. Bom para quem ainda se perde na fala rápida.", how:"Ouça a versão lenta e depois a natural. Compare o que muda no ritmo.", site:"https://www.eslpod.com/", q:"ESLPod"},
+    {id:"p-luke", n:"Luke's English Podcast", by:"Luke Thompson", acc:"Britânico", lv:"B2+", len:"30–60 min", d:"Histórias e conversas longas, com humor. Desafio para quem quer treinar escuta de verdade.", how:"Escolha um episódio de assunto que você gosta e ouça 10 minutos por dia, sem pausar.", site:"https://teacherluke.co.uk/", q:"Luke's English Podcast"}
+  ],
+  it:[
+    {id:"p-cbi", n:"Coffee Break Italian", by:"Coffee Break Languages", acc:"Italiano padrão", lv:"A1–B1", len:"15–20 min", d:"Aulas em dupla: um professor e uma aluna, passo a passo, em inglês. Boas para começar.", how:"Ouça com um caderno e repita as frases em voz alta nas pausas.", site:"https://coffeebreaklanguages.com/coffeebreakitalian/", q:"Coffee Break Italian"},
+    {id:"p-pi", n:"Podcast Italiano", by:"Davide", acc:"Italiano padrão", lv:"A2–B2", len:"15–30 min", d:"Italiano claro e natural, sobre temas variados, com transcrição para assinantes e dicas de aprendizado.", how:"Comece pelos episódios para iniciantes e ouça sem legenda, depois com.", site:"https://www.podcastitaliano.com/", q:"Podcast Italiano Davide"}
+  ]
+};
+const pods = () => PODS[state.lang] || [];
+function dailyPod(){ const l = pods(); if(!l.length) return null; const d = Math.floor(Date.now()/86400000); const lv = userLevel(); const ok = l.filter(p => { const m = p.lv.match(/[ABC]\d/g) || []; return m.length && LEVEL_ORDER[m[0]] <= LEVEL_ORDER[lv]+0; }); const pool = ok.length ? ok : l; return pool[d % pool.length]; }
+function podLinks(p){ const q = encodeURIComponent(p.q || p.n); return `<div class="links"><a href="${esc(p.site)}" target="_blank" rel="noopener">Site oficial ↗</a><a href="https://podcasts.apple.com/search?term=${q}" target="_blank" rel="noopener">Apple Podcasts ↗</a><a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Spotify ↗</a><a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">YouTube ↗</a></div>`; }
+function startPod(p){ p = p || dailyPod(); if(!p){ toast("Ainda não há podcasts neste idioma."); return; } open({type:"podp", pid:p.id}); }
+function viewPodp(){
+  const o = overlay, p = pods().find(x => x.id===o.pid) || pods()[0], el = h(`<div class="screen"></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1">Podcast</div></div>`);
+  $("button",head).addEventListener("click", () => { if(planRun) planRun = null; close(); });
+  el.appendChild(head);
+  el.appendChild(h(`<div><h1 class="headline">🎧 ${esc(p.n)}</h1><p class="sub" style="margin-top:4px">${esc(p.by)} · sotaque ${esc(p.acc.toLowerCase())} · nível ${esc(p.lv)} · ${esc(p.len)}</p></div>`));
+  el.appendChild(h(`<section class="card"><p style="line-height:1.5">${esc(p.d)}</p><div class="m-goal" style="margin-top:10px">💡 Como estudar: ${esc(p.how)}</div>${podLinks(p)}</section>`));
+  const done = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Depois de ouvir</div><p class="sub" style="font-size:13px">Quanto você ouviu? Conta para a missão e para o seu XP.</p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[5,10,20,30].map(m => `<button class="btn btn-line" data-m="${m}">${m} min</button>`).join("")}</div></section>`);
+  done.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { const m = +b.dataset.m; const lg = L(); (lg.aud = lg.aud || []).push({id:p.id, d:today(), m}); if(lg.aud.length>200) lg.aud.splice(0,lg.aud.length-200); addXp(Math.max(3, Math.round(m/2))); persist(); toast("Registrado: "+m+" min de escuta. +"+Math.max(3, Math.round(m/2))+" XP"); close(); }));
+  el.appendChild(done);
+  el.appendChild(h(`<p class="sub" style="font-size:12px">Os episódios tocam no app de podcasts ou no site oficial; o Nômade registra o seu tempo de escuta.</p>`));
+  return el;
+}
+function viewPodsTab(el){
+  el.appendChild(h(`<p class="sub">Escuta longa e natural, no seu ritmo. Escolha pelo nível e pelo sotaque que quer treinar.</p>`));
+  const dp = dailyPod();
+  pods().forEach(p => {
+    const c = h(`<section class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:15.5px">${esc(p.n)}${dp && dp.id===p.id ? ` <span class="pill lv">hoje</span>` : ""}</b><div class="sub" style="font-size:12.5px">${esc(p.by)} · ${esc(p.acc)} · ${esc(p.len)}</div></div><span class="pill lv">${esc(p.lv)}</span></div><p class="sub" style="margin-top:8px">${esc(p.d)}</p><button class="btn btn-dark btn-block" style="margin-top:10px">🎧 Ouvir e registrar</button></section>`);
+    $("button",c).addEventListener("click", () => startPod(p));
+    el.appendChild(c);
+  });
+}
 function viewSong(){
   const o = overlay, sg = o.sg, el = h(`<div class="screen"></div>`);
   const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1"><span class="pill lv">${esc(sg.level)}</span>${esc(sg.theme)}</div></div>`);
   $("button",head).addEventListener("click", () => { stopAudio(); seqToken++; tab="news"; close(); });
   el.appendChild(head);
   el.appendChild(h(`<div><h1 class="headline">${sg.icon||"🎵"} ${esc(sg.title)}</h1><p class="sub" style="margin-top:4px">Canção original para estudo. Ouça, depois leia em voz alta junto.</p></div>`));
+  { const kb = h(`<button class="btn btn-dark btn-block">🎤 Cantar em modo karaokê</button>`); kb.addEventListener("click", () => { stopAudio(); seqToken++; open({type:"kara", sg, bpm:90}); }); el.appendChild(kb); }
   const ctr = h(`<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px"></div>`);
-  const all = h(`<button class="btn btn-dark">▶ Ouvir tudo</button>`); all.addEventListener("click", () => speakSeq(sg.lines.map(l=>l.t)));
+  const all = h(`<button class="btn btn-line">▶ Ouvir tudo</button>`); all.addEventListener("click", () => speakSeq(sg.lines.map(l=>l.t)));
   const tr = h(`<button class="btn btn-line">${o.showTr?"Ocultar":"Mostrar"} tradução</button>`); tr.addEventListener("click", () => { o.showTr=!o.showTr; render(); });
   ctr.appendChild(all); ctr.appendChild(tr); el.appendChild(ctr);
   const body = h(`<section class="card" style="padding-block:6px"></section>`);
@@ -5116,7 +5274,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v77";
+const APP_VER = "v78";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
