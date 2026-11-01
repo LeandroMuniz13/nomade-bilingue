@@ -1337,7 +1337,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint};
+    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -1460,7 +1460,7 @@ function viewWelcome(){
       {k:20, m:5, ic:"☕", t:"5 minutos", s:"Leve"},
       {k:40, m:10, ic:"🚇", t:"10 minutos", s:"Recomendado"},
       {k:60, m:15, ic:"🔥", t:"15 minutos", s:"Puxado"}
-    ], x => { state.goal = x.k; state.minutes = x.m; if(!L().target) L().target = ({A1:"A2",A2:"B1",B1:"B2"})[userLevel()] || "B1"; L().onboarded = true; persist(); const j = journeyNext(); overlay = null; tab = "home"; journeyGo(j); });
+    ], x => { state.goal = x.k; state.minutes = x.m; if(!L().target) L().target = ({A1:"A2",A2:"B1",B1:"B2"})[userLevel()] || "B1"; L().onboarded = true; persist(); const j = journeyNext(); if(!state.prof){ overlay = {type:"intv", after:j}; render(); scrollTo(0,0); return; } overlay = null; tab = "home"; journeyGo(j); });
   }
   return el;
 }
@@ -2694,6 +2694,7 @@ function viewHome(){
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
   if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); }
   else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); }
+  el.appendChild(profCard());
   /* atalhos: no máximo 4, só depois da 1ª lição */
   if(!first){
     const sst = srsStats();
@@ -3005,12 +3006,194 @@ function runHead(total, doneN, label){
   if(label) wrap.appendChild(h(`<div class="stage-label">${label}</div>`));
   return wrap;
 }
+/* ---- variedade: cada aula monta perguntas novas ---- */
+function seenEx(){ return L().seenEx = L().seenEx || {}; }
+const baseT = t => String(t||"").split(/\s*\/\s*/)[0].replace(/…/g,"").replace(/\s+/g," ").trim();
+const WORD_RE = /^[\p{L}'’-]+$/u, PUNCT_RE = /[.,!?;:¿¡"“”()]/g;
+function genEx(u){
+  const out = [], lgName = LANGS[state.lang].name;
+  const uv = (u.vocab||[]).filter(v => v && v.t && v.pt && !/…/.test(v.t+v.pt));
+  const allV = units().flatMap(x => x.vocab||[]).filter(v => v && v.t && v.pt && !/…/.test(v.t+v.pt));
+  const lines = ((u.dialogue||{}).lines||[]).filter(l => l && l.t && l.pt);
+  const allL = units().flatMap(x => (x.dialogue||{}).lines || []).filter(l => l && l.t && l.pt);
+  const mk = (k, q, right, pool, extra) => {
+    const wrong = shuffle([...new Set(pool.filter(x => x && x!==right))]).slice(0,3);
+    if(wrong.length<3) return;
+    const opts = shuffle([right].concat(wrong));
+    out.push(Object.assign({type:"mcq", q, options:opts, correct:opts.indexOf(right), _k:k}, extra||{}));
+  };
+  uv.forEach(v => {
+    const b = baseT(v.t), note = v.note ? " "+v.note : "";
+    const ptPool = uv.map(x => x.pt).concat(shuffle(allV.map(x => x.pt)).slice(0,14));
+    const tPool = uv.map(x => baseT(x.t)).concat(shuffle(allV.map(x => baseT(x.t))).slice(0,14));
+    mk("vt", `O que significa “${b}”?`, v.pt, ptPool, {explain:`“${b}” = ${v.pt}.${note}`});
+    mk("vr", `Como se diz “${v.pt}” em ${lgName}?`, b, tPool, {explain:`${v.pt} = “${b}”.${note}`});
+    if(!/\//.test(v.t)) mk("vl", "Ouça e escolha o significado", v.pt, ptPool, {type:"listen", speak:v.t, explain:`“${v.t}” = ${v.pt}.${note}`});
+  });
+  lines.forEach(l => {
+    const w = l.t.split(/\s+/);
+    if(w.length>=3 && w.length<=9) out.push({type:"order", q:`Monte a frase: “${l.pt}”`, answer:l.t, explain:`“${l.t}”`, _k:"lo"});
+    const cand = w.map((x,i) => ({x:x.replace(PUNCT_RE,""), i})).filter(c => c.x.length>=4 && WORD_RE.test(c.x));
+    if(cand.length && w.length>=4){
+      const c = cand[Math.floor(Math.random()*cand.length)];
+      const q = w.map((x,i) => i===c.i ? x.replace(c.x,"_____") : x).join(" ");
+      const own = lines.flatMap(z => z.t.split(/\s+/).map(y => y.replace(PUNCT_RE,"")));
+      const glob = allL.flatMap(z => z.t.split(/\s+/).map(y => y.replace(PUNCT_RE,"")));
+      const ok = y => y.length>=4 && WORD_RE.test(y) && y.toLowerCase()!==c.x.toLowerCase();
+      mk("lc", `Complete a frase: ${q}`, c.x, shuffle(own.filter(ok)).concat(shuffle(glob.filter(ok))), {explain:`“${l.t}” — ${l.pt}`});
+    }
+    mk("ll", "Ouça: o que a frase quer dizer?", l.pt, lines.map(x => x.pt).concat(shuffle(allL.map(x => x.pt)).slice(0,12)), {type:"listen", speak:l.t, explain:`“${l.t}” = ${l.pt}`});
+  });
+  return out;
+}
+function buildSession(u, extra){
+  const n = Math.max(6, (u.exercises||[]).length), seen = seenEx(), rev = L().rev || {};
+  const pool = [].concat(
+    (extra||[]).map(e => Object.assign({}, e, {_k:"ai", _ai:1})),
+    (u.exercises||[]).map(e => Object.assign({}, e, {_k:"st"})),
+    genEx(u));
+  const sc = e => { const k = exKey(e), r = rev[k]; return (seen[k]||0)*2 + Math.random()*1.5 - (e._ai?3:0) - (r && r.miss>r.hit ? 2.5 : 0); };
+  const sorted = pool.map(e => ({e, s:sc(e)})).sort((a,b) => a.s-b.s).map(x => x.e);
+  const cnt = {}, picked = [], cap = {st:2, ai:3};
+  for(const e of sorted){ if(picked.length>=n) break; const c = cnt[e._k]||0; if(c>=(cap[e._k]||2)) continue; cnt[e._k] = c+1; picked.push(e); }
+  for(const e of sorted){ if(picked.length>=n) break; if(!picked.includes(e)) picked.push(e); }
+  picked.forEach(e => { const k = exKey(e); seen[k] = (seen[k]||0)+1; });
+  const ks = Object.keys(seen); if(ks.length>2500) ks.slice(0,1000).forEach(k => delete seen[k]);
+  return shuffle(picked);
+}
+const gmJson = raw => JSON.parse(String(raw).replace(/^[^{[]*/,"").replace(/[^}\]]*$/,""));
+function profCtx(){
+  const p = state.prof; if(!p) return "";
+  return `\nPerfil do aluno (use para personalizar situações, exemplos e vocabulário): objetivo: ${p.goal||"-"}; contextos de uso: ${(p.contexts||[]).join(", ")||"-"}; interesses: ${(p.interests||[]).join(", ")||"-"}; dificuldades: ${(p.weak||[]).join(", ")||"-"}; estilo: ${p.style||"-"}.`;
+}
+async function aiFresh(u){
+  if(!gmKey() || !navigator.onLine) return [];
+  const lg = LANGS[state.lang];
+  const v = (u.vocab||[]).map(x => x.t+" = "+x.pt).join("; ");
+  const prompt = `Você é professor de ${lg.name} para um brasileiro, nível ${u.level||userLevel()}. Tema da aula: ${u.title} (${u.subtitle}). Itens: ${v}.${profCtx()}
+Crie 4 perguntas NOVAS de múltipla escolha, diferentes entre si, em situações realistas e criativas (ligadas ao perfil do aluno quando fizer sentido). Pelo menos uma deve ser “o que você diria/responderia nesta situação”, não só tradução.
+Responda só com JSON: {"exercises":[{"q":"pergunta em português","options":["a","b","c","d"],"correct":0,"explain":"explicação curta em português"}]}
+Regras: 4 opções distintas, uma correta, opções no idioma estudado quando fizer sentido, nada vulgar; varie a posição da correta.`;
+  const j = gmJson(await gmCall([{text:prompt}], 2200, true));
+  return (j.exercises||[]).filter(e => e && e.q && Array.isArray(e.options) && e.options.length===4 && new Set(e.options).size===4 && Number.isInteger(e.correct) && e.correct>=0 && e.correct<4 && e.explain).slice(0,4).map(e => Object.assign({type:"mcq"}, e));
+}
+/* ---- conversa inicial com a IA: monta o perfil de estudo ---- */
+const INTV_FB = [
+  {k:"goal", q:"Para que você quer aprender?", chips:["Viajar","Trabalho","Estudos","Por prazer"]},
+  {k:"contexts", q:"Em que situações vai usar mais?", chips:["Reuniões e e-mails","Viagem e restaurantes","Filmes e séries","Conversar com pessoas"]},
+  {k:"weak", q:"O que está mais difícil hoje?", chips:["Entender o que ouço","Falar sem travar","Pronúncia","Vocabulário","Gramática"]},
+  {k:"interests", q:"Quais assuntos você curte?", chips:["Tecnologia","Futebol","Cinema","Culinária","Negócios","Viagens"]},
+  {k:"style", q:"Como prefere estudar?", chips:["Ouvindo","Jogos rápidos","Lendo","Falando"]}
+];
+function profUnits(cats){
+  const done = L().done || {};
+  return units().filter(u => cats.includes(u.cat) && !done[u.id]).sort((a,b) => LEVEL_ORDER[a.level]-LEVEL_ORDER[b.level]).slice(0,6).map(u => u.id);
+}
+function profSave(p){
+  const lang = state.lang, prev = (state.prof && state.prof.units) || {};
+  const ids = (p.unit_ids||[]).filter(id => units().some(u => u.id===id));
+  state.prof = {goal:p.goal||"", contexts:p.contexts||[], interests:p.interests||[], weak:p.weak||[], style:p.style||"", summary:p.summary||"", date:today(), units:Object.assign({}, prev, {[lang]:ids})};
+  persist();
+}
+async function intvTurn(o){
+  o.busy = true; o.err = ""; render();
+  try{
+    const lg = LANGS[state.lang], nAns = o.msgs.filter(m => m.r==="me").length;
+    const us = units().map(u => `${u.id}|${u.title}|${u.cat}|${u.level}`).join("\n");
+    const convo = o.msgs.map(m => (m.r==="ai" ? "IA: " : "Aluno: ")+m.t).join("\n");
+    const prompt = `Você é o consultor de estudo do app Nômade Bilíngue. Entreviste um brasileiro que vai estudar ${lg.name} para personalizar o estudo dele. Faça UMA pergunta curta por vez, em português do Brasil, simpática, sem repetir o que já foi respondido. Cubra ao longo da conversa: objetivo e prazo (viagem? trabalho? prova?), situações reais de uso, assuntos que ele curte, o que sente mais difícil (ouvir, falar, pronúncia, vocabulário, gramática), tempo e rotina, jeito preferido de estudar. Se uma resposta for vaga, aprofunde. No máximo 6 perguntas; já foram respondidas ${nAns}.
+Conversa até agora:
+${convo || "(início)"}
+Aulas disponíveis (id|título|categoria|nível):
+${us}
+Responda SOMENTE com JSON. Para continuar: {"done":false,"say":"pergunta","chips":["até 4 respostas rápidas e curtas"]}. Quando tiver informação suficiente ou após 6 respostas: {"done":true,"say":"1-2 frases dizendo o que você vai priorizar","profile":{"goal":"","contexts":[""],"interests":[""],"weak":[""],"style":"","summary":"2 frases sobre o aluno","unit_ids":["até 6 ids de aulas na ordem recomendada"]}}`;
+    const j = gmJson(await gmCall([{text:prompt}], 1800, true));
+    if(j.done && j.profile){ profSave(j.profile); o.msgs.push({r:"ai", t:j.say||"Pronto! Já montei o seu plano."}); o.done = true; }
+    else if(j.say){ o.msgs.push({r:"ai", t:j.say, chips:(j.chips||[]).slice(0,4)}); }
+    else throw new Error("empty");
+  }catch(e){ o.err = gmErrMsg(e); }
+  o.busy = false; render();
+}
+function intvFbNext(o){
+  const q = INTV_FB[o.step];
+  if(q){ o.msgs.push({r:"ai", t:q.q, chips:q.chips}); return; }
+  const a = o.ans, goal = (a.goal||[]).join(", ");
+  const cats = ["base"]; if(/Viajar|viagem/i.test(goal+(a.contexts||[]).join())) cats.push("viagem"); if(/Trabalho|Reuniões/i.test(goal+(a.contexts||[]).join())) cats.push("trabalho"); if(/Filmes|pessoas/i.test((a.contexts||[]).join())) cats.push("nativo"); cats.push("rotina");
+  profSave({goal, contexts:a.contexts||[], interests:a.interests||[], weak:a.weak||[], style:(a.style||[]).join(", "), summary:"", unit_ids:profUnits(cats)});
+  o.msgs.push({r:"ai", t:"Pronto! Já organizei as aulas que combinam com você."}); o.done = true;
+}
+function viewIntv(){
+  const o = overlay, el = h(`<div class="screen"></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Fechar">✕</button><div style="flex:1"></div></div>`);
+  $("button",head).addEventListener("click", () => { if(o.after){ const j = o.after; overlay = null; tab = "home"; journeyGo(j); } else close(); });
+  el.appendChild(head);
+  el.appendChild(h(`<div><div class="eyebrow">Seu plano</div><h1 class="headline" style="margin-top:6px">Vamos <span class="script" style="font-size:32px">conversar</span></h1><p class="sub" style="margin-top:6px">Respostas rápidas para eu personalizar as perguntas, os exemplos e a ordem das aulas.</p></div>`));
+  if(!o.mode){
+    const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div class="eyebrow">Com IA (gratuito)</div>
+      <p class="sub" style="font-size:13px">Uma IA do Google (Gemini) faz perguntas curtas e adapta o seu estudo. Cole a chave gratuita de aistudio.google.com/apikey. Ela fica só neste aparelho.</p>
+      ${gmKey() ? "" : `<input id="ivKey" class="in" type="password" placeholder="Chave da API do Gemini" autocomplete="off">`}
+      <button class="btn btn-dark" id="ivAi">${gmKey() ? "Começar com a IA" : "Salvar chave e começar"}</button>
+      <button class="btn btn-line" id="ivFb">Prefiro perguntas simples (sem IA)</button>
+      <button class="link" id="ivSkip" style="align-self:center">Pular por agora</button></section>`);
+    $("#ivAi",box).addEventListener("click", () => {
+      if(!gmKey()){ const k = $("#ivKey",box).value.trim(); if(!k){ toast("Cole a chave."); return; } try{ localStorage.setItem("nb-gm", k); }catch(e){} }
+      o.mode = "ai"; o.msgs = []; intvTurn(o);
+    });
+    $("#ivFb",box).addEventListener("click", () => { o.mode = "fb"; o.msgs = []; o.step = 0; o.ans = {}; intvFbNext(o); render(); });
+    $("#ivSkip",box).addEventListener("click", () => { if(o.after){ const j = o.after; overlay = null; tab = "home"; journeyGo(j); } else close(); });
+    el.appendChild(box); return el;
+  }
+  const chat = h(`<div style="display:flex;flex-direction:column;gap:10px"></div>`);
+  o.msgs.forEach(m => chat.appendChild(h(`<div style="${m.r==="ai" ? "align-self:flex-start;background:var(--surface);border:1px solid var(--line)" : "align-self:flex-end;background:var(--ink,#1B2340);color:#fff"};max-width:86%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.45">${esc(m.t)}</div>`)));
+  if(o.busy) chat.appendChild(h(`<div class="sub" style="align-self:flex-start">Pensando…</div>`));
+  el.appendChild(chat);
+  if(o.err) el.appendChild(h(`<p class="sub" style="color:var(--bad)">${esc(o.err)}</p>`));
+  const send = txt => {
+    txt = String(txt||"").trim(); if(!txt || o.busy) return;
+    o.msgs.push({r:"me", t:txt});
+    if(o.mode==="ai"){ intvTurn(o); }
+    else { const q = INTV_FB[o.step]; (o.ans[q.k] = o.ans[q.k] || []).push(txt); o.step++; intvFbNext(o); render(); }
+  };
+  if(o.done){
+    const p = state.prof, rec = ((p && p.units && p.units[state.lang]) || []).map(id => units().find(u => u.id===id)).filter(Boolean).slice(0,3);
+    if(rec.length) el.appendChild(h(`<section class="card"><div class="eyebrow">Aulas para começar</div>${rec.map(u => `<div style="margin-top:6px"><b>${u.icon} ${esc(u.title)}</b> <span class="sub">· ${esc(u.subtitle)}</span></div>`).join("")}</section>`));
+    const go2 = h(`<button class="btn btn-dark btn-block">Começar <span class="arr">→</span></button>`);
+    go2.addEventListener("click", () => { if(o.after){ const j = o.after; overlay = null; tab = "home"; journeyGo(j); } else close(); });
+    el.appendChild(go2); return el;
+  }
+  const last = o.msgs[o.msgs.length-1];
+  if(!o.busy && last && last.r==="ai"){
+    if(last.chips && last.chips.length){ const row = h(`<div style="display:flex;flex-wrap:wrap;gap:8px"></div>`); last.chips.forEach(c => { const b = h(`<button class="filter">${esc(c)}</button>`); b.addEventListener("click", () => send(c)); row.appendChild(b); }); el.appendChild(row); }
+    const f = h(`<form style="display:flex;gap:8px"><input class="in" placeholder="Ou escreva com suas palavras" style="flex:1"><button class="btn btn-dark" type="submit">Enviar</button></form>`);
+    f.addEventListener("submit", e => { e.preventDefault(); send($("input",f).value); });
+    el.appendChild(f);
+  }
+  if(o.err && !o.busy){ const rt = h(`<button class="btn btn-line">Tentar de novo</button>`); rt.addEventListener("click", () => intvTurn(o)); el.appendChild(rt); }
+  return el;
+}
+function profCard(){
+  const p = state.prof;
+  if(!p){
+    const b = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Personalize o estudo</div><p class="sub" style="font-size:13.5px">Converse 2 minutos com a IA: ela adapta perguntas, exemplos e a ordem das aulas ao seu objetivo.</p><button class="btn btn-dark">Começar a conversa</button></section>`);
+    $("button",b).addEventListener("click", () => open({type:"intv"})); return b;
+  }
+  const ids = (p.units && p.units[state.lang]) || [], done = L().done || {};
+  const rec = ids.map(id => units().find(u => u.id===id)).filter(u => u && !done[u.id]).slice(0,3);
+  const b = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Para você</div>${p.summary ? `<p class="sub" style="font-size:13.5px">${esc(p.summary)}</p>` : ""}${rec.map((u,k) => `<button class="btn btn-line" data-u="${k}" style="text-align:left">${u.icon} ${esc(u.title)}</button>`).join("")}<button class="link" id="pfRe" style="align-self:flex-start">Refazer a conversa</button></section>`);
+  rec.forEach((u,k) => $(`[data-u="${k}"]`,b).addEventListener("click", () => startLesson(u)));
+  $("#pfRe",b).addEventListener("click", () => open({type:"intv"}));
+  return b;
+}
 function viewLesson(){
   const o = overlay, u = o.unit;
-  const total = 2 + u.vocab.length + u.exercises.length;
+  if(!o.practice && !o._pf){ o._pf = true; if(gmKey() && navigator.onLine) aiFresh(u).then(a => { o.aiEx = a; }).catch(()=>{}); }
+  if(o.stage==="ex" && !o.exs) o.exs = o.practice ? u.exercises : buildSession(u, o.aiEx);
+  const EXS = o.exs || u.exercises;
+  const total = 2 + u.vocab.length + EXS.length;
   const doneN = o.stage==="tip"?0 : o.stage==="vocab"?1+o.vi : o.stage==="dialogue"?1+u.vocab.length : o.stage==="ex"?2+u.vocab.length+o.ei : total;
   const el = h(`<div class="screen"></div>`);
-  const labels = {tip:"Antes de começar", vocab:`Expressão ${o.vi+1} de ${u.vocab.length}${o.vw?" · escreva":""}`, dialogue:"Diálogo", ex:`Exercício ${o.ei+1} de ${u.exercises.length}`, end:""};
+  const labels = {tip:"Antes de começar", vocab:`Expressão ${o.vi+1} de ${u.vocab.length}${o.vw?" · escreva":""}`, dialogue:"Diálogo", ex:`Exercício ${o.ei+1} de ${EXS.length}`, end:""};
   el.appendChild(runHead(total, doneN, `${u.icon} ${esc(u.title)}${labels[o.stage]?" · "+labels[o.stage]:""}`));
 
   if(o.stage==="tip"){
@@ -3107,11 +3290,11 @@ function viewLesson(){
     el.appendChild(next);
   }
   else if(o.stage==="ex"){
-    const ex = Object.assign(u.exercises[o.ei],{_src:"u:"+u.id, _lvl:u.level});
+    const ex = Object.assign(EXS[o.ei],{_src:"u:"+u.id, _lvl:u.level});
     el.appendChild(exerciseCard(ex, ok => { if(ok) o.correct++; }, () => {
-      if(o.ei < u.exercises.length-1){ o.ei++; } else { finishLesson(); o.stage="end"; }
+      if(o.ei < EXS.length-1){ o.ei++; } else { finishLesson(); o.stage="end"; }
       render();
-    }, o.ei===u.exercises.length-1 ? "Concluir aula" : "Continuar"));
+    }, o.ei===EXS.length-1 ? "Concluir aula" : "Continuar"));
   }
   else { el.appendChild(lessonEnd()); }
   return el;
@@ -3186,7 +3369,7 @@ function exerciseCard(ex, onAnswer, onNext, nextLabel){
 
 function finishLesson(){
   const o = overlay, u = o.unit, prev = L().done[u.id];
-  const score = o.correct+"/"+u.exercises.length;
+  const score = o.correct+"/"+(o.exs||u.exercises).length;
   if(o.practice){ o.earned = 5 + o.correct*3; ensureDay().game = true; addXp(o.earned); setTimeout(()=>{ confetti(); sfx.win(); }, 100); return; }
   o.earned = prev ? 5 : 10 + o.correct*5;
   if(!prev || parseInt(score) > parseInt(prev)) L().done[u.id] = score;
@@ -3196,7 +3379,7 @@ function finishLesson(){
   setTimeout(()=>{ confetti(); sfx.win(); if(up) toast("Você subiu para o nível "+levelInfo().label+"!"); }, 100);
 }
 function lessonEnd(){
-  const o = overlay, u = o.unit, pct = Math.round(o.correct/u.exercises.length*100);
+  const o = overlay, u = o.unit, pct = Math.round(o.correct/(o.exs||u.exercises).length*100);
   const nxt = recommendedUnit();
   const weak = pct < 50;
   const el = h(`<div style="display:flex;flex-direction:column;gap:16px">
@@ -3204,7 +3387,7 @@ function lessonEnd(){
       <div style="display:grid;place-items:center">${capi(pct>=80?"cheer":weak?"think":"happy",120)}</div>
       <div class="eyebrow" style="margin-top:6px">Aula concluída</div>
       <h1 class="headline" style="margin-top:6px">${pct>=80?"Mandou muito bem":weak?"Vale treinar de novo":"Mais uma no bolso"}</h1>
-      <p class="sub" style="margin-top:4px">${o.correct} de ${u.exercises.length} certas em “${esc(u.title)}”</p>
+      <p class="sub" style="margin-top:4px">${o.correct} de ${(o.exs||u.exercises).length} certas em “${esc(u.title)}”</p>
     </section>
     <div class="metrics card" style="grid-template-columns:repeat(3,minmax(0,1fr))">
       <div class="metric"><b>+${o.earned}</b><span>XP</span></div>
@@ -4814,7 +4997,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v72";
+const APP_VER = "v73";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5477,6 +5660,7 @@ function viewYou(){
       <div class="set-row"><svg class="si" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg><div><div class="set-title">Vozes para o metrô</div><div class="set-sub" id="dlSt">Baixa todas as vozes de ${LANGS[state.lang].name.toLowerCase()} (cerca de ${state.lang==="en"?"6":"6"} MB) para tocar sem internet</div></div>
         <button class="btn btn-line" id="dlBtn" style="padding:8px 14px;font-size:13px">Baixar</button></div>
       <button class="set-row" id="swap" style="width:100%;border:none;background:none;text-align:left;padding-inline:0"><svg class="si" viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg><div><div class="set-title">Idioma</div><div class="set-sub">${LANGS[state.lang].name} — trocar</div></div><span class="tl-chev">›</span></button>
+      <button class="set-row" id="reprof" style="width:100%;border:none;background:none;text-align:left;padding-inline:0;border-top:1px solid var(--line)"><svg class="si" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4A8 8 0 1 1 20 12Z"/></svg><div><div class="set-title">Conversa com a IA</div><div class="set-sub">${state.prof ? "Perfil criado — refazer" : "Personalizar o estudo ao seu objetivo"}</div></div><span class="tl-chev">›</span></button>
       <button class="set-row" id="retest" style="width:100%;border:none;background:none;text-align:left;padding-inline:0;border-top:1px solid var(--line)"><svg class="si" viewBox="0 0 24 24"><path d="M5 19V9M12 19V5M19 19v-7"/></svg><div><div class="set-title">Teste de nível</div><div class="set-sub">${L().placement?`Atual: ${L().placement.level} (${L().placement.score})`:"Ainda não feito"} — refazer</div></div><span class="tl-chev">›</span></button>
     </div>
   </section>`);
@@ -5497,6 +5681,7 @@ function viewYou(){
   $$("#apSeg button",set).forEach(b => b.addEventListener("click", () => { state.appearance=b.dataset.a; persist(); render(); }));
   $("#snd",set).addEventListener("click", () => { state.sound=!state.sound; persist(); render(); if(state.sound) sfx.right(); });
   $("#swap",set).addEventListener("click", () => { state.lang = state.lang==="en"?"it":"en"; persist(); go("home"); });
+  $("#reprof",set).addEventListener("click", () => open({type:"intv"}));
   $("#retest",set).addEventListener("click", () => open({type:"placement", idx:0, answers:[]}));
   el.appendChild(set);
 
