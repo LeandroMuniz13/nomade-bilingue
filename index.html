@@ -4808,7 +4808,8 @@ function closePron(){
 }
 /* ---- microfone (só no site) ---- */
 const SR_CLS = () => window.SpeechRecognition || window.webkitSpeechRecognition;
-function SR_OK(){ return !!SR_CLS(); }
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
 async function micBegin(done){
@@ -4828,14 +4829,21 @@ async function micBegin(done){
     setTimeout(() => done(URL.createObjectURL(new Blob(chunks,{type:mr.mimeType||mt||"audio/webm"})), heard.trim()), 350);
   };
   try{
-    const C = SR_CLS();
+    const C = SR_OK() ? SR_CLS() : null;
     if(C){
       const sr = new C(); sr.lang = state.lang==="it" ? "it-IT" : "en-US"; sr.interimResults = false; sr.continuous = true;
       sr.onresult = ev => { for(let i=ev.resultIndex;i<ev.results.length;i++) heard += " " + ev.results[i][0].transcript; };
       sr.onerror = () => {}; sr.start(); micS.sr = sr;
     }
   }catch(e){ micS.sr=null; }
-  mr.start(); micS.mr = mr; micS.stream = stream;
+  try{ mr.start(); }
+  catch(e){
+    try{ await new Promise(r => setTimeout(r, 200)); mr = new MediaRecorder(stream); mr.ondataavailable = e2 => { if(e2.data && e2.data.size) chunks.push(e2.data); };
+      mr.onstop = () => { if(!kept) stream.getTracks().forEach(t=>t.stop()); setTimeout(() => done(URL.createObjectURL(new Blob(chunks,{type:mr.mimeType||"audio/mp4"})), heard.trim()), 350); };
+      mr.start();
+    }catch(e2){ try{ micS.sr && micS.sr.stop(); }catch(x){} if(!kept) stream.getTracks().forEach(t=>t.stop()); e2.micStage = "rec"; throw e2; }
+  }
+  micS.mr = mr; micS.stream = stream;
   setTimeout(() => { if(micS.mr===mr && mr.state==="recording") mr.stop(); }, 20000);
 }
 async function micKeep(on){
@@ -4845,7 +4853,7 @@ async function micKeep(on){
 function micErrMsg(e){
   const n = (e && e.name) || "", st = e && e.micStage;
   const standalone = (window.navigator.standalone === true) || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
-  if(st==="rec") return "O microfone abriu, mas este navegador não consegue gravar áudio ("+(n||"erro")+"). Tente abrir o site no Safari.";
+  if(st==="rec") return "O microfone abriu, mas a gravação não iniciou ("+(n||"erro")+"). Feche outros apps que usam o microfone, toque em Falar de novo e, se persistir, me avise.";
   if(n==="NotAllowedError" || n==="SecurityError") return (standalone ? "O iPhone bloqueou o microfone no app da tela inicial. Abra o endereço direto no Safari (não pelo ícone) e toque em Permitir. " : "O microfone está bloqueado para este site. ") + "Para liberar: toque em “aA” na barra do Safari > Ajustes do Site > Microfone > Permitir. Ou em Ajustes do iPhone > Apps > Safari > Microfone > Perguntar/Permitir.";
   if(n==="NotFoundError") return "Não encontrei um microfone neste aparelho.";
   if(n==="NotReadableError") return "O microfone está em uso por outro app. Feche o outro app e tente de novo.";
@@ -4902,6 +4910,7 @@ function micMini(target, st, key){
       <button class="btn ${m.on?"btn-dark":"btn-line"}" id="mmGo">${m.on?"⏹ Parar":"🎙️ Falar"}</button>
       <button class="btn btn-line" id="mmCmp" ${m.url?"":"disabled"}>🔁 Modelo → você</button>
     </div>
+    ${m.url?`<audio controls src="${m.url}" style="width:100%"></audio>`:""}
     ${r?`<div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><p class="sub" style="font-size:12.5px">${r.pct}% das palavras reconhecidas${m.heard?` · entendi: “${esc(m.heard)}”`:""}</p>`:""}
     ${m.url && azCfg() ? `<button class="btn btn-line" id="mmAz">${m.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
     ${m.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(m.az)}</div>` : ""}
@@ -5178,7 +5187,7 @@ function viewPron(){
   if(micOK()){
     const mic = h(`<section class="card dict">
       <div class="eyebrow">Gravar a sua voz</div>
-      <p class="sub" style="font-size:12.5px">Grave a frase, ouça a sua voz e compare com a voz nativa. ${SR_OK()?"O navegador também tenta reconhecer o que você disse e mostra as <b>palavras reconhecidas</b>.":"Neste navegador não há reconhecimento de voz: compare de ouvido."} Isso não mede sotaque.</p>
+      <p class="sub" style="font-size:12.5px">Grave a frase, ouça a sua voz e compare com a voz nativa. ${SR_OK()?"O navegador também tenta reconhecer o que você disse e mostra as <b>palavras reconhecidas</b>.":(IS_IOS ? "No iPhone o Safari não deixa gravar e reconhecer ao mesmo tempo: compare de ouvido e use a nota do Azure ou a IA para avaliar." : "Neste navegador não há reconhecimento de voz: compare de ouvido.")} Isso não mede sotaque.</p>
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
         <button class="btn ${o.recording?"btn-dark":"btn-line"}" id="micGo">${o.recording?"⏹ Parar":"🎙️ Gravar"}</button>
         <button class="btn btn-line" id="micCmp" ${o.rec?"":"disabled"}>🔁 Modelo → você</button>
