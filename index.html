@@ -449,6 +449,15 @@ ul.plan{margin:10px 0 0; padding-left:18px; display:flex; flex-direction:column;
 .kl.dim{font-size:16px; font-weight:500; opacity:.55}
 .kcount{font-size:64px; font-weight:700; line-height:1}
 .kl small{display:block; font-size:13px; font-weight:500; color:var(--ink-dim); margin-top:4px}
+.vz-chips{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch}
+.vz-chips .filter{flex:none}
+.vz-ctl{display:flex; align-items:center; justify-content:center; gap:14px}
+.vz-ctl button{width:54px; height:54px; border-radius:50%; border:1px solid var(--line); background:var(--surface); font-size:13px; font-weight:700}
+.vz-ctl .big{width:72px; height:72px; background:var(--ink,#1B2340); color:#fff; font-size:26px; border:none}
+.vz-seek{width:100%}
+.vz-row{display:flex; align-items:center; gap:10px}
+.vz-row input[type=range]{flex:1}
+.vz-t{font-size:12px; color:var(--ink-dim); min-width:38px; text-align:center; font-variant-numeric:tabular-nums}
 .pgrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
 .ptile{display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:left; border:1px solid var(--line); background:var(--surface); border-radius:var(--r-m); padding:12px; min-height:92px}
 .ptile .game-ic{width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px}
@@ -727,6 +736,8 @@ button:active:not(:disabled){transform:scale(.985)}
 @keyframes avmouth{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
 @keyframes avblink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
 @media (prefers-reduced-motion:reduce){.av.talk,.av.talk .av-mouth,.av .av-eyes{animation:none}.av.talk{transform:scale(1.08)}.av.talk .av-mouth{transform:scaleY(1)}}
+.cine-fix{position:sticky; top:env(safe-area-inset-top,0px); z-index:6; background:var(--bg); padding:4px 0 8px; display:flex; flex-direction:column; gap:8px}
+.cine-fix .stage{height:190px}
 .cine-line{background:var(--surface);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line)}
 .cine-line.act{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 .cine-who{font-size:12px;font-weight:700;color:var(--accent)}
@@ -1398,7 +1409,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp};
+    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -1765,11 +1776,12 @@ function planCandidates(){
     if(sc) out.chat = {key:"chat", ic:"💬", t:"Conversar: "+sc.title, s:"Conversa com a IA, correção no final", min:7, p:P("prod")-4, act:() => startScene(sc)};
   }
   { const sg = nextSong(); if(sg) out.sing = {key:"sing", ic:"🎤", t:"Karaokê: "+sg.title, s:"Cante junto com a base · 4 min", min:4, p:P("listen")-6, act:() => startKara(sg)}; }
+  if(state.lang==="en"){ const da = dailyAccent(); out.voz = {key:"voz", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Pessoa real falando · ouça e repare", min:3, p:P("listen")-4, act:() => startVozes(da)}; }
   { const dp = dailyPod(); if(dp) out.pod = {key:"pod", ic:"🎧", t:"Podcast: "+dp.n, s:dp.acc+" · "+dp.len+" · escuta longa", min:8, p:P("listen")-10, act:() => startPod(dp)}; }
   return out;
 }
 function planPick(cand, mins){
-  const ord = ["learn","gram","errlab","listen","cinema","sing","pod","read","prod","mastery","chat","rev","check"];
+  const ord = ["learn","gram","errlab","listen","cinema","voz","sing","pod","read","prod","mastery","chat","rev","check"];
   const fkey = {listen:"listen", read:"read", gram:"gram", vocab:cand.mastery ? "mastery" : "rev", prod:"prod"}[focusSkill().k];
   const list = Object.values(cand).sort((a,b) => b.p-a.p), keys = []; let tot = 0;
   if(cand[fkey]){ keys.push(fkey); tot += cand[fkey].min; }
@@ -2408,6 +2420,12 @@ function cineNext(){
   const lv = cineRank[userLevel()] === undefined ? 0 : cineRank[userLevel()];
   return cinema().filter(s => !(cineAll()[s.id]||{}).b).sort((a,b) => Math.abs(cineRank[a.lvl]-lv) - Math.abs(cineRank[b.lvl]-lv) || (a.id < b.id ? -1 : 1))[0] || null;
 }
+function cineFix(stageEl, bar, extra){
+  const w = h(`<div class="cine-fix"></div>`); w.appendChild(stageEl); w.appendChild(bar); if(extra) w.appendChild(extra); return w;
+}
+function cineFocus(line, fixEl){
+  try{ const top = line.getBoundingClientRect().top + window.scrollY - (fixEl ? fixEl.getBoundingClientRect().height : 0) - 14 - (parseFloat(getComputedStyle(document.body).paddingTop)||0); window.scrollTo({top:Math.max(0, top), behavior:"smooth"}); }catch(e){}
+}
 function startCinema(id){ open({type:"cine", id:id || null, stage:id ? "menu" : "list", lv:null, rate:1}); }
 function cineWords(text, cls){ return text.split(/\s+/).map(w => `<span class="w ${cls||""}">${esc(w)}</span>`).join(" "); }
 /* ---- Palco animado: personagens originais desenhados em SVG que falam junto com o áudio ---- */
@@ -2515,9 +2533,9 @@ function viewCinema(){
   }
   if(o.stage === "watch"){
     el.appendChild(head("Com legenda · " + sc.title, toMenu));
-    const stg = cineStage(sc, true); el.appendChild(stg.el);
+    const stg = cineStage(sc, true);
     const bar = h(`<div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px"><button class="btn btn-dark" id="wP">▶ Assistir</button><button class="btn btn-line" id="wR">${o.rate < 1 ? "0,8x" : "1x"}</button><button class="btn btn-line" id="wT" aria-pressed="true">PT</button></div>`);
-    el.appendChild(bar);
+    const fixW = cineFix(stg.el, bar); el.appendChild(fixW);
     const box = h(`<section style="display:flex;flex-direction:column;gap:10px"></section>`), wordEls = [], lineEls = [];
     sc.lines.forEach((l, i) => {
       const r = h(`<div class="cine-line"><div class="cine-who">${esc(l.who)} ${sc.cast[l.who] === "f" ? "👩" : "👨"}</div><div class="cine-t">${cineWords(l.t)}</div><div class="cine-pt">${esc(l.pt)}</div><button class="link cine-rp" aria-label="Ouvir esta fala de novo">🔊 Ouvir de novo</button></div>`);
@@ -2532,7 +2550,7 @@ function viewCinema(){
       stopAll(); const tok = ++cineTok;
       for(let i = 0; i < sc.lines.length; i++){
         if(tok !== cineTok) return;
-        lineEls.forEach((r, j) => r.classList.toggle("act", j === i)); lineEls[i].scrollIntoView({block:"center", behavior:"smooth"});
+        lineEls.forEach((r, j) => r.classList.toggle("act", j === i)); cineFocus(lineEls[i], fixW);
         stg.speak(sc.lines[i].who); try{ await cinePlayLine(sc.lines[i].t, o.rate, cineDual(wordEls[i], stg.caption(sc.lines[i].t)), tok); }catch(e){} stg.speak(null);
         if(tok !== cineTok) return; await sleepGap(320);
       }
@@ -2546,9 +2564,9 @@ function viewCinema(){
   if(o.stage === "shadow"){
     el.appendChild(head("Shadowing · " + sc.title, toMenu));
     el.appendChild(h(`<section class="soft"><p class="sub">Para cada fala: <b>1)</b> ouça inteira, <b>2)</b> repita cada trecho em voz alta na pausa, <b>3)</b> repita a fala toda. Imite o ritmo, não só as palavras.</p></section>`));
-    const stg = cineStage(sc, true); el.appendChild(stg.el);
+    const stg = cineStage(sc, true);
     const bar = h(`<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><button class="btn btn-dark" id="sP">▶ Começar</button><button class="btn btn-line" id="sR">${o.rate < 1 ? "0,8x" : "1x"}</button></div>`);
-    el.appendChild(bar);
+    const fixW = cineFix(stg.el, bar); el.appendChild(fixW);
     const stat = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div id="sS" style="font-weight:700">Pronto para começar</div><div class="sh-bar"><i id="sB"></i></div></section>`);
     el.appendChild(stat);
     const box = h(`<section style="display:flex;flex-direction:column;gap:10px"></section>`), lineEls = [], wordEls = [], chunkEls = [];
@@ -2566,7 +2584,7 @@ function viewCinema(){
     if(micOK()){
       const tg = h(`<button class="btn btn-line btn-block">${o.useMic?"🎙️ Gravar e conferir minha fala: ligado":"🎙️ Gravar e conferir minha fala: desligado"}</button>`);
       tg.addEventListener("click", () => { o.useMic = !o.useMic; tg.textContent = o.useMic ? "🎙️ Gravar e conferir minha fala: ligado" : "🎙️ Gravar e conferir minha fala: desligado"; });
-      bar.after(tg);
+      fixW.after(tg);
     }
     const turnRec = async (secs, tok, target) => {
       if(!(o.useMic && micOK() && micS.keep)) return turn(secs, tok);
@@ -2583,7 +2601,7 @@ function viewCinema(){
       stopAll(); const tok = ++cineTok; running = true; $("#sP", bar).textContent = "⏸ Parar";
       for(let i = 0; i < sc.lines.length && tok === cineTok; i++){
         const l = sc.lines[i], chs = l.ch && l.ch.length ? l.ch : [l.t];
-        lineEls.forEach((r, j) => r.classList.toggle("act", j === i)); lineEls[i].scrollIntoView({block:"center", behavior:"smooth"});
+        lineEls.forEach((r, j) => r.classList.toggle("act", j === i)); cineFocus(lineEls[i], fixW);
         setS("1) Ouça a fala (" + (i+1) + "/" + sc.lines.length + ")"); stg.speak(l.who); try{ await cinePlayLine(l.t, o.rate, cineDual(wordEls[i], stg.caption(l.t)), tok); }catch(e){} stg.speak(null);
         if(tok !== cineTok) break; await cineWait(300);
         if(chs.length > 1){
@@ -4314,9 +4332,11 @@ function accentPicker(compact){
   const opts = ACCENTS.filter(a => accAvail(a.k)).map(a => ({k:a.k, n:a.n})).concat([{k:"mix", n:"🎲 Misturar"}]);
   const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Sotaque do inglês (escuta)</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px">${opts.map(o => `<button class="filter ${cur===o.k?"on":""}" data-a="${o.k}">${esc(o.n)}</button>`).join("")}</div>
-    <button class="btn btn-line" id="accTry">🔊 Ouvir exemplo</button>
+    <button class="btn btn-line" id="accTry">🔊 Ouvir exemplo (voz do aparelho)</button>
+    <button class="btn btn-dark" id="accReal">🌍 Ouvir pessoas reais de cada sotaque</button>
     ${compact ? "" : `<p class="sub" style="font-size:12px">Americano é a voz gravada (a melhor qualidade). Os outros usam as vozes do aparelho e só aparecem se estiverem instaladas. No iPhone: Ajustes › Acessibilidade › Conteúdo Falado › Vozes › Inglês, e baixe as vozes do Reino Unido, Austrália, Irlanda e Índia.</p>`}</section>`);
   box.querySelectorAll("[data-a]").forEach(b => b.addEventListener("click", () => { state.accent = b.dataset.a; persist(); render(); }));
+  $("#accReal",box).addEventListener("click", () => startVozes(["us","gb","au","ie","in","ca","za","sc"].includes(cur) ? cur : "us"));
   $("#accTry",box).addEventListener("click", () => { seqToken++; speak("Could you tell me where the nearest station is?").then(() => { try{ toast("Sotaque: "+accDef(lastAccent).n); }catch(e){} }); });
   return box;
 }
@@ -4864,6 +4884,7 @@ function libNow(){
   if(cn) out.push({k:"Ver · Cena de cinema", ic:"🎬", t:cn.title, s:"Sem legenda · "+cn.genre+" · "+cn.lvl, act:() => startCinema(cn.id)});
   const sg = nextSong();
   if(sg) out.push({k:"Ouvir · Karaokê", ic:"🎤", t:sg.title, s:"Cante junto, as palavras acendem · "+sg.level, act:() => startKara(sg)});
+  if(state.lang==="en"){ const da = dailyAccent(); out.push({k:"Ouvir · Vozes reais", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Pessoas de verdade, com velocidade e pausa", act:() => startVozes(da)}); }
   const dp = dailyPod();
   if(dp) out.push({k:"Ouvir · Podcast", ic:"🎧", t:dp.n, s:dp.acc+" · "+dp.len+" · "+dp.lv, act:() => startPod(dp)});
   const bk = books().find(b => !ss[b.id]);
@@ -4898,11 +4919,11 @@ const music = () => content().music || {originals:[], recs:[]};
 function viewNews(){
   const lg = LANGS[state.lang], nw = news[state.lang];
   if(!newsInit){ newsInit = true; if(newsSub==="news") newsSub = "now"; }
-  const GROUPS = [["now","Agora",["now"]], ["ler","Ler",["stories","books","news","cur","places","quiz"]], ["ver","Ver",["videos"]], ["ouvir","Ouvir",["music","pods"]]];
+  const GROUPS = [["now","Agora",["now"]], ["ler","Ler",["stories","books","news","cur","places","quiz"]], ["ver","Ver",["videos"]], ["ouvir","Ouvir",["music","pods","voices"]]];
   const grp = GROUPS.find(g => g[2].includes(newsSub)) || GROUPS[0];
-  const sNames = {stories:"Histórias", books:"Livros", news:"Notícias", cur:"Curiosidades", places:"Lugares", quiz:"Testes", videos:"Cenas e filmes", music:"Música e karaokê", pods:"Podcasts"};
-  const avail = k => !((k==="stories" && !stories().length) || (k==="books" && !books().length) || (k==="pods" && !pods().length));
-  const heads = {now:["O que ler, ver e ouvir","agora"], videos:["Cenas","e filmes"], news:["Leia o mundo","em "+lg.native], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","e karaokê"], pods:["Podcasts","para o ouvido"]};
+  const sNames = {stories:"Histórias", books:"Livros", news:"Notícias", cur:"Curiosidades", places:"Lugares", quiz:"Testes", videos:"Cenas e filmes", music:"Música e karaokê", pods:"Podcasts", voices:"Vozes reais"};
+  const avail = k => !((k==="stories" && !stories().length) || (k==="books" && !books().length) || (k==="pods" && !pods().length) || (k==="voices" && state.lang!=="en"));
+  const heads = {now:["O que ler, ver e ouvir","agora"], videos:["Cenas","e filmes"], news:["Leia o mundo","em "+lg.native], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","e karaokê"], pods:["Podcasts","para o ouvido"], voices:["Vozes reais","de cada sotaque"]};
   const [h1, h2] = heads[newsSub];
   const el = h(`<div class="screen">
     <div><p class="hello">Biblioteca · ${lg.name}</p><h1 class="headline" style="margin-top:2px">${h1} <span class="script" style="font-size:32px">${h2}</span></h1></div>
@@ -4915,6 +4936,7 @@ function viewNews(){
   if(newsSub==="now"){ el.appendChild(h(`<p class="sub">Uma sugestão de cada tipo, do jeito que o app escolheu para o seu nível.</p>`)); el.appendChild(shelfRows(libNow())); }
   else if(newsSub==="videos"){ viewVideos(el); }
   else if(newsSub==="pods"){ viewPodsTab(el); }
+  else if(newsSub==="voices"){ viewVoicesTab(el); }
   else if(newsSub==="stories"){ viewStoriesTab(el); }
   else if(newsSub==="books"){ viewBooksTab(el); }
   else if(newsSub==="news"){
@@ -5168,6 +5190,136 @@ function viewPodsTab(el){
     el.appendChild(c);
   });
 }
+/* =========================================================
+   VOZES REAIS — pessoas de verdade, por sotaque (Speech Accent Archive, George Mason University, CC BY-NC-SA 4.0)
+   ========================================================= */
+const VOICE_ACC = {
+  us:{n:"Americano", f:"🇺🇸", tip:"R sempre pronunciado e forte. O T entre vogais soa quase como D (water ≈ “uóder”). Varia bastante entre o Sul, o Norte e a costa."},
+  gb:{n:"Britânico (Inglaterra)", f:"🇬🇧", tip:"O R só aparece antes de vogal (car soa quase “cá”). Vogais mais longas e T mais seco. Muda muito de região para região."},
+  sc:{n:"Escocês", f:"🏴󠁧󠁢󠁳󠁣󠁴󠁿", tip:"R vibrado, vogais curtas e puras, melodia própria. Pode soar bem diferente do britânico “de TV”."},
+  ie:{n:"Irlandês", f:"🇮🇪", tip:"R pronunciado, melodia cantada e vogais bem marcadas. O “th” pode soar como t ou d."},
+  au:{n:"Australiano", f:"🇦🇺", tip:"Vogais que deslizam (day ≈ “dai”) e entonação que sobe no fim das frases. R suave, como no britânico."},
+  nz:{n:"Neozelandês", f:"🇳🇿", tip:"Parecido com o australiano, mas com vogais mais curtas e fechadas (bed pode soar como “bid”)."},
+  ca:{n:"Canadense", f:"🇨🇦", tip:"Muito próximo do americano. Repare em “about” e “out”, que têm um ditongo um pouco diferente."},
+  za:{n:"Sul-africano", f:"🇿🇦", tip:"R leve, vogais curtas e ritmo bem marcado. O “i” de kit soa mais aberto."},
+  in:{n:"Indiano", f:"🇮🇳", tip:"Ritmo por sílabas (menos reduções de vogal), T e D mais firmes, R pronunciado. Muito comum no trabalho internacional."},
+  jm:{n:"Jamaicano", f:"🇯🇲", tip:"Ritmo musical, “th” vira t ou d, vogais mais puras. Pode ser difícil no começo: ótimo para treinar o ouvido."},
+  sg:{n:"Singapura", f:"🇸🇬", tip:"Ritmo por sílabas, finais de palavra mais curtos e poucas reduções. Comum em negócios na Ásia."},
+  br:{n:"Brasileiros falando inglês", f:"🇧🇷", tip:"Compare com você mesmo: repare em vogal extra no fim das palavras, no “th” virando t/f/s e no R virando H."}
+};
+const VOICES = {
+  us:[[1,"M",42,"Pittsburgh, Pensilvânia"],[6,"F",45,"Brooklyn, Nova York"],[7,"M",52,"Macon, Mississippi"],[9,"F",48,"Carthage, Texas"],[10,"F",35,"Davenport, Iowa"],[16,"M",21,"Wise, Virgínia"],[18,"F",39,"Dickenson County, Virgínia"],[19,"M",53,"Louisville, Kentucky"]],
+  gb:[[194,"M",19,"Manchester"],[206,"F",35,"Hucknall, Nottinghamshire"],[250,"M",19,"Chester"],[334,"F",18,"Derby"],[460,"F",19,"Rutland"],[496,"M",20,"Londres"],[612,"M",20,"Middlesbrough"]],
+  sc:[[24,"M",37,"Glasgow"],[188,"M",35,"Edimburgo"],[488,"F",35,"Irvine"]],
+  ie:[[72,"M",31,"Kilkenny"],[156,"M",33,"Dublin"],[304,"F",20,"Clare"]],
+  au:[[3,"F",26,"Brisbane"],[8,"F",21,"Perth"],[69,"M",23,"Adelaide"],[73,"M",24,"Darwin"],[77,"M",26,"Melbourne"]],
+  nz:[[41,"M",44,"Wellington"],[241,"F",52,"Wanganui"],[255,"F",24,"Oamaru"]],
+  ca:[[28,"M",54,"Toronto"],[29,"F",54,"Lindsay, Ontário"],[30,"F",30,"St. Mary’s, Ontário"],[43,"M",47,"Vancouver"]],
+  za:[[130,"M",32,"Port Elizabeth"],[270,"M",29,"Cidade do Cabo"]],
+  in:[[37,"F",28,"Yole"],[111,"M",21,"Mumbai"],[370,"M",22,"Pondicherry"]],
+  jm:[[4,"F",53,"Saint Ann’s Bay"],[91,"M",23,"Kingston"]],
+  sg:[[259,"M",23,"Singapura"]],
+  br:[[1,"F",37,"Bahia"],[2,"F",18,"Brasília"],[3,"F",18,"Blumenau"],[6,"M",44,"São Paulo"],[7,"M",40,"Vitória"],[8,"M",26,"Fortaleza"]]
+};
+const VOICE_TXT = "Please call Stella. Ask her to bring these things with her from the store: Six spoons of fresh snow peas, five thick slabs of blue cheese, and maybe a snack for her brother Bob. We also need a small plastic snake and a big toy frog for the kids. She can scoop these things into three red bags, and we will go meet her Wednesday at the train station.";
+const VOICE_PT = "Por favor, ligue para a Stella. Peça a ela que traga estas coisas da loja: seis colheres de ervilhas frescas, cinco fatias grossas de queijo azul e talvez um lanche para o irmão dela, Bob. Também precisamos de uma pequena cobra de plástico e de um grande sapo de brinquedo para as crianças. Ela pode colocar essas coisas em três sacolas vermelhas, e nos encontraremos com ela na quarta-feira na estação de trem.";
+const voiceUrl = (acc, id) => "https://accent.gmu.edu/audio/"+(acc==="br" ? "portuguese" : "english")+id+".mp3";
+const vzWho = (v, acc) => (v[1]==="F" ? "Mulher" : "Homem")+", "+v[2]+" anos · "+v[3]+(acc==="br" ? ", Brasil" : "");
+const vzT = t => { t = Math.max(0, Math.floor(t||0)); return Math.floor(t/60)+":"+String(t%60).padStart(2,"0"); };
+let vozAud = null;
+function vozStop(){ if(vozAud){ try{ vozAud.pause(); vozAud.src = ""; }catch(e){} vozAud = null; } }
+function dailyAccent(){ const ks = Object.keys(VOICES).filter(k => k!=="br"); return ks[Math.floor(Date.now()/86400000) % ks.length]; }
+function startVozes(acc, quiz){ if(state.lang!=="en"){ toast("As vozes reais são de inglês. Troque o idioma para Inglês."); return; } stopAudio(); open({type:"vozes", acc:acc||"us", i:0, speed:1, vol:1, loop:false, quiz:!!quiz, xpg:{}}); }
+function vozQuizNext(o){
+  const ks = Object.keys(VOICES).filter(k => k!=="br"), acc = ks[Math.floor(Math.random()*ks.length)], i = Math.floor(Math.random()*VOICES[acc].length);
+  const others = shuffle(ks.filter(k => k!==acc)).slice(0,3); o.q = {acc, i, opts:shuffle([acc].concat(others)), ans:null};
+}
+function vozPlayer(o, acc, i, onEnd){
+  const v = VOICES[acc][i], key = acc+v[0];
+  if(!vozAud || vozAud.__key !== key){
+    vozStop(); const a = new Audio(voiceUrl(acc, v[0])); a.preload = "auto"; a.__key = key; vozAud = a;
+    try{ a.preservesPitch = true; a.webkitPreservesPitch = true; }catch(e){}
+  }
+  const a = vozAud; a.playbackRate = o.speed; a.loop = !!o.loop; if(!IS_IOS) a.volume = o.vol;
+  const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:12px">
+    <div class="vz-ctl"><button data-a="back" aria-label="Voltar 10 segundos">−10</button><button class="big" data-a="play" aria-label="Tocar">▶</button><button data-a="fwd" aria-label="Avançar 10 segundos">+10</button></div>
+    <div class="vz-row"><span class="vz-t" data-r="cur">0:00</span><input class="vz-seek" type="range" min="0" max="1000" value="0" data-r="seek" aria-label="Posição"><span class="vz-t" data-r="dur">--:--</span></div>
+    <div><div class="eyebrow" style="margin-bottom:6px">Velocidade</div><div class="seg" style="width:100%">${[0.6,0.8,1,1.2,1.5].map(x => `<button data-sp="${x}" class="${o.speed===x?"on":""}">${String(x).replace(".",",")}x</button>`).join("")}</div></div>
+    ${IS_IOS ? `<p class="sub" style="font-size:12px">Volume: use os botões do iPhone.</p>` : `<div class="vz-row"><span style="font-size:16px">🔈</span><input type="range" min="0" max="100" value="${Math.round(o.vol*100)}" data-r="vol" aria-label="Volume"><span style="font-size:16px">🔊</span></div>`}
+    <div style="display:flex;gap:8px"><button class="filter ${o.loop?"on":""}" data-a="loop">🔁 Repetir</button><button class="filter" data-a="restart">⏮ Do início</button></div>
+  </section>`);
+  const q = s => box.querySelector(s), playB = q('[data-a="play"]'), seek = q('[data-r="seek"]');
+  const sync = () => { const d = a.duration; q('[data-r="cur"]').textContent = vzT(a.currentTime); q('[data-r="dur"]').textContent = isFinite(d) ? vzT(d) : "--:--"; if(isFinite(d) && d>0 && !seek.__drag) seek.value = Math.round(a.currentTime/d*1000); playB.textContent = a.paused ? "▶" : "⏸"; };
+  ["timeupdate","loadedmetadata","play","pause","ended","durationchange"].forEach(ev => a.addEventListener(ev, sync));
+  a.addEventListener("ended", () => { if(onEnd) onEnd(); });
+  a.addEventListener("error", () => { const m = q('[data-r="dur"]'); m.textContent = "erro"; try{ toast("Não consegui carregar a gravação. Verifique a internet."); }catch(e){} });
+  playB.addEventListener("click", () => { if(a.paused){ stopAudio(); a.play().catch(() => { try{ toast("Não consegui tocar. Toque de novo."); }catch(e){} }); } else a.pause(); });
+  q('[data-a="back"]').addEventListener("click", () => { a.currentTime = Math.max(0, a.currentTime-10); });
+  q('[data-a="fwd"]').addEventListener("click", () => { a.currentTime = Math.min(isFinite(a.duration) ? a.duration : 1e9, a.currentTime+10); });
+  q('[data-a="restart"]').addEventListener("click", () => { a.currentTime = 0; a.play().catch(()=>{}); });
+  q('[data-a="loop"]').addEventListener("click", () => { o.loop = !o.loop; a.loop = o.loop; q('[data-a="loop"]').classList.toggle("on", o.loop); });
+  seek.addEventListener("input", () => { seek.__drag = true; if(isFinite(a.duration)) a.currentTime = seek.value/1000*a.duration; });
+  seek.addEventListener("change", () => { seek.__drag = false; });
+  box.querySelectorAll("[data-sp]").forEach(b => b.addEventListener("click", () => { o.speed = +b.dataset.sp; a.playbackRate = o.speed; box.querySelectorAll("[data-sp]").forEach(x => x.classList.toggle("on", +x.dataset.sp===o.speed)); }));
+  const vol = q('[data-r="vol"]'); if(vol) vol.addEventListener("input", () => { o.vol = vol.value/100; a.volume = o.vol; });
+  sync();
+  return box;
+}
+function viewVozes(){
+  const o = overlay, el = h(`<div class="screen"></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1">Vozes reais · sotaques</div></div>`);
+  $("button",head).addEventListener("click", () => { vozStop(); close(); });
+  el.appendChild(head);
+  const mode = h(`<div class="seg"><button data-m="0" class="${o.quiz?"":"on"}">Explorar</button><button data-m="1" class="${o.quiz?"on":""}">Desafio: qual sotaque?</button></div>`);
+  mode.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { const q = b.dataset.m==="1"; if(q===o.quiz) return; vozStop(); o.quiz = q; if(q) vozQuizNext(o); render(); }));
+  el.appendChild(mode);
+  if(!o.quiz){
+    const acc = o.acc, list = VOICES[acc], v = list[o.i];
+    el.appendChild(h(`<div><h1 class="headline">${VOICE_ACC[acc].f} ${esc(VOICE_ACC[acc].n)}</h1><p class="sub" style="margin-top:4px">${esc(vzWho(v, acc))}</p></div>`));
+    const chips = h(`<div class="vz-chips">${Object.keys(VOICES).map(k => `<button class="filter ${k===acc?"on":""}" data-k="${k}">${VOICE_ACC[k].f} ${esc(VOICE_ACC[k].n.replace(/ \(.*\)/,"").replace("Brasileiros falando inglês","Brasileiros"))}</button>`).join("")}</div>`);
+    chips.querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => { vozStop(); o.acc = b.dataset.k; o.i = 0; render(); }));
+    el.appendChild(chips);
+    const sp = h(`<div class="vz-chips">${list.map((x,k) => `<button class="filter ${k===o.i?"on":""}" data-i="${k}">${k+1} · ${x[1]==="F"?"♀":"♂"} ${x[2]}</button>`).join("")}</div>`);
+    sp.querySelectorAll("[data-i]").forEach(b => b.addEventListener("click", () => { vozStop(); o.i = +b.dataset.i; render(); }));
+    el.appendChild(sp);
+    el.appendChild(vozPlayer(o, acc, o.i, () => { const k = acc+v[0]; if(!o.xpg[k]){ o.xpg[k] = 1; addXp(2); persist(); try{ toast("+2 XP por ouvir até o fim"); }catch(e){} } }));
+    el.appendChild(h(`<section class="card"><div class="eyebrow">O que reparar neste sotaque</div><p style="margin-top:6px;line-height:1.5">${esc(VOICE_ACC[acc].tip)}</p></section>`));
+    const tr = h(`<section class="card"><div class="eyebrow">O trecho que todos leem</div><p style="margin-top:6px;line-height:1.55">${esc(VOICE_TXT)}</p>${o.pt ? `<p class="sub" style="margin-top:8px;line-height:1.5">${esc(VOICE_PT)}</p>` : ""}<button class="link" style="margin-top:6px">${o.pt?"Ocultar":"Mostrar"} tradução</button></section>`);
+    $("button",tr).addEventListener("click", () => { o.pt = !o.pt; render(); });
+    el.appendChild(tr);
+    const nav = h(`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button class="btn btn-line">‹ Outra voz</button><button class="btn btn-dark">Outro sotaque ›</button></div>`);
+    const [pv, nx] = nav.querySelectorAll("button");
+    pv.addEventListener("click", () => { vozStop(); o.i = (o.i+1) % list.length; render(); });
+    nx.addEventListener("click", () => { vozStop(); const ks = Object.keys(VOICES); o.acc = ks[(ks.indexOf(acc)+1) % ks.length]; o.i = 0; render(); });
+    el.appendChild(nav);
+  } else {
+    if(!o.q) vozQuizNext(o);
+    const qz = o.q, v = VOICES[qz.acc][qz.i];
+    el.appendChild(h(`<div><h1 class="headline">Qual é o <span class="script" style="font-size:32px">sotaque?</span></h1><p class="sub" style="margin-top:4px">Ouça quantas vezes quiser, mude a velocidade e escolha.</p></div>`));
+    el.appendChild(vozPlayer(o, qz.acc, qz.i));
+    const opts = h(`<div class="opts"></div>`);
+    qz.opts.forEach(k => {
+      const b = h(`<button class="opt">${VOICE_ACC[k].f} ${esc(VOICE_ACC[k].n)}</button>`);
+      if(qz.ans){ b.disabled = true; if(k===qz.acc) b.classList.add("right"); else if(k===qz.ans) b.classList.add("wrong"); }
+      b.addEventListener("click", () => { if(qz.ans) return; qz.ans = k; if(k===qz.acc){ addXp(2); try{ sfx.right(); }catch(e){} } else { try{ sfx.wrong(); }catch(e){} } persist(); render(); });
+      opts.appendChild(b);
+    });
+    el.appendChild(opts);
+    if(qz.ans){
+      el.appendChild(h(`<section class="card"><b>${qz.ans===qz.acc ? "Isso aí! +2 XP" : "Era: "+esc(VOICE_ACC[qz.acc].n)}</b><p class="sub" style="margin-top:4px">${esc(vzWho(v, qz.acc))}</p><p style="margin-top:6px;line-height:1.5">${esc(VOICE_ACC[qz.acc].tip)}</p></section>`));
+      const nx = h(`<button class="btn btn-dark btn-block">Próxima voz <span class="arr">→</span></button>`); nx.addEventListener("click", () => { vozStop(); vozQuizNext(o); render(); scrollTo(0,0); }); el.appendChild(nx);
+    }
+  }
+  el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">Gravações: Speech Accent Archive, George Mason University (speech accent archive), licença CC BY-NC-SA 4.0. Precisam de internet.</p>`));
+  return el;
+}
+function viewVoicesTab(el){
+  el.appendChild(h(`<p class="sub">Pessoas de verdade, de cada país, lendo o mesmo texto. Ouça as diferenças, escolha a velocidade, volte e avance. Depois teste o seu ouvido no desafio.</p>`));
+  const c = h(`<button class="btn btn-dark btn-block">🎯 Desafio: qual é o sotaque?</button>`); c.addEventListener("click", () => startVozes("us", true)); el.appendChild(c);
+  const g = h(`<div class="pgrid"></div>`);
+  Object.keys(VOICES).forEach(k => { const b = h(`<button class="ptile"><span class="game-ic" style="background:var(--accent-soft)">${VOICE_ACC[k].f}</span><b>${esc(VOICE_ACC[k].n)}</b><small>${VOICES[k].length} ${VOICES[k].length===1?"voz":"vozes"}</small></button>`); b.addEventListener("click", () => startVozes(k)); g.appendChild(b); });
+  el.appendChild(g);
+}
 function viewSong(){
   const o = overlay, sg = o.sg, el = h(`<div class="screen"></div>`);
   const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1"><span class="pill lv">${esc(sg.level)}</span>${esc(sg.theme)}</div></div>`);
@@ -5274,7 +5426,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v78";
+const APP_VER = "v80";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
