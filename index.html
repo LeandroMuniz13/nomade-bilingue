@@ -1335,7 +1335,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint};
+    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -2548,6 +2548,9 @@ function viewCinema(){
     const row = h(`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"></div>`);
     [["💪","Acompanhei"],["🙂","Em parte"],["🐢","Perdi o ritmo"]].forEach(x => { const b = h(`<button class="btn btn-line" style="flex-direction:column;gap:2px"><span>${x[0]}</span><small>${x[1]}</small></button>`); b.addEventListener("click", () => { const c = cineAll()[sc.id] = cineAll()[sc.id] || {}; c.s = Object.assign(c.s || {}, {d:today(), self:x[1]}); persist(); toast(x[0] === "🐢" ? "Tente de novo em 0,8x: o ritmo vem com a repetição." : "Anotado. Confira com o ditado."); }); row.appendChild(b); });
     el.appendChild(row);
+    { const sp = h(`<button class="btn btn-dark btn-block">🔁 Treinar estas falas nos próximos dias</button>`);
+      sp.addEventListener("click", () => { const n = spAdd(sc.lines.filter(l => l.t.split(/\s+/).length >= 3).slice(0,10).map(l => ({t:l.t, pt:l.pt}))); toast(n ? n+" frases entraram no treino espaçado (Praticar)." : "Estas falas já estão no treino espaçado."); });
+      el.appendChild(sp); }
     const dq = sc.lines.filter(l => l.t.split(/\s+/).length >= 4).slice(0, 4).map(l => ({t:l.t, pt:l.pt}));
     if(dq.length >= 2){ const d = h(`<button class="btn btn-dark btn-block">Conferir com ditado (${dq.length} falas) <span class="arr">→</span></button>`); d.addEventListener("click", () => open({type:"dict", qs:dq, i:0, res:[], r:null, plays:0, saved:false})); el.appendChild(d); }
     const a = h(`<button class="btn btn-line btn-block">Refazer em outra velocidade</button>`); a.addEventListener("click", () => { o.rate = o.rate < 1 ? 1 : 0.8; o.stage = "shadow"; render(); scrollTo(0,0); }); el.appendChild(a);
@@ -3859,6 +3862,7 @@ function viewPlay(){
     {ic:"✍️", bg:"var(--accent-soft)", title:"Ditado", sub:"Ouça a frase e escreva o que ouviu. Mede se você entende fala real", act:startDict},
     {ic:"⌨️", bg:"var(--ok-soft)", title:"Traduza e escreva", sub:`Do português para o ${LANGS[state.lang].name}, digitando (ou falando no teclado)`, act:startTyped},
     {ic:"🔬", bg:"var(--accent-mist)", title:"Laboratório de erros", sub:"Erros típicos de brasileiros: o app vigia e confere se voltam", act:()=>openErrLab()},
+    {ic:"🔁", bg:"var(--gold-soft)", title:"Treino espaçado de fala", sub:`${spDue().length ? spDue().length+" frases para hoje" : "Suas frases voltam nos dias 1, 2, 4 e 8"}`, act:startSpaced},
     {ic:"🎯", bg:"var(--accent-soft)", title:"Treino das palavras difíceis", sub:"As palavras e frases que você mais erra, direto para repetir", act:()=>startPronFocus(false)},
     {ic:"📈", bg:"var(--gold-soft)", title:"Meu relatório de pronúncia", sub:"Onde você mais erra, quais sons treinar e plano com IA", act:()=>open({type:"prep"})},
     {ic:"📺", bg:"var(--accent-soft)", title:"Filmes e séries", sub:"Cenas reais no player do YouTube, em loop e câmera lenta (versão site)", act:()=>startFilm()},
@@ -4932,6 +4936,54 @@ function startPronFocus(back){
   if(!list.length){ toast("Ainda não há palavras difíceis. Faça alguns treinos de pronúncia primeiro."); return; }
   startPron(list, back ? {back:overlay} : {});
 }
+/* ---- treino espaçado de fala: 1, 2, 4 e 8 dias ---- */
+var SP_DAYS = [1,2,4,8,30];
+function spStore(){ return L().sp = L().sp || {}; }
+function spAdd(list){
+  const st = spStore(); let n = 0;
+  list.forEach(x => { if(x && x.t && !st[x.t]){ st[x.t] = {t:x.t, pt:x.pt||"", k:0, due:Date.now(), n:0}; n++; } });
+  persist(); return n;
+}
+function spDue(){ return Object.values(spStore()).filter(x => x.due <= Date.now()).sort((a,b) => a.due-b.due); }
+function startSpaced(){
+  const list = spDue().slice(0,10);
+  if(!list.length){ toast(Object.keys(spStore()).length ? "Nada para hoje. As frases voltam nos dias 1, 2, 4 e 8." : "Adicione frases primeiro: no fim do shadowing de uma cena ou no relatório de pronúncia."); return; }
+  open({type:"spc", list, i:0, ok:0});
+}
+function spRate(it, r){
+  const rec = spStore()[it.t]; if(!rec) return;
+  rec.n++; const day = 86400000;
+  if(r==="ok"){ rec.k = Math.min(rec.k+1, SP_DAYS.length); }
+  else if(r==="hard"){ rec.k = 0; }
+  rec.due = Date.now() + SP_DAYS[Math.min(Math.max(rec.k-1, 0), SP_DAYS.length-1)]*day;
+  persist();
+}
+function viewSpaced(){
+  const o = overlay, el = h(`<div class="screen"></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Fechar">✕</button><div class="steps">${o.list.map((_,i)=>`<i class="${i<o.i?"on":""}"></i>`).join("")}</div></div>`);
+  $("button",head).addEventListener("click", close); el.appendChild(head);
+  if(o.i >= o.list.length){
+    el.appendChild(h(`<section class="soft" style="text-align:center"><div class="eyebrow">Treino espaçado concluído</div><h1 class="headline" style="margin-top:8px">${o.ok} de ${o.list.length} foram bem</h1><p class="sub" style="margin-top:6px">As frases voltam sozinhas nos dias 1, 2, 4 e 8. Regularidade em semanas importa mais que sessões longas.</p></section>`));
+    const b = h(`<button class="btn btn-dark btn-block">Voltar</button>`); b.addEventListener("click", close); el.appendChild(b); return el;
+  }
+  const it = o.list[o.i], rec = spStore()[it.t] || {k:0};
+  el.appendChild(h(`<div class="stage-label">Treino espaçado · ${o.i+1} de ${o.list.length} · etapa ${Math.min(rec.k+1, SP_DAYS.length)} de ${SP_DAYS.length}</div>`));
+  const card = h(`<div class="word-card"><button class="speak" aria-label="Ouvir a voz nativa">${ICON.speak}</button><div class="word-t" style="font-size:24px">${esc(it.t)}</div>${it.pt?`<div class="word-pt">${esc(it.pt)}</div>`:""}</div>`);
+  $(".speak",card).addEventListener("click", () => speak(it.t));
+  const slow = h(`<button class="btn btn-line" style="width:auto;padding:8px 16px;margin:8px auto 0;display:block">🐢 Ouvir devagar</button>`); slow.addEventListener("click", () => speakSlow(it.t)); card.appendChild(slow);
+  el.appendChild(card);
+  const mm = micMini(it.t, o, "sp"+o.i);
+  if(mm) el.appendChild(mm); else el.appendChild(h(`<section class="card"><p class="sub">Ouça o modelo, repita em voz alta e avalie abaixo. (A gravação com comparação funciona no site.)</p></section>`));
+  el.appendChild(h(`<p class="sub" style="text-align:center">Como foi?</p>`));
+  const row = h(`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"></div>`);
+  [["💪","Consegui","ok"],["🙂","Quase","mid"],["🐢","Difícil","hard"]].forEach(x => {
+    const b = h(`<button class="btn btn-line" style="flex-direction:column;gap:2px"><span>${x[0]}</span><small>${x[1]}</small></button>`);
+    b.addEventListener("click", () => { spRate(it, x[2]); if(x[2]==="ok"){ o.ok++; addXp(2); sfx.right(); } o.i++; render(); scrollTo(0,0); });
+    row.appendChild(b);
+  });
+  el.appendChild(row);
+  return el;
+}
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
   const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Fechar">✕</button><div style="flex:1"></div></div>`);
@@ -4944,6 +4996,7 @@ function viewPronRep(){
   el.appendChild(h(`<section class="card"><div class="eyebrow">Trocas (esperado → reconhecido)</div>${li(st.subs, w=>`<li>${esc(w[0])} · ${w[1]}x</li>`)}<p class="sub" style="font-size:12px">Mostra o que o navegador entendeu no lugar. Pode ser ruído do microfone, não só pronúncia.</p></section>`));
   el.appendChild(h(`<section class="card"><div class="eyebrow">Sons para treinar</div>${li(st.sounds, x=>`<li><b>${esc(x.s)}</b> · ${x.n}x (ex.: ${x.ex.map(esc).join(", ")}). ${esc(x.tip)}</li>`)}</section>`));
   const fb = h(`<button class="btn btn-dark btn-block">🎯 Treinar agora as minhas mais difíceis</button>`); fb.addEventListener("click", () => startPronFocus(true)); el.appendChild(fb);
+  const fs = h(`<button class="btn btn-line btn-block">🔁 Colocar as difíceis no treino espaçado</button>`); fs.addEventListener("click", () => { const n = spAdd(pronFocusList()); toast(n ? n+" itens entraram no treino espaçado." : "Já estão no treino espaçado."); }); el.appendChild(fs);
   const ai = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Plano com IA</div>
     <div class="ai-out sub" style="white-space:pre-wrap;line-height:1.5">${o.ai?esc(o.ai):"A IA lê só o resumo em texto acima (nunca o seu áudio) e monta um plano de treino."}</div>
     ${(!window.claude && !o.hasKey && !(()=>{try{return localStorage.getItem("nb-key")}catch(e){return ""}})())?`<input id="apiKey" class="in" type="password" placeholder="Cole sua chave da API Anthropic (fica só neste aparelho)" autocomplete="off"><p class="sub" style="font-size:12px">A chave fica guardada apenas no navegador deste aparelho. Só o resumo em texto é enviado à Anthropic.</p>`:""}
