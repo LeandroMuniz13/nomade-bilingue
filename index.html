@@ -4812,7 +4812,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v67";
+const APP_VER = "v68";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -4839,12 +4839,18 @@ async function micBegin(done){
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); document.querySelectorAll("audio").forEach(a => { try{ a.pause(); }catch(e){} }); }catch(e){}
   const kept = micS.keep && micS.keep.active && micS.keep.getAudioTracks().every(t => t.readyState==="live" && !t.muted);
   let stream;
-  const getS = async () => { try{ return await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }catch(e){ e.micStage = "perm"; throw e; } };
+  const getS = async (c, tag) => { try{ return await navigator.mediaDevices.getUserMedia(c); }catch(e){ e.micStage = tag; throw e; } };
   if(kept) stream = micS.keep;
   else {
-    stream = await getS();
-    await new Promise(r => setTimeout(r, 200));
-    if(stream.getAudioTracks().some(t => t.muted || t.readyState!=="live")){ stream.getTracks().forEach(t => t.stop()); await new Promise(r => setTimeout(r, 400)); stream = await getS(); }
+    try{ stream = await getS({audio:true}, "perm1"); }
+    catch(e1){
+      if(e1 && e1.name==="NotAllowedError") throw e1;
+      await new Promise(r => setTimeout(r, 400));
+      stream = await getS({audio:true}, "perm2");
+    }
+    /* espera a trilha "acordar" (iOS entrega a trilha muda por um instante), sem pedir o microfone de novo */
+    const tr = stream.getAudioTracks()[0];
+    if(tr && tr.muted) await new Promise(r => { let done = false; const f = () => { if(!done){ done = true; r(); } }; tr.addEventListener("unmute", f, {once:true}); setTimeout(f, 1500); });
   }
   if(stream.getAudioTracks().length === 0 || !stream.active){ const e = new Error("sem trilha de áudio ativa"); e.name = "InvalidStateError"; e.micStage = "track"; throw e; }
   let heard0 = "";
