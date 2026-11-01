@@ -331,6 +331,7 @@ body.focus main{padding-bottom:32px}
 .rd-cover{padding:12px 14px}
 .subtabs.sub2{margin-top:-4px}
 .m-cov{width:46px;height:66px;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25);background:var(--line)} .m-cov img{width:100%;height:100%;object-fit:cover;display:block}
+#fstage iframe,#ytp{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
 .book-art{height:110px; border-radius:16px; background-size:cover; background-position:center; border:1px solid var(--line)}
 .book-art.tall{height:130px; flex:none}
 .rd-body.has-art{position:relative; overflow:hidden; isolation:isolate}
@@ -2614,7 +2615,7 @@ function viewFilm(){
       <p class="sub" style="font-size:12.5px">Roteiro: 1) assista uma vez com legenda; 2) em 0,5x ou 0,75x, escute o trecho em loop; 3) pause no fim de cada fala e repita em voz alta, imitando o ritmo; 4) tire a legenda e repita de novo.</p></div>`;
     $("#fa", stage); const rates = [1, 0.75, 0.5]; let ri = 0;
     try{ await ytLoad(); }catch(e){ $("#fmsg", ld).textContent = "Não consegui carregar o player do YouTube. Confira a internet e tente de novo."; return; }
-    player = new YT.Player("ytp", {videoId:id, playerVars:{playsinline:1, rel:0, start:A, cc_load_policy:1, cc_lang_pref:state.lang, hl:state.lang, modestbranding:1}, events:{onError:() => { $("#fmsg", ld).textContent = "Este vídeo não permite ser aberto aqui. Escolha outro."; }}});
+    player = new YT.Player("ytp", {width:"100%", height:"100%", videoId:id, playerVars:{playsinline:1, rel:0, start:A, cc_load_policy:1, cc_lang_pref:state.lang, hl:state.lang, modestbranding:1}, events:{onError:() => { $("#fmsg", ld).textContent = "Este vídeo não permite ser aberto aqui. Escolha outro."; }}});
     poll = setInterval(() => { try{ if(B && player.getCurrentTime && player.getCurrentTime() >= B - 0.15) player.seekTo(A, true); }catch(e){} }, 200);
     $("#fpp", stage).addEventListener("click", () => { try{ player.getPlayerState() === 1 ? player.pauseVideo() : player.playVideo(); }catch(e){} });
     $("#fb3", stage).addEventListener("click", () => { try{ player.seekTo(Math.max(A, player.getCurrentTime() - 3), true); }catch(e){} });
@@ -3014,7 +3015,8 @@ function viewLesson(){
         $(".speak",cx).addEventListener("click", () => speak(v.ex.t));
         el.appendChild(cx);
       }
-      setTimeout(()=>speak(v.t), 150);
+      if(o.spk!==vid){ o.spk = vid; setTimeout(()=>speak(v.t), 150); }
+      { const mm = micMini(v.t, o, "mm"+o.vi); if(mm) el.appendChild(mm); }
       const row = h(`<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px"></div>`);
       const back = h(`<button class="btn btn-line" ${o.vi===0?"disabled":""}>‹</button>`);
       back.addEventListener("click", () => { o.vi--; o.wr = null; render(); });
@@ -4842,6 +4844,40 @@ async function pronAI(st){
   const res = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}, body:JSON.stringify({model:"claude-sonnet-5-5", max_tokens:700, messages:[{role:"user", content:prompt}]})});
   if(!res.ok) throw new Error("http"+res.status);
   const j = await res.json(); return (j.content||[]).map(c=>c.text||"").join("").trim();
+}
+/* mini bloco de fala (lições): grava, mostra palavras reconhecidas e compara com o modelo */
+function micMini(target, st, key){
+  if(!micOK()) return null;
+  const m = st[key] || (st[key] = {});
+  const r = m.result;
+  const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px">
+    <div class="eyebrow">Sua vez: fale em voz alta</div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
+      <button class="btn ${m.on?"btn-dark":"btn-line"}" id="mmGo">${m.on?"⏹ Parar":"🎙️ Falar"}</button>
+      <button class="btn btn-line" id="mmCmp" ${m.url?"":"disabled"}>🔁 Modelo → você</button>
+    </div>
+    ${r?`<div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><p class="sub" style="font-size:12.5px">${r.pct}% das palavras reconhecidas${m.heard?` · entendi: “${esc(m.heard)}”`:""}</p>`:""}
+    ${m.msg?`<p class="sub" style="font-size:12.5px">${esc(m.msg)}</p>`:""}
+  </section>`);
+  $("#mmGo",box).addEventListener("click", async () => {
+    if(m.on){ micStop(); return; }
+    m.msg = ""; stopAudio();
+    try{
+      await micBegin((url, heard) => {
+        m.on = false; if(m.url) URL.revokeObjectURL(m.url); m.url = url; m.heard = heard;
+        if(heard){ m.result = scoreSpeech(target, heard); addXp(m.result.pct>=80?2:1); m.result.pct>=80 ? sfx.right() : sfx.wrong();
+          const lg = L(); (lg.pronLog = lg.pronLog || []).push({t:target, h:heard, p:m.result.pct, m:m.result.missed, ts:Date.now()}); if(lg.pronLog.length>300) lg.pronLog.splice(0, lg.pronLog.length-300); }
+        else m.msg = SR_OK() ? "Gravado, mas o reconhecimento não captou palavras. Ouça e tente de novo." : "Gravado. Ouça e compare com o modelo.";
+        render();
+      });
+      m.on = true; render();
+    }catch(e){ m.msg = "Não consegui acessar o microfone. Permita o acesso nas configurações do navegador."; render(); }
+  });
+  $("#mmCmp",box).addEventListener("click", () => {
+    if(!m.url) return; speak(target);
+    setTimeout(() => { const a = new Audio(m.url); a.play().catch(()=>{}); }, 900 + target.split(/\s+/).length*450);
+  });
+  return box;
 }
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
