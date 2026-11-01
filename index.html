@@ -442,6 +442,17 @@ ul.plan{margin:10px 0 0; padding-left:18px; display:flex; flex-direction:column;
 .nb-x{border:0; background:none; color:var(--ink-dim); font-size:15px; padding:8px; border-radius:50%}
 .nb-seg{align-self:flex-start; max-width:100%; overflow-x:auto}
 .nb-card{border-left:4px solid var(--gold)}
+.pgrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+.ptile{display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:left; border:1px solid var(--line); background:var(--surface); border-radius:var(--r-m); padding:12px; min-height:92px}
+.ptile .game-ic{width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px}
+.ptile b{font-size:14px; line-height:1.2}
+.ptile small{font-size:12px; color:var(--ink-dim); line-height:1.25}
+.shelf{display:flex; flex-direction:column; gap:8px}
+.shrow{display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:12px; align-items:center; width:100%; text-align:left; border:1px solid var(--line); background:var(--surface); border-radius:var(--r-m); padding:12px}
+.shrow .sh-ic{width:44px; height:44px; border-radius:14px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:21px}
+.shrow b{display:block; font-size:15px; line-height:1.25}
+.shrow small{display:block; font-size:12.5px; color:var(--ink-dim); margin-top:2px}
+.shrow .sh-k{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); font-weight:700}
 .game-tile{display:grid; grid-template-columns:52px minmax(0,1fr) auto; gap:14px; align-items:center; width:100%; text-align:left; border:1px solid var(--line); background:var(--surface); border-radius:var(--r-m); padding:14px}
 .game-ic{width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:23px}
 .mem-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px}
@@ -741,7 +752,7 @@ button:active:not(:disabled){transform:scale(.985)}
     <button data-tab="home"><span class="nb"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 9.5V20h4.5v-5h3v5H18V9.5"/></svg></span>Início</button>
     <button data-tab="learn"><span class="nb"><svg viewBox="0 0 24 24"><path d="M4 6.5C6.5 5 9.5 5 12 6.5 14.5 5 17.5 5 20 6.5V19c-2.5-1.5-5.5-1.5-8 0-2.5-1.5-5.5-1.5-8 0Z"/><path d="M12 6.5V19"/></svg></span>Jornada</button>
     <button data-tab="play"><span class="nb"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="14" rx="2.5"/><path d="M8 3h10.5A2.5 2.5 0 0 1 21 5.5V16"/></svg></span>Praticar</button>
-    <button data-tab="news"><span class="nb"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="14" height="15" rx="2"/><path d="M17.5 8.5h2a1 1 0 0 1 1 1V17a2.5 2.5 0 0 1-5 0M7 8.5h7M7 12h7M7 15.5h4"/></svg></span>Ler</button>
+    <button data-tab="news"><span class="nb"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="14" height="15" rx="2"/><path d="M17.5 8.5h2a1 1 0 0 1 1 1V17a2.5 2.5 0 0 1-5 0M7 8.5h7M7 12h7M7 15.5h4"/></svg></span>Biblioteca</button>
     
   </nav></div>
 </div>
@@ -1340,8 +1351,23 @@ let trailFilter = "all";
 function go(t){ tab=t; overlay=null; menuOpen=false; render(); scrollTo(0,0); }
 let planRun = null;
 function open(o){ overlay=o; menuOpen=false; render(); scrollTo(0,0); }
-function close(){ if(overlay && overlay.timer) clearInterval(overlay.timer); overlay=null; if(planRun){ const r = planRun; planRun = null; if(state.xp > r.xp0) planMark(r.key); } render(); scrollTo(0,0); }
-$$("#nav button").forEach(b => b.addEventListener("click", () => { if(b.dataset.tab==="news") newsSub = stories().length ? "stories" : "news"; go(b.dataset.tab); }));
+function close(){
+  if(overlay && overlay.timer) clearInterval(overlay.timer); overlay=null;
+  let adv = null;
+  if(planRun){ const r = planRun; planRun = null; if(state.xp > r.xp0){ planMark(r.key); if(r.auto) adv = true; } }
+  render(); scrollTo(0,0);
+  if(adv) setTimeout(planAdvance, 350);
+}
+function planAdvance(){
+  if(overlay) return;
+  try{
+    const cand = planCandidates(), plan = planToday(cand), k = plan.keys.find(x => !plan.done[x] && cand[x]);
+    if(!k){ toast("Missão de hoje cumprida! 🎉"); try{ confetti(); sfx.win(); }catch(e){} return; }
+    const b = cand[k]; toast("Próximo: "+b.t);
+    planRun = {key:k, xp0:state.xp, auto:true}; b.act();
+  }catch(e){}
+}
+$$("#nav button").forEach(b => b.addEventListener("click", () => { if(b.dataset.tab==="news") newsSub = "now"; go(b.dataset.tab); }));
 
 function applyAppearance(){
   const r = document.documentElement, a = state.appearance || "light";
@@ -1768,13 +1794,16 @@ function planCard(){
   </section>`);
   $$(".pl-tabs button", c).forEach(b => b.addEventListener("click", () => { state.planMin = +b.dataset.m; persist(); render(); }));
   const list = $(".pl-list", c), next = blocks.find(b => !plan.done[b.key]);
-  const run = b => { planRun = {key:b.key, xp0:state.xp}; b.act(); };
-  blocks.forEach(b => {
+  const run = (b, auto) => { planRun = {key:b.key, xp0:state.xp, auto:!!auto}; b.act(); };
+  const MAXV = 4; let hidden = 0;
+  blocks.forEach((b, bi) => {
     const dn = !!plan.done[b.key];
+    const hide = blocks.length > MAXV && bi >= MAXV && !(next===b) && !planCard._all;
     const r = h(`<button class="pl-row${dn?" ok":""}${next===b?" nx":""}"><span class="pl-ic">${dn?"✓":b.ic}</span><span class="pl-tx"><b>${esc(b.t)}</b><small>${esc(b.s)}</small></span><span class="pl-min">${b.min} min</span></button>`);
-    r.addEventListener("click", () => run(b)); list.appendChild(r);
+    r.addEventListener("click", () => run(b)); if(hide){ r.style.display = "none"; r.dataset.more = "1"; hidden++; } list.appendChild(r);
   });
-  if(next){ const go = h(`<button class="btn btn-dark btn-block">${doneN ? "Continuar a missão" : "Começar a missão"} <span class="arr">→</span></button>`); go.addEventListener("click", () => run(next)); c.appendChild(go); }
+  if(hidden){ const mb = h(`<button class="link" style="align-self:center">Ver mais ${hidden}</button>`); mb.addEventListener("click", () => { $$("[data-more]", list).forEach(x => x.style.display = ""); mb.remove(); }); list.appendChild(mb); }
+  if(next){ const go = h(`<button class="btn btn-dark btn-block">${doneN ? "Continuar a missão" : "Começar a missão"} <span class="arr">→</span></button>`); go.addEventListener("click", () => run(next, true)); c.appendChild(go); }
   return c;
 }
 function profileCard(){
@@ -2717,25 +2746,29 @@ function viewHome(){
     </div>
   </section>`);
   $("#goNext",hero).addEventListener("click", () => journeyGo(j));
-  el.appendChild(hero);
+  if(first) el.appendChild(hero); else el.appendChild(h(`<div><p class="hello">${greeting()} · ${chapLine}</p><h1 class="headline" style="margin-top:2px">O que fazer <span class="script" style="font-size:32px">hoje</span></h1></div>`));
   /* status compacto */
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
   if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); }
   else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); }
-  el.appendChild(profCard());
   /* atalhos: no máximo 4, só depois da 1ª lição */
   if(!first){
+    el.appendChild(shelfCard(true));
+    { const jr = j.m ? `Capítulo ${j.ci+1} de ${j.total} · ${j.inf.done} de ${j.inf.us.length} lições` : `Nível ${userLevel()}`; const jb = h(`<button class="shrow"><span class="sh-ic">🗺️</span><span><b>Jornada</b><small>${esc(jr)}</small></span><span class="tl-chev">›</span></button>`); jb.addEventListener("click", () => go("learn")); el.appendChild(jb); }
+    if(!state.prof){ const pb = h(`<button class="shrow"><span class="sh-ic">✨</span><span><b>Personalize o estudo</b><small>Converse 2 min com a IA</small></span><span class="tl-chev">›</span></button>`); pb.addEventListener("click", () => open({type:"intv"})); el.appendChild(pb); }
+  }
+  if(false){
     const sst = srsStats();
     const quick = [
       {ic:'<svg viewBox="0 0 24 24"><rect x="4" y="7" width="13" height="13" rx="2.5"/><path d="M8 4h9.5A2.5 2.5 0 0 1 20 6.5V16"/></svg>', t:"Revisar", s: sst.due ? sst.due+" cartões" : "cartões", act:startSrs},
       {ic:'<svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3.5" y="13" width="4" height="7" rx="2"/><rect x="16.5" y="13" width="4" height="7" rx="2"/></svg>', t:"Ouvir", s:"1 minuto", act:startEar},
-      {ic:'<svg viewBox="0 0 24 24"><path d="M4 6.5C6.5 5 9.5 5 12 6.5 14.5 5 17.5 5 20 6.5V19c-2.5-1.5-5.5-1.5-8 0-2.5-1.5-5.5-1.5-8 0Z"/><path d="M12 6.5V19"/></svg>', t:"Ler", s:"histórias", act:() => { newsSub = stories().length ? "stories" : "news"; go("news"); }},
+      {ic:'<svg viewBox="0 0 24 24"><path d="M4 6.5C6.5 5 9.5 5 12 6.5 14.5 5 17.5 5 20 6.5V19c-2.5-1.5-5.5-1.5-8 0-2.5-1.5-5.5-1.5-8 0Z"/><path d="M12 6.5V19"/></svg>', t:"Ler", s:"histórias", act:() => { newsSub = "now"; go("news"); }},
       {ic:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4A8 8 0 1 1 20 12Z"/></svg>', t:"Conversar", s:"com IA", act:() => go("chat")}
     ];
     const q = h(`<section><div class="sec-head"><h2>Treino rápido</h2></div><div class="quick2"></div></section>`);
     quick.forEach(x => { const b = h(`<button class="qk"><span class="qk-ic">${x.ic}</span><b>${x.t}</b><span>${x.s}</span></button>`); b.addEventListener("click", x.act); $(".quick2",q).appendChild(b); });
     el.appendChild(q);
-  } else {
+  } else if(first){
     el.appendChild(h(`<section class="card how2"><div class="eyebrow">Como funciona</div>
       <div class="how2-row"><b>1</b><span><b>Faça a lição do dia.</b> Vocabulário, diálogo com áudio e exercícios curtos.</span></div>
       ${missionsOf().length ? `<div class="how2-row"><b>2</b><span><b>Avance por capítulos.</b> Cada um prepara você para uma situação real.</span></div>
@@ -2745,7 +2778,7 @@ function viewHome(){
   }
   /* próximos capítulos */
   const ms = missionsOf();
-  if(ms.length){
+  if(ms.length && first){
     const car = h(`<section><div class="sec-head"><h2>Sua jornada</h2><button class="link" id="seeAll">Ver tudo ›</button></div><div class="chaps"></div></section>`);
     $("#seeAll",car).addEventListener("click", () => go("learn"));
     ms.forEach((m, i) => {
@@ -4049,7 +4082,7 @@ function notebookCard(){
 function viewPlay(){
   const voc = allVocab(), known = voc.filter(v=>L().known[v.id]).length;
   const el = h(`<div class="screen">
-    <div><p class="hello">Praticar · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Treino rápido, <span class="script" style="font-size:32px">memória longa</span></h1></div>
+    <div><p class="hello">Praticar · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Treinar <span class="script" style="font-size:32px">uma habilidade</span></h1></div>
   </div>`);
   const flash = h(`<section class="card">
     <div class="sec-head"><h2>Cartões</h2><span class="sub">${known}/${voc.length}</span></div>
@@ -4083,18 +4116,27 @@ function viewPlay(){
     {ic:"🪜", bg:"var(--gold-soft)", title:"Prova de domínio", sub:"Escada: lembrar, aplicar e usar em situações novas. Só conta como dominada com prova", act:startLadder},
     {ic:"🔊", bg:"var(--gold-soft)", title:"Treino de pronúncia", sub:"Ouça, repita em voz alta e confira pelo ditado do teclado", act:()=>startPron(pronPool(), {})}
   ];
-  const gs = h(`<section style="display:flex;flex-direction:column;gap:10px"><div class="sec-head"><h2>Jogos</h2></div></section>`);
-  const grpOf = g => /Anki|caderno/i.test(g.title) ? 0 : /Ouça|Ditado|pronúncia|Conversar|Traduza|Prova|Laboratório|Cenas|Filmes/i.test(g.title) ? 1 : 2;
-  const grpName = ["Para hoje", "Ouvir e falar", "Mais treinos"];
-  games.sort((x, y) => grpOf(x) - grpOf(y));
-  $(".sec-head", gs).remove();
-  let lastG = -1;
-  games.forEach(g => {
-    if(grpOf(g) !== lastG){ lastG = grpOf(g); gs.appendChild(h(`<div class="sec-head" style="margin-top:6px"><h2>${grpName[lastG]}</h2></div>`)); }
-    const b = h(`<button class="game-tile"><span class="game-ic" style="background:${g.bg}">${g.ic}</span><span><div style="font-weight:700;font-size:15px">${g.title}</div><div class="sub" style="font-size:12.5px">${g.sub}</div></span><span class="tl-chev">›</span></button>`);
-    b.addEventListener("click", g.act);
-    gs.appendChild(b);
+  const G = t => games.find(g => g.title===t);
+  const short = {"Revisão do dia (Anki)":"Revisão do dia","Meu caderno de erros":"Caderno de erros","Treino espaçado de fala":"Fala espaçada","Treino das palavras difíceis":"Palavras difíceis","Ouça e escolha":"Ouça e escolha","Ditado":"Ditado","Prova de domínio":"Prova de domínio","Laboratório de erros":"Laboratório de erros","Conversar com a IA":"Conversar com a IA","Treino de pronúncia":"Pronúncia","Meu relatório de pronúncia":"Relatório de fala","Traduza e escreva":"Traduza e escreva","Monte a frase":"Monte a frase","Complete a frase":"Complete a frase","Desafio relâmpago":"Relâmpago","Jogo da memória":"Memória"};
+  const tsub = {"Revisão do dia (Anki)":`${sst.due} a revisar`,"Meu caderno de erros":nbs.all?`${nbs.due} para hoje`:"Seus erros ficam aqui","Treino espaçado de fala":spDue().length?`${spDue().length} para hoje`:"Volta em 1, 2, 4, 8 dias","Treino das palavras difíceis":"O que você mais erra","Ouça e escolha":"Ouvir e achar a tradução","Ditado":"Ouvir e escrever","Prova de domínio":"Lembrar, aplicar, usar","Laboratório de erros":"Erros típicos de brasileiros","Conversar com a IA":"Cenas reais com correção","Treino de pronúncia":"Repita e confira","Meu relatório de pronúncia":"Onde você mais erra","Traduza e escreva":"Do português, digitando","Monte a frase":"Ordene as palavras","Complete a frase":"A palavra certa","Desafio relâmpago":"60 segundos","Jogo da memória":"Combine pares"};
+  const groups = [
+    ["Revisar", ["Revisão do dia (Anki)","Meu caderno de erros","Treino espaçado de fala","Treino das palavras difíceis"]],
+    ["Ouvir", ["Ouça e escolha","Ditado","Prova de domínio","Laboratório de erros"]],
+    ["Falar", ["Conversar com a IA","Treino de pronúncia","Meu relatório de pronúncia"]],
+    ["Escrever", ["Traduza e escreva","Monte a frase","Complete a frase"]],
+    ["Jogos rápidos", ["Desafio relâmpago","Jogo da memória"]]
+  ];
+  const gs = h(`<section style="display:flex;flex-direction:column;gap:10px"></section>`);
+  groups.forEach(([gn, list]) => {
+    gs.appendChild(h(`<div class="sec-head" style="margin-top:6px"><h2>${gn}</h2></div>`));
+    const grid = h(`<div class="pgrid"></div>`);
+    list.map(G).filter(Boolean).forEach(g => {
+      const b = h(`<button class="ptile"><span class="game-ic" style="background:${g.bg}">${g.ic}</span><b>${short[g.title]||g.title}</b><small>${tsub[g.title]||""}</small></button>`);
+      b.addEventListener("click", g.act); grid.appendChild(b);
+    });
+    gs.appendChild(grid);
   });
+  { const vb = h(`<button class="shrow" style="margin-top:6px"><span class="sh-ic">🎬</span><span><b>Vídeos e cenas</b><small>Agora ficam na Biblioteca</small></span><span class="tl-chev">›</span></button>`); vb.addEventListener("click", () => { newsSub = "videos"; go("news"); }); gs.appendChild(vb); }
   el.appendChild(gs);
   const more = h(`<details class="more-tr"><summary>Mais opções: cartões das aulas e o método</summary><div style="display:flex;flex-direction:column;gap:12px;margin-top:12px"></div></details>`);
   $("div",more).appendChild(flash); $("div",more).appendChild(methodCard());
@@ -4804,16 +4846,50 @@ function viewBooksTab(el){
   });
   el.appendChild(h(`<p class="sub" style="font-size:12px;text-align:center">Os links levam ao Project Gutenberg, Standard Ebooks e LibriVox, que publicam obras de domínio público.</p>`));
 }
+/* ---- Biblioteca: o que ler / ver / ouvir agora (um lugar só) ---- */
+function libNow(){
+  const out = [], ss = L().stories || {};
+  const st = stories().find(x => !ss[x.id]);
+  if(st) out.push({k:"História", ic:"📖", t:st.title, s:docMinutes(st)+" min · toque nas palavras novas", act:() => startStory(st)});
+  const bk = books().find(b => !ss[b.id]);
+  if(bk) out.push({k:"Livro", ic:"📚", t:bk.title, s:bk.author+" · começo do clássico", act:() => startStory(bookDoc(bk))});
+  let cn = null; try{ cn = cineNext(); }catch(e){}
+  if(cn) out.push({k:"Cena de cinema", ic:"🎬", t:cn.title, s:"Sem legenda · "+cn.genre+" · "+cn.lvl, act:() => startCinema(cn.id)});
+  if(state.lang==="en" && !window.claude) out.push({k:"Filmes e séries", ic:"📺", t:"Cenas no player", s:"Loop e câmera lenta", act:() => startFilm()});
+  const nw = news[state.lang]; if(nw && nw.items && nw.items.length) out.push({k:"Notícia da semana", ic:"📰", t:nw.items[0].title || "Notícias", s:"Leia no idioma", act:() => { newsSub = "news"; go("news"); }});
+  out.push({k:"Música", ic:"🎵", t:"Ouvir e cantar", s:"Ritmo e ligação entre palavras", act:() => { newsSub = "music"; go("news"); }});
+  return out;
+}
+function shelfRows(list){
+  const box = h(`<div class="shelf"></div>`);
+  list.forEach(x => { const b = h(`<button class="shrow"><span class="sh-ic">${x.ic}</span><span><span class="sh-k">${esc(x.k)}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span><span class="tl-chev">›</span></button>`); b.addEventListener("click", x.act); box.appendChild(b); });
+  return box;
+}
+function shelfCard(short){
+  const list = libNow(), sec = h(`<section><div class="sec-head"><h2>Para ler e ver</h2><button class="link" id="shAll">Biblioteca ›</button></div></section>`);
+  $("#shAll",sec).addEventListener("click", () => { newsSub = "now"; go("news"); });
+  sec.appendChild(shelfRows(short ? list.slice(0,3) : list));
+  return sec;
+}
+function viewVideos(el){
+  el.appendChild(h(`<p class="sub">Treine o ouvido com cenas reais. Comece pela sugestão ou escolha abaixo.</p>`));
+  const items = [];
+  let cn = null; try{ cn = cineNext(); }catch(e){}
+  if(cn) items.push({k:"Sugestão", ic:"🎬", t:cn.title, s:"Sem legenda · "+cn.genre+" · "+cn.lvl, act:() => startCinema(cn.id)});
+  items.push({k:"Todas", ic:"🎞️", t:"Cenas de cinema", s:"Escute, acompanhe a fala e faça shadowing", act:() => startCinema()});
+  if(state.lang==="en" && !window.claude) items.push({k:"YouTube", ic:"📺", t:"Filmes e séries", s:"Cenas no player, em loop e câmera lenta", act:() => startFilm()});
+  el.appendChild(shelfRows(items));
+}
 let newsSub = "news", newsInit = false;
 const ex = () => content().explore || {curiosities:[], places:[], quiz:[]};
 const music = () => content().music || {originals:[], recs:[]};
 function viewNews(){
   const lg = LANGS[state.lang], nw = news[state.lang];
-  if(!newsInit){ newsInit = true; if(stories().length && newsSub==="news") newsSub = "stories"; }
+  if(!newsInit){ newsInit = true; if(newsSub==="news") newsSub = "now"; }
   const isMore = ["cur","places","quiz"].includes(newsSub);
-  const subs = (stories().length?[["stories","Histórias"]]:[]).concat(books().length?[["books","Livros"]]:[]).concat([["news","Notícias"],["music","Música"],[isMore?newsSub:"cur","Mais"]]);
+  const subs = [["now","Agora"]].concat(stories().length?[["stories","Histórias"]]:[]).concat(books().length?[["books","Livros"]]:[]).concat([["videos","Vídeos"],["news","Notícias"],["music","Música"],[isMore?newsSub:"cur","Mais"]]);
   const moreSubs = [["cur","Curiosidades"],["places","Lugares"],["quiz","Testes"]];
-  const heads = {news:["Leia o mundo","em "+lg.native], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","para ouvir e cantar"]};
+  const heads = {now:["O que ler e ver","agora"], videos:["Vídeos","para o ouvido"], news:["Leia o mundo","em "+lg.native], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","para ouvir e cantar"]};
   const [h1, h2] = heads[newsSub];
   const el = h(`<div class="screen">
     <div><p class="hello">Ler e ouvir · ${lg.name}</p><h1 class="headline" style="margin-top:2px">${h1} <span class="script" style="font-size:32px">${h2}</span></h1></div>
@@ -4822,7 +4898,9 @@ function viewNews(){
   </div>`);
   $$(".subtabs button", el).forEach(b => b.addEventListener("click", () => { newsSub = b.dataset.s; render(); }));
 
-  if(newsSub==="stories"){ viewStoriesTab(el); }
+  if(newsSub==="now"){ el.appendChild(h(`<p class="sub">Uma sugestão de cada tipo, do jeito que o app escolheu para o seu nível.</p>`)); el.appendChild(shelfRows(libNow())); }
+  else if(newsSub==="videos"){ viewVideos(el); }
+  else if(newsSub==="stories"){ viewStoriesTab(el); }
   else if(newsSub==="books"){ viewBooksTab(el); }
   else if(newsSub==="news"){
     el.appendChild(h(`<p class="sub">Notícias da semana em ${lg.name.toLowerCase()}. Toque para ler no site que publicou.</p>`));
@@ -5038,7 +5116,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v76";
+const APP_VER = "v77";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
