@@ -4997,7 +4997,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v74";
+const APP_VER = "v75";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5309,22 +5309,34 @@ function aiSampleGet(){
     (inp||[]).forEach(m => { const r = m.role==="assistant" ? "model" : "user", t = String(m.content||""); const l = out[out.length-1]; if(l && l.role===r) l.parts[0].text += "\n\n"+t; else out.push({role:r, parts:[{text:t}]}); });
     return out;
   };
-  const f = async (inp, o) => ({text: await gmCall({contents:toContents(inp)}, (o && o.maxTokens) || 2000)});
-  f.json = async (inp, o) => gmJson(await gmCall({contents:toContents(inp)}, 2800, true));
+  const f = async (inp, o) => ({text: await gmCall({contents:toContents(inp)}, (o && o.maxTokens) || 1200, false, true)});
+  f.json = async (inp, o) => gmJson(await gmCall({contents:toContents(inp)}, 2800, true, true));
   return Promise.resolve(f);
 }
-async function gmCall(parts, maxTok, json){
+let gmNoThink = false;
+function gmPref(){ try{ return localStorage.getItem("nb-gm-model") || ""; }catch(e){ return ""; } }
+async function gmCall(parts, maxTok, json, fast){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
-  for(const m of GM_MODELS){
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents:(parts && parts.contents) ? parts.contents : [{role:"user", parts}], generationConfig:Object.assign({temperature:0.3, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {})})});
-    if(res.status===404 || res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error(res.status===404 ? "model" : "busy"); await new Promise(r => setTimeout(r, 700)); continue; }
-    if(res.status===400 || res.status===403){ const t = await res.text(); throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http"+res.status); }
-    if(res.status===429) throw new Error("quota");
-    if(!res.ok) throw new Error("http"+res.status);
-    const j = await res.json(), c = ((j.candidates||[])[0]||{}).content;
-    const txt = ((c && c.parts) || []).map(x => x.text || "").join("").trim();
-    if(!txt) throw new Error("empty"); return txt;
+  const order = (fast ? ["gemini-flash-lite-latest","gemini-3.5-flash-lite","gemini-flash-latest"] : GM_MODELS).concat(GM_MODELS);
+  const models = [...new Set([gmPref()].concat(order).filter(Boolean))];
+  const contents = (parts && parts.contents) ? parts.contents : [{role:"user", parts}];
+  for(const m of models){
+    for(let att = 0; att < 2; att++){
+      const gen = Object.assign({temperature:0.4, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {}, gmNoThink ? {} : {thinkingConfig:{thinkingBudget:0}});
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents, generationConfig:gen})});
+      if(res.status===400){ const t = await res.text(); if(!gmNoThink && /thinking/i.test(t)){ gmNoThink = true; continue; } throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http400"); }
+      if(res.status===404){ last = new Error("model"); break; }
+      if(res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error("busy"); break; }
+      if(res.status===403){ const t = await res.text(); throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http403"); }
+      if(res.status===429) throw new Error("quota");
+      if(!res.ok) throw new Error("http"+res.status);
+      const j = await res.json(), c = ((j.candidates||[])[0]||{}).content;
+      const txt = ((c && c.parts) || []).map(x => x.text || "").join("").trim();
+      if(!txt) throw new Error("empty");
+      try{ localStorage.setItem("nb-gm-model", m); }catch(e){}
+      return txt;
+    }
   }
   throw last || new Error("model");
 }
