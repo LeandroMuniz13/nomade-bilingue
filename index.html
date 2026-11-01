@@ -1129,7 +1129,9 @@ const ACACHE = "nomade-audio-v1";
 const bufCache = {};
 let curStop = null, seqToken = 0, aEl = null;
 /* iOS: o modo silencioso muda o Web Audio, mas não o elemento <audio>; por isso a voz toca por <audio> */
-try{ if(navigator.audioSession) navigator.audioSession.type = "playback"; }catch(e){}
+function audSess(t){ try{ if(navigator.audioSession) navigator.audioSession.type = t; }catch(e){} }
+audSess("playback");
+document.addEventListener("play", () => { try{ if(!(micS && micS.mr && micS.mr.state==="recording")) audSess("playback"); }catch(e){} }, true);
 const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 function unlockAudio(){
   try{ if(!aEl) aEl = new Audio(); aEl.src = SILENT; const p = aEl.play(); if(p && p.then) p.then(()=>aEl.pause()).catch(()=>{}); }catch(e){}
@@ -4812,7 +4814,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v68";
+const APP_VER = "v69";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -4837,6 +4839,7 @@ function pcmRecorder(stream, done){
 async function micBegin(done){
   /* iPhone: a voz do navegador e players mudam a sessão de áudio e podem silenciar o microfone */
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); document.querySelectorAll("audio").forEach(a => { try{ a.pause(); }catch(e){} }); }catch(e){}
+  audSess("play-and-record");
   const kept = micS.keep && micS.keep.active && micS.keep.getAudioTracks().every(t => t.readyState==="live" && !t.muted);
   let stream;
   const getS = async (c, tag) => { try{ return await navigator.mediaDevices.getUserMedia(c); }catch(e){ e.micStage = tag; throw e; } };
