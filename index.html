@@ -4812,7 +4812,8 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v66";
+const APP_VER = "v67";
+const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
   const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
@@ -4892,6 +4893,7 @@ async function micKeep(on){
 function micErrMsg(e){
   const n = (e && e.name) || "", st = e && e.micStage;
   const standalone = (window.navigator.standalone === true) || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  if(IN_APP && (n==="NotAllowedError" || n==="InvalidStateError" || n==="SecurityError")) return "Você abriu o site dentro de outro app (como o app Claude), que bloqueia o microfone. Copie o endereço e abra no app Safari do iPhone: leandromuniz13.github.io/nomade-bilingue. Depois, em Compartilhar > Adicionar à Tela de Início.";
   if(st==="rec") return "O microfone abriu, mas a gravação não iniciou ("+(n||"erro")+"). Feche outros apps que usam o microfone, toque em Falar de novo e, se persistir, me avise.";
   if(n==="NotAllowedError" || n==="SecurityError") return (standalone ? "O iPhone bloqueou o microfone no app da tela inicial. Abra o endereço direto no Safari (não pelo ícone) e toque em Permitir. " : "O microfone está bloqueado para este site. ") + "Para liberar: toque em “aA” na barra do Safari > Ajustes do Site > Microfone > Permitir. Ou em Ajustes do iPhone > Apps > Safari > Microfone > Perguntar/Permitir.";
   if(n==="NotFoundError") return "Não encontrei um microfone neste aparelho.";
