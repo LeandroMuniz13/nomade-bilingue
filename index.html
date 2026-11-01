@@ -4812,11 +4812,50 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
+const APP_VER = "v66";
+/* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
+function pcmRecorder(stream, done){
+  const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
+  try{ ctx.resume && ctx.resume(); }catch(e){}
+  const src = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 1, 1), bufs = [];
+  proc.onaudioprocess = e => { bufs.push(new Float32Array(e.inputBuffer.getChannelData(0))); };
+  src.connect(proc); proc.connect(ctx.destination);
+  const rate = ctx.sampleRate, rec = {state:"recording", mimeType:"audio/wav"};
+  rec.stop = () => {
+    if(rec.state !== "recording") return; rec.state = "inactive";
+    try{ proc.disconnect(); src.disconnect(); }catch(e){}
+    let n = 0; bufs.forEach(b => n += b.length);
+    const dv = new DataView(new ArrayBuffer(44 + n*2)), w = (o, t) => { for(let i=0;i<t.length;i++) dv.setUint8(o+i, t.charCodeAt(i)); };
+    w(0,"RIFF"); dv.setUint32(4, 36+n*2, true); w(8,"WAVE"); w(12,"fmt "); dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true); dv.setUint32(24,rate,true); dv.setUint32(28,rate*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true); w(36,"data"); dv.setUint32(40, n*2, true);
+    let o = 44; bufs.forEach(b => { for(let i=0;i<b.length;i++){ const v = Math.max(-1, Math.min(1, b[i])); dv.setInt16(o, v<0 ? v*0x8000 : v*0x7FFF, true); o += 2; } });
+    try{ ctx.close(); }catch(e){}
+    done(new Blob([dv], {type:"audio/wav"}));
+  };
+  return rec;
+}
 async function micBegin(done){
-  const kept = micS.keep && micS.keep.active;
+  /* iPhone: a voz do navegador e players mudam a sessão de áudio e podem silenciar o microfone */
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); document.querySelectorAll("audio").forEach(a => { try{ a.pause(); }catch(e){} }); }catch(e){}
+  const kept = micS.keep && micS.keep.active && micS.keep.getAudioTracks().every(t => t.readyState==="live" && !t.muted);
   let stream;
-  try{ stream = kept ? micS.keep : await navigator.mediaDevices.getUserMedia({audio:true}); }
-  catch(e){ e.micStage = "perm"; throw e; }
+  const getS = async () => { try{ return await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }catch(e){ e.micStage = "perm"; throw e; } };
+  if(kept) stream = micS.keep;
+  else {
+    stream = await getS();
+    await new Promise(r => setTimeout(r, 200));
+    if(stream.getAudioTracks().some(t => t.muted || t.readyState!=="live")){ stream.getTracks().forEach(t => t.stop()); await new Promise(r => setTimeout(r, 400)); stream = await getS(); }
+  }
+  if(stream.getAudioTracks().length === 0 || !stream.active){ const e = new Error("sem trilha de áudio ativa"); e.name = "InvalidStateError"; e.micStage = "track"; throw e; }
+  let heard0 = "";
+  const usePcm = IS_IOS || !window.MediaRecorder;
+  if(usePcm){
+    try{
+      const pr = pcmRecorder(stream, blob => { if(!kept) stream.getTracks().forEach(t=>t.stop()); setTimeout(() => done(URL.createObjectURL(blob), ""), 200); });
+      micS.mr = pr; micS.stream = stream; micS.path = "pcm";
+      setTimeout(() => { if(micS.mr===pr && pr.state==="recording") pr.stop(); }, 20000);
+      return;
+    }catch(e){ micS.pcmErr = e; /* cai para MediaRecorder */ }
+  }
   const mt = ["audio/mp4","audio/webm;codecs=opus","audio/webm"].find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
   let mr;
   try{ mr = mt ? new MediaRecorder(stream,{mimeType:mt}) : new MediaRecorder(stream); }
@@ -4857,7 +4896,7 @@ function micErrMsg(e){
   if(n==="NotAllowedError" || n==="SecurityError") return (standalone ? "O iPhone bloqueou o microfone no app da tela inicial. Abra o endereço direto no Safari (não pelo ícone) e toque em Permitir. " : "O microfone está bloqueado para este site. ") + "Para liberar: toque em “aA” na barra do Safari > Ajustes do Site > Microfone > Permitir. Ou em Ajustes do iPhone > Apps > Safari > Microfone > Perguntar/Permitir.";
   if(n==="NotFoundError") return "Não encontrei um microfone neste aparelho.";
   if(n==="NotReadableError") return "O microfone está em uso por outro app. Feche o outro app e tente de novo.";
-  return "Não consegui acessar o microfone ("+(n||"erro desconhecido")+").";
+  return "Não consegui acessar o microfone ("+(n||"erro desconhecido")+"). [diag "+APP_VER+" · "+(IS_IOS?"ios":"outro")+" · etapa "+(st||"?")+" · "+(micS.path||"-")+"]";
 }
 function micStop(){ try{ if(micS.mr && micS.mr.state==="recording") micS.mr.stop(); }catch(e){} }
 
@@ -5441,4 +5480,4 @@ if(hot){ try{ hot.snapshot(() => ({state, tab})); }catch(e){} hot.ready ? hot.re
 else boot({});
 })();
 </script>
-<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script></body></html>
+<script>if("serviceWorker" in navigator){var __had=!!navigator.serviceWorker.controller,__rl=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(__had&&!__rl){__rl=true;location.reload()}});window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(r){r.update()}).catch(function(){})})}</script></body></html>
