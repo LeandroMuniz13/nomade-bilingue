@@ -2550,6 +2550,29 @@ function ytLoad(){
   ytReady = new Promise((res, rej) => { window.onYouTubeIframeAPIReady = () => res(); const s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api"; s.onerror = () => { ytReady = null; rej(new Error("yt")); }; document.head.appendChild(s); setTimeout(() => { if(!(window.YT && window.YT.Player)){ ytReady = null; rej(new Error("timeout")); } }, 12000); });
   return ytReady;
 }
+const FILM_PICKS = [
+ {l:"en",f:"Shrek",t:"Cebolas: ogros têm camadas",id:"zUQ9bjBfiRk",lv:"A2"},
+ {l:"en",f:"Shrek",t:"O burro que fala",id:"6Q6qHRHTTPg",lv:"A2"},
+ {l:"en",f:"Shrek",t:"O pântano do Shrek",id:"lzWJiZP7j6o",lv:"A2"},
+ {l:"en",f:"Shrek",t:"O espelho mágico",id:"nlkVTBIoTYw",lv:"B1"},
+ {l:"en",f:"Shrek",t:"Os Merry Men",id:"A4EKxM_giHo",lv:"B1"},
+ {l:"en",f:"Shrek Forever After",t:"Waffles na floresta",id:"Zo2rkKXL2gk",lv:"B1"},
+ {l:"en",f:"A Era do Gelo",t:"Cadê o bebê?",id:"gpdTgTBnyV0",lv:"A2"},
+ {l:"en",f:"A Era do Gelo",t:"Escorregador de gelo",id:"4V13FfAaa3M",lv:"A2"},
+ {l:"en",f:"A Era do Gelo",t:"Sid contra os dodôs",id:"jPRP6VP80HM",lv:"A2"},
+ {l:"en",f:"Procurando Nemo",t:"Gaivotas: Mine! Mine!",id:"x6XT7FDSdn8",lv:"A2"},
+ {l:"en",f:"Procurando Nemo",t:"Peixes são amigos",id:"c6mVl6fAxLw",lv:"A2"},
+ {l:"en",f:"Procurando Nemo",t:"No dentista",id:"3sAWDQjCOeU",lv:"B1"},
+ {l:"en",f:"Friends",t:"We were on a break",id:"6OHTvBhwHdo",lv:"B1"},
+ {l:"en",f:"Friends",t:"Pivot!",id:"ylaCmXw0fBQ",lv:"B1"},
+ {l:"en",f:"Friends",t:"Smelly Cat",id:"ukiD7YyCK9g",lv:"B1"},
+ {l:"en",f:"Friends",t:"Acordados a noite toda",id:"YzohP2AhiNw",lv:"B2"},
+ {l:"it",f:"Shrek (dublado)",t:"Início do filme",id:"OQAWf799308",lv:"A2"},
+ {l:"it",f:"Shrek 2 (dublado)",t:"Cerco un eroe",id:"kM5v0Msb11Q",lv:"B1"},
+ {l:"it",f:"Shrek (dublado)",t:"Primeiro dia como rei",id:"vHB0q_yY53g",lv:"B1"},
+ {l:"it",f:"Shrek (dublado)",t:"Shrek no colégio medieval",id:"0EJoc7CMp2o",lv:"B1"},
+ {l:"it",f:"Shrek (dublado)",t:"Cena final",id:"XsTvr3-kAmI",lv:"A2"}
+];
 function startFilm(){ open({type:"film"}); }
 function viewFilm(){
   const o = overlay, el = h(`<div class="screen"></div>`), lg = LANGS[state.lang];
@@ -2562,6 +2585,9 @@ function viewFilm(){
     el.appendChild(h(`<section class="card"><div class="eyebrow">Disponível no site do Nômade</div><p style="margin-top:6px">Dentro do Claude o vídeo do YouTube é bloqueado. Esta aba funciona na versão em site (a que você instala na tela inicial pelo navegador). Aqui você tem as cenas de cinema com personagens animados.</p></section>`));
     const b = h(`<button class="btn btn-dark btn-block">Ir para as cenas de cinema <span class="arr">→</span></button>`); b.addEventListener("click", () => startCinema()); el.appendChild(b); return el;
   }
+  const pk = FILM_PICKS.filter(x => x.l === state.lang);
+  const pks = h(`<section class="card"><div class="eyebrow">Cenas prontas · toque para abrir</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${pk.map((x, i) => `<button class="pl-row" data-k="${i}"><span class="pl-ic">${x.f.startsWith("Friends") ? "☕" : x.f.startsWith("Shrek") ? "🧅" : x.f.startsWith("A Era") ? "🧊" : "🐠"}</span><span class="pl-tx"><b>${esc(x.f)}</b><small>${esc(x.t)} · nível estimado ${x.lv}</small></span></button>`).join("")}</div><p class="sub" style="font-size:12.5px;margin-top:8px">São vídeos públicos do YouTube, abertos no player oficial. Eu não consegui conferir um a um se o dono permite abrir aqui; se algum não abrir, use a busca abaixo. O nível é uma estimativa minha: desenho animado costuma ser mais fácil que sitcom.</p></section>`);
+  el.appendChild(pks);
   const q = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">1. Ache a cena</div><input id="fq" type="text" placeholder="Nome do filme ou cena, ou uma expressão" autocomplete="off" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-line" id="fy">Buscar no YouTube</button><button class="btn btn-line" id="fg">Ouvir no YouGlish</button></div><p class="sub" style="font-size:12.5px">Os dois abrem em outra aba. Copie o link do vídeo que gostou e cole abaixo. Prefira os clipes oficiais dos estúdios. O YouGlish mostra a expressão dita por muitas pessoas; o crédito é dele.</p></section>`);
   $("#fy", q).addEventListener("click", () => { const v = $("#fq", q).value.trim(); if(v) window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(v + (state.lang === "en" ? " movie scene english subtitles" : " scena film italiano sottotitoli")), "_blank", "noopener"); });
   $("#fg", q).addEventListener("click", () => { const v = $("#fq", q).value.trim(); if(v) window.open("https://youglish.com/pronounce/" + encodeURIComponent(v) + "/" + (state.lang === "en" ? "english/us" : "italian"), "_blank", "noopener"); });
@@ -2599,6 +2625,7 @@ function viewFilm(){
     stage.scrollIntoView({behavior:"smooth", block:"start"});
   }
   $("#fo", ld).addEventListener("click", () => { const p = ytParse($("#fl", ld).value); if(!p.id){ $("#fmsg", ld).textContent = "Não reconheci o link. Cole o endereço completo do vídeo do YouTube."; return; } $("#fmsg", ld).textContent = ""; openVideo(p.id, p.t, 0, ""); });
+  $$("[data-k]", pks).forEach(b => b.addEventListener("click", () => { const x = pk[+b.dataset.k]; $("#fl", ld).value = "https://www.youtube.com/watch?v=" + x.id; $("#fmsg", ld).textContent = ""; openVideo(x.id, 0, 0, x.f + " · " + x.t); }));
   drawSaved(); return el;
 }
 function journeyGo(j){
@@ -4742,6 +4769,35 @@ function closePron(){
   const o = overlay; if(o.rec) URL.revokeObjectURL(o.rec);
   if(o.back){ overlay = o.back; render(); scrollTo(0,0); } else close();
 }
+/* ---- microfone (só no site) ---- */
+const SR_CLS = () => window.SpeechRecognition || window.webkitSpeechRecognition;
+function SR_OK(){ return !!SR_CLS(); }
+function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
+const micS = {mr:null, stream:null, sr:null};
+async function micBegin(done){
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const mt = ["audio/mp4","audio/webm;codecs=opus","audio/webm"].find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+  const mr = mt ? new MediaRecorder(stream,{mimeType:mt}) : new MediaRecorder(stream);
+  const chunks=[]; let heard="";
+  mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+  mr.onstop = () => {
+    stream.getTracks().forEach(t=>t.stop());
+    try{ micS.sr && micS.sr.stop(); }catch(e){}
+    setTimeout(() => done(URL.createObjectURL(new Blob(chunks,{type:mr.mimeType||mt||"audio/webm"})), heard.trim()), 350);
+  };
+  try{
+    const C = SR_CLS();
+    if(C){
+      const sr = new C(); sr.lang = state.lang==="it" ? "it-IT" : "en-US"; sr.interimResults = false; sr.continuous = true;
+      sr.onresult = ev => { for(let i=ev.resultIndex;i<ev.results.length;i++) heard += " " + ev.results[i][0].transcript; };
+      sr.onerror = () => {}; sr.start(); micS.sr = sr;
+    }
+  }catch(e){ micS.sr=null; }
+  mr.start(); micS.mr = mr; micS.stream = stream;
+  setTimeout(() => { if(micS.mr===mr && mr.state==="recording") mr.stop(); }, 20000);
+}
+function micStop(){ try{ if(micS.mr && micS.mr.state==="recording") micS.mr.stop(); }catch(e){} }
+
 function viewPron(){
   const o = overlay, el = h(`<div class="screen"></div>`);
   if(o.i >= o.list.length){
@@ -4767,15 +4823,44 @@ function viewPron(){
     <textarea id="dictIn" placeholder="Fale aqui pelo microfone do teclado…" autocomplete="off" autocapitalize="off" spellcheck="false">${esc(o.heard||"")}</textarea>
     <button class="btn btn-dark" id="dictGo">Conferir</button>
   </section>`);
-  $("#dictGo",dict).addEventListener("click", () => {
-    const v = $("#dictIn").value.trim(); if(!v) return;
+  const grade = (v) => {
     o.heard = v; o.result = scoreSpeech(it.t, v); o.tips = "";
     o.attempts = (o.attempts||0)+1; o.best = Math.max(o.best||0, o.result.pct);
     const prev = L().pron[it.t]; L().pron[it.t] = Math.max(typeof prev==="number" && prev>3 ? prev : 0, o.result.pct);
     notePron(it, o.result.pct);
     addXp(o.result.pct>=80 ? 4 : 2); o.result.pct>=80 ? sfx.right() : sfx.wrong();
     render();
-  });
+  };
+  $("#dictGo",dict).addEventListener("click", () => { const v = $("#dictIn").value.trim(); if(v) grade(v); });
+  if(micOK()){
+    const mic = h(`<section class="card dict">
+      <div class="eyebrow">Gravar a sua voz</div>
+      <p class="sub" style="font-size:12.5px">Grave a frase, ouça a sua voz e compare com a voz nativa. ${SR_OK()?"O navegador também tenta reconhecer o que você disse e mostra as <b>palavras reconhecidas</b>.":"Neste navegador não há reconhecimento de voz: compare de ouvido."} Isso não mede sotaque.</p>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
+        <button class="btn ${o.recording?"btn-dark":"btn-line"}" id="micGo">${o.recording?"⏹ Parar":"🎙️ Gravar"}</button>
+        <button class="btn btn-line" id="micCmp" ${o.rec?"":"disabled"}>🔁 Modelo → você</button>
+      </div>
+      ${o.rec?`<audio controls src="${o.rec}" style="width:100%;margin-top:8px"></audio>`:""}
+      ${o.micMsg?`<p class="sub" style="font-size:12.5px">${esc(o.micMsg)}</p>`:""}
+    </section>`);
+    $("#micGo",mic).addEventListener("click", async () => {
+      if(o.recording){ micStop(); return; }
+      o.micMsg=""; 
+      try{
+        const r = await micBegin((url, heard) => {
+          o.recording=false; if(o.rec) URL.revokeObjectURL(o.rec); o.rec=url;
+          if(heard){ grade(heard); } else { o.micMsg = SR_OK() ? "Gravado. O reconhecimento não captou palavras; ouça e tente de novo." : "Gravado. Ouça e compare com o modelo."; render(); }
+        });
+        o.recording=true; render();
+      }catch(e){ o.micMsg = "Não consegui acessar o microfone. Permita o acesso nas configurações do navegador."; render(); }
+    });
+    $("#micCmp",mic).addEventListener("click", () => {
+      if(!o.rec) return; speak(it.t);
+      const ms = 900 + it.t.split(/\s+/).length*450;
+      setTimeout(() => { const a = new Audio(o.rec); a.play().catch(()=>{}); }, ms);
+    });
+    el.appendChild(mic);
+  }
   el.appendChild(dict);
   if(o.result){
     const r = o.result;
