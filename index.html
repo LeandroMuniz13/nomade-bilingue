@@ -1699,7 +1699,7 @@ function planCandidates(){
   { const cn = cineNext(); if(cn) out.cinema = {key:"cinema", ic:"🎬", t:"Cena de cinema: "+cn.title, s:"Escute sem legenda e responda · "+cn.genre+" · "+cn.lvl, min:5, p:P("listen")-2, act:() => startCinema(cn.id)}; }
   { const u = errSummary().urgent[0]; if(u) out.errlab = {key:"errlab", ic:"🔬", t:"Corrigir um erro recorrente", s:u.p.title+(u.status==="voltou" ? " · voltou depois do treino" : " · "+u.n14+"x na sua escrita"), min:5, p:u.status==="voltou" ? 97 : 82, act:() => openErrLab(u.p.id)}; }
   if(cpDue()) out.check = {key:"check", ic:"🧪", t:"Checkpoint de habilidades", s:"Frases novas, sem dica: confirma o que ficou", min:8, p:94, act:startCheckpoint};
-  if(window.claude && window.claude.use){
+  if(aiAvail()){
     const scs = SCENES[state.lang] || [], sc = scs.length ? scs[(L().chatTotal||0) % scs.length] : null;
     if(sc) out.chat = {key:"chat", ic:"💬", t:"Conversar: "+sc.title, s:"Conversa com a IA, correção no final", min:7, p:P("prod")-4, act:() => startScene(sc)};
   }
@@ -2012,10 +2012,10 @@ function startLadder(){
 }
 function ladAskAI(o){
   const q = o.qs[o.i], lg = LANGS[state.lang];
-  if(!window.claude || !window.claude.use){ toast("O contexto novo com a IA funciona com o app aberto no Claude."); return; }
+  if(!aiAvail()){ toast("Cole a chave gratuita do Gemini em Meu relatório de pronúncia para usar a IA."); return; }
   const k = q.mode === "cloze" ? q.k : ladAlts(q.ans)[0], avoid = (xfer()[q.id] || []).map(c => c.t).concat(q.t ? [q.t] : []).slice(0, 4).join(" | ");
   o.busy = true; render();
-  window.claude.use("sample").then(sample => {
+  aiSampleGet().then(sample => {
     if(!sample) throw new Error("no sample");
     const prompt = `Escreva UMA frase nova em ${lg.name} (nível ${q.v.lvl || "A2"}), natural e informal, de 5 a 14 palavras, que contenha exatamente a expressão “${k}” (sem mudar nenhuma palavra dela), numa situação diferente destas: ${avoid || "nenhuma"}.
 Responda somente com JSON: {"t":"a frase","k":"${k}","pt":"tradução natural em português do Brasil","sc":"cenário em 2 a 4 palavras em português"}`;
@@ -3926,11 +3926,11 @@ function startCustom(){
   const o = overlay;
   const items = revAll().filter(i => i.streak<3).sort((a,b)=>b.miss-a.miss).slice(0,8);
   if(items.length < 3){ if(o) o.busy=false; toast("Erre ou marque “Ainda não” em mais alguns itens e eu monto a aula."); if(o) render(); return; }
-  if(!window.claude || !window.claude.use){ toast("A aula sob medida funciona com o app aberto no Claude."); return; }
+  if(!aiAvail()){ toast("Cole a chave gratuita do Gemini em Meu relatório de pronúncia para usar a IA."); return; }
   o.busy = true; render();
   const lg = LANGS[state.lang], lv = userLevel();
   const list = items.map((i,k) => (k+1)+". “"+i.t+"”"+(i.kind==="x"?"":" = "+i.pt)).join("\n");
-  window.claude.use("sample").then(sample => {
+  aiSampleGet().then(sample => {
     if(!sample) throw new Error("no sample");
     const prompt = `Você é professor de ${lg.name} (${lg.native}) para um brasileiro, nível ${lv}. O aluno está tendo dificuldade com estes itens:
 ${list}
@@ -4326,8 +4326,8 @@ function startScene(s){
 }
 function askAI(){
   const o = overlay;
-  if(!window.claude || !window.claude.use){ o.busy=false; o.msgs.push({role:"sys", text:"A conversa com IA funciona com o app aberto no Claude."}); render(); return; }
-  window.claude.use("sample").then(sample => {
+  if(!aiAvail()){ o.busy=false; o.msgs.push({role:"sys", text:"Para conversar com a IA, cole a chave gratuita do Gemini em Praticar › Meu relatório de pronúncia."}); render(); return; }
+  aiSampleGet().then(sample => {
     if(!sample){ o.busy=false; o.msgs.push({role:"sys", text:"Conversa indisponível agora."}); render(); return; }
     const input = [{role:"user", content:systemPrompt(o.s)}];
     o.msgs.forEach(m => { if(m.role==="me") input.push({role:"user", content:m.text}); else if(m.role==="them") input.push({role:"assistant", content:m.text}); });
@@ -4377,8 +4377,8 @@ function endScene(o){
     addXp(5 + Math.round(st.avg||0)); persist();
   }
   render(); scrollTo(0,0);
-  if(!window.claude || !window.claude.use){ o.sum.busy=false; o.sum.err="O resumo por IA funciona com o app aberto no Claude."; render(); return; }
-  window.claude.use("sample").then(sample => {
+  if(!aiAvail()){ o.sum.busy=false; o.sum.err="Cole a chave gratuita do Gemini em Meu relatório de pronúncia para usar o resumo por IA."; render(); return; }
+  aiSampleGet().then(sample => {
     if(!sample){ o.sum.busy=false; o.sum.err="Resumo por IA indisponível agora."; render(); return; }
     const lg = LANGS[state.lang];
     const tr = o.msgs.filter(m=>m.role==="me"||m.role==="them").slice(-40).map(m => (m.role==="me" ? "ALUNO" : "PERSONAGEM")+": "+m.text.slice(0,500)+(m.score?` [nota ${m.score.n}, acertos ${m.score.ok}, erros ${m.score.err}]`:"")).join("\n");
@@ -4505,8 +4505,8 @@ function wordSave(st, si, w){
   persist(); return true;
 }
 function aiJson(prompt){
-  if(!window.claude || !window.claude.use) return Promise.reject(new Error("noai"));
-  return window.claude.use("sample").then(sample => {
+  if(!aiAvail()) return Promise.reject(new Error("noai"));
+  return aiSampleGet().then(sample => {
     if(!sample) throw new Error("noai");
     return (sample.json ? sample.json(prompt, {cache:true}) : sample(prompt, {cache:true}).then(r => JSON.parse(String(r.text).replace(/^[^{]*|[^}]*$/g,""))));
   });
@@ -4968,9 +4968,9 @@ function soundFocus(words, lang){
   return out;
 }
 function askTips(o, it){
-  if(!window.claude || !window.claude.use){ o.tips = "As dicas da IA funcionam com o app aberto no Claude."; render(); return; }
+  if(!aiAvail()){ o.tips = "Cole a chave gratuita do Gemini em Meu relatório de pronúncia para ver as dicas da IA."; render(); return; }
   o.tips = "…"; render();
-  window.claude.use("sample").then(sample => {
+  aiSampleGet().then(sample => {
     if(!sample){ o.tips = "Dicas indisponíveis agora."; render(); return; }
     const lg = LANGS[state.lang];
     return sample(`Você é um professor de pronúncia de ${lg.name} para brasileiros.
@@ -4997,7 +4997,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v73";
+const APP_VER = "v74";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5298,11 +5298,26 @@ function azCard(r){
 /* ---- IA que escuta (Gemini, faixa gratuita; chave do próprio usuário) ---- */
 function gmKey(){ try{ return localStorage.getItem("nb-gm") || ""; }catch(e){ return ""; } }
 const GM_MODELS = ["gemini-flash-latest","gemini-3.8-flash","gemini-3.6-flash","gemini-flash-lite-latest","gemini-3.5-flash-lite"];
+/* IA unificada: usa o Claude quando o app está aberto nele; no site usa o Gemini (chave gratuita) */
+function aiAvail(){ return !!(window.claude && window.claude.use) || !!gmKey(); }
+function aiSampleGet(){
+  if(window.claude && window.claude.use) return window.claude.use("sample");
+  if(!gmKey()) return Promise.resolve(null);
+  const toContents = inp => {
+    if(typeof inp === "string") return [{role:"user", parts:[{text:inp}]}];
+    const out = [];
+    (inp||[]).forEach(m => { const r = m.role==="assistant" ? "model" : "user", t = String(m.content||""); const l = out[out.length-1]; if(l && l.role===r) l.parts[0].text += "\n\n"+t; else out.push({role:r, parts:[{text:t}]}); });
+    return out;
+  };
+  const f = async (inp, o) => ({text: await gmCall({contents:toContents(inp)}, (o && o.maxTokens) || 2000)});
+  f.json = async (inp, o) => gmJson(await gmCall({contents:toContents(inp)}, 2800, true));
+  return Promise.resolve(f);
+}
 async function gmCall(parts, maxTok, json){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
   for(const m of GM_MODELS){
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents:[{role:"user", parts}], generationConfig:Object.assign({temperature:0.3, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {})})});
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents:(parts && parts.contents) ? parts.contents : [{role:"user", parts}], generationConfig:Object.assign({temperature:0.3, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {})})});
     if(res.status===404 || res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error(res.status===404 ? "model" : "busy"); await new Promise(r => setTimeout(r, 700)); continue; }
     if(res.status===400 || res.status===403){ const t = await res.text(); throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http"+res.status); }
     if(res.status===429) throw new Error("quota");
