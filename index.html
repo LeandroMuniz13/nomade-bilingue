@@ -1083,7 +1083,13 @@ let voices=[];
 function loadVoices(){ try{ voices = speechSynthesis.getVoices(); }catch(e){} }
 if("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 /* voz do navegador (reserva): escolhe a melhor voz instalada */
-function bestVoice(){
+function bestVoice(accLang){
+  if(accLang){
+    const al = accLang.toLowerCase(), norm = v => (v.lang||"").replace("_","-").toLowerCase();
+    const c = voices.filter(v => norm(v) === al || (al==="en-scotland" && /scot/.test(norm(v)+v.name.toLowerCase())));
+    const sc = v => (/premium|enhanced|natural|neural|online/i.test(v.name)?4:0) + (/google|microsoft|siri/i.test(v.name)?2:0);
+    return c.sort((a,b) => sc(b)-sc(a))[0] || null;
+  }
   const lg = LANGS[state.lang].voice;
   // só aceita voz do idioma certo — nunca uma voz em português lendo inglês/italiano
   const c = voices.filter(v => v.lang && v.lang.replace("_","-").toLowerCase().slice(0,2) === state.lang);
@@ -1092,18 +1098,18 @@ function bestVoice(){
 }
 let ttsWarnAt = 0, ttsGen = 0;
 function ttsFail(msg){ const n = Date.now(); if(n - ttsWarnAt < 4000) return; ttsWarnAt = n; try{ toast(msg); }catch(e){} }
-function ttsSpeak(text){
+function ttsSpeak(text, accLang, rate){
   const gen = ++ttsGen;
   return new Promise(res => {
     try{
       if(!("speechSynthesis" in window)){ ttsFail("Este modo do app não oferece voz do aparelho. Abra o link pelo Safari para ouvir."); return res(); }
       loadVoices();
-      const v = bestVoice(), lc = ({en:"en-US", it:"it-IT"})[state.lang] || state.lang;
+      const v = bestVoice(accLang), lc = accLang || ({en:"en-US", it:"it-IT"})[state.lang] || state.lang;
       /* iOS: falar logo depois de cancel() faz a nova fala ser derrubada ("canceled"); por isso espera um instante e tenta de novo uma vez */
       const say = (retry) => {
         if(gen !== ttsGen) return res();
         const t0 = Date.now(), u = new SpeechSynthesisUtterance(text);
-        u.lang = v ? v.lang : lc; if(v) u.voice = v; u.rate = 0.92;
+        u.lang = v ? v.lang : lc; if(v) u.voice = v; u.rate = rate ? 0.62 : 0.92;
         let started = false, fin = false;
         u.onstart = () => { started = true; };
         u.onend = () => { fin = true; res(); };
@@ -1159,8 +1165,30 @@ function loadUrl(file){
 }
 let audioStatus = "";
 function stopAudio(){ try{ if(curStop) curStop(); }catch(e){} curStop=null; try{ speechSynthesis.cancel(); }catch(e){} }
+/* sotaques do inglês: americano = voz neural gravada; os outros usam as vozes do aparelho */
+const ACCENTS = [
+  {k:"us", n:"Americano", lang:"en-US", ex:"EUA"},
+  {k:"gb", n:"Britânico", lang:"en-GB", ex:"Reino Unido"},
+  {k:"au", n:"Australiano", lang:"en-AU", ex:"Austrália"},
+  {k:"ie", n:"Irlandês", lang:"en-IE", ex:"Irlanda"},
+  {k:"in", n:"Indiano", lang:"en-IN", ex:"Índia"},
+  {k:"za", n:"Sul-africano", lang:"en-ZA", ex:"África do Sul"},
+  {k:"ca", n:"Canadense", lang:"en-CA", ex:"Canadá"},
+  {k:"sc", n:"Escocês", lang:"en-scotland", ex:"Escócia"}
+];
+let lastAccent = "us";
+const accDef = k => ACCENTS.find(a => a.k===k) || ACCENTS[0];
+function accAvail(k){ if(k==="us") return true; try{ loadVoices(); }catch(e){} return !!bestVoice(accDef(k).lang); }
+function accentFor(){
+  if(state.lang!=="en") return "us";
+  let a = state.accent || "us";
+  if(a==="mix"){ const av = ACCENTS.filter(x => accAvail(x.k)); a = av[Math.floor(Math.random()*av.length)].k; }
+  else if(!accAvail(a)){ a = "us"; if(!window.__accWarn){ window.__accWarn = true; try{ toast("Este aparelho não tem voz desse sotaque. Usei o americano."); }catch(e){} } }
+  lastAccent = a; return a;
+}
 function playOne(text, rate){
   stopAudio();
+  const acc = accentFor(); if(acc !== "us") return ttsSpeak(text, accDef(acc).lang, rate);
   const m = AUDIO[state.lang] && AUDIO[state.lang][text];
   if(!m) return ttsSpeak(text);
   return loadUrl(m[0]).then(url => new Promise((res, rej) => {
@@ -3332,7 +3360,7 @@ function exerciseCard(ex, onAnswer, onNext, nextLabel){
       b.addEventListener("click", () => {
         if(answered) return;
         $$(".opt",opts).forEach((x,j) => { x.disabled=true; if(j===cpos) x.classList.add("right"); else if(j===i) x.classList.add("wrong"); });
-        finish(i===cpos, ex.type==="listen"?`<span style="display:block;margin-bottom:4px">“${esc(ex.speak)}”</span>`:"");
+        finish(i===cpos, ex.type==="listen"?`<span style="display:block;margin-bottom:4px">“${esc(ex.speak)}”${state.lang==="en" ? ` <small>· sotaque ${accDef(lastAccent).n.toLowerCase()}</small>` : ""}</span>`:"");
       });
       opts.appendChild(b);
     });
@@ -4229,6 +4257,18 @@ function earSaveBad(v){
   const id = "u:"+Date.now().toString(36)+Math.floor(Math.random()*999);
   s2.cards[id] = {id, kind:"u", t:v.t, pt:v.pt, note:"Errou no treino de ouvido", ctx:null, ivl:0, ease:2.5, reps:0, lapses:0, state:"new", due:today(), added:today()};
 }
+function accentPicker(compact){
+  if(state.lang!=="en") return null;
+  const cur = state.accent || "us";
+  const opts = ACCENTS.filter(a => accAvail(a.k)).map(a => ({k:a.k, n:a.n})).concat([{k:"mix", n:"🎲 Misturar"}]);
+  const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Sotaque do inglês (escuta)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${opts.map(o => `<button class="filter ${cur===o.k?"on":""}" data-a="${o.k}">${esc(o.n)}</button>`).join("")}</div>
+    <button class="btn btn-line" id="accTry">🔊 Ouvir exemplo</button>
+    ${compact ? "" : `<p class="sub" style="font-size:12px">Americano é a voz gravada (a melhor qualidade). Os outros usam as vozes do aparelho e só aparecem se estiverem instaladas. No iPhone: Ajustes › Acessibilidade › Conteúdo Falado › Vozes › Inglês, e baixe as vozes do Reino Unido, Austrália, Irlanda e Índia.</p>`}</section>`);
+  box.querySelectorAll("[data-a]").forEach(b => b.addEventListener("click", () => { state.accent = b.dataset.a; persist(); render(); }));
+  $("#accTry",box).addEventListener("click", () => { seqToken++; speak("Could you tell me where the nearest station is?").then(() => { try{ toast("Sotaque: "+accDef(lastAccent).n); }catch(e){} }); });
+  return box;
+}
 function viewEar(){
   const o = overlay, el = h(`<div class="screen"></div>`);
   const quit = () => { stopAudio(); seqToken++; close(); };
@@ -4250,6 +4290,7 @@ function viewEar(){
   const q = o.qs[o.i];
   const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Sair">✕</button><div style="flex:1"><div class="timer"><i style="width:${o.i/o.qs.length*100}%"></i></div></div><b style="font-size:13px;min-width:44px;text-align:right">${o.i+1}/${o.qs.length}</b></div>`);
   $("button",top).addEventListener("click", quit); el.appendChild(top);
+  { const ap = o.i===0 && o.ans===null ? accentPicker(true) : null; if(ap) el.appendChild(ap); }
   el.appendChild(h(`<div class="sec-head"><span class="eyebrow">Ouça e escolha</span><span class="chip xp">${o.pts} pts${o.combo>=2?" · 🔥"+o.combo:""}</span></div>`));
   const card = h(`<div class="word-card"><button class="btn btn-dark" id="earP" style="font-size:18px;padding:16px 26px">🔊 Ouvir</button><button class="link" id="earS" style="margin-top:6px">🐢 mais devagar</button><div class="sub" id="earQ" style="margin-top:6px">Qual é a tradução do que você ouviu?</div></div>`);
   el.appendChild(card);
@@ -4264,7 +4305,7 @@ function viewEar(){
       noteVocab(q.v, ok, "listen");
       if(ok){ o.ok++; o.combo++; o.best = Math.max(o.best, o.combo); o.pts += 10 + Math.max(0, Math.round(10 - secs)) + Math.min(o.combo-1, 5); sfx.right(); b.classList.add("right"); }
       else { o.combo = 0; o.bad.push(q.v); sfx.wrong(); b.classList.add("wrong"); $$(".opt",opts).forEach(x => { if(x.textContent===q.v.pt) x.classList.add("right"); }); }
-      const fb = h(`<div class="card" style="margin-top:10px"><div style="font-size:18px;font-weight:700">${esc(q.v.t)}</div><div class="sub" style="margin-top:2px">${esc(q.v.pt)}</div></div>`);
+      const fb = h(`<div class="card" style="margin-top:10px"><div style="font-size:18px;font-weight:700">${esc(q.v.t)}</div><div class="sub" style="margin-top:2px">${esc(q.v.pt)}</div>${state.lang==="en" ? `<div class="sub" style="margin-top:4px;font-size:12px">Sotaque: ${accDef(lastAccent).n}</div>` : ""}</div>`);
       el.appendChild(fb);
       const nx = h(`<button class="btn btn-dark btn-block" style="margin-top:10px">${o.i+1>=o.qs.length?"Ver resultado":"Próxima"} <span class="arr">→</span></button>`);
       nx.addEventListener("click", () => { stopAudio(); seqToken++; o.i++; o.ans = null; o.t0 = 0; render(); scrollTo(0,0); });
@@ -4997,7 +5038,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v75";
+const APP_VER = "v76";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5711,6 +5752,7 @@ function viewYou(){
   $("#reprof",set).addEventListener("click", () => open({type:"intv"}));
   $("#retest",set).addEventListener("click", () => open({type:"placement", idx:0, answers:[]}));
   el.appendChild(set);
+  { const ap = accentPicker(false); if(ap) el.appendChild(ap); }
 
   const sc = h(`<section class="card"><div class="sec-head"><h2>Notas por aula</h2><span class="sub">${LANGS[state.lang].name}</span></div><div style="margin-top:6px"></div></section>`);
   const box = $("div:last-child",sc);
