@@ -4814,7 +4814,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v70";
+const APP_VER = "v71";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5114,13 +5114,13 @@ function azCard(r){
 }
 /* ---- IA que escuta (Gemini, faixa gratuita; chave do próprio usuário) ---- */
 function gmKey(){ try{ return localStorage.getItem("nb-gm") || ""; }catch(e){ return ""; } }
-const GM_MODELS = ["gemini-3.8-flash","gemini-3.6-flash","gemini-3.5-flash-lite"];
+const GM_MODELS = ["gemini-flash-latest","gemini-3.8-flash","gemini-3.6-flash","gemini-flash-lite-latest","gemini-3.5-flash-lite"];
 async function gmCall(parts, maxTok){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
   for(const m of GM_MODELS){
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents:[{role:"user", parts}], generationConfig:{temperature:0.3, maxOutputTokens:maxTok||900}})});
-    if(res.status===404){ last = new Error("model"); continue; }
+    if(res.status===404 || res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error(res.status===404 ? "model" : "busy"); await new Promise(r => setTimeout(r, 700)); continue; }
     if(res.status===400 || res.status===403){ const t = await res.text(); throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http"+res.status); }
     if(res.status===429) throw new Error("quota");
     if(!res.ok) throw new Error("http"+res.status);
@@ -5147,7 +5147,7 @@ Seja honesto e cauteloso: você não é um medidor calibrado de sotaque. Se o á
 }
 function gmErrMsg(e){
   const m = e && e.message;
-  return m==="key" ? "A chave do Gemini foi recusada. Confira em Meu relatório de pronúncia." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="nokey" ? "Cole a chave do Gemini em Meu relatório de pronúncia." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.";
+  return m==="busy" ? "Os servidores do Gemini estão sobrecarregados agora (erro temporário do Google). Tente de novo em alguns minutos." : m==="key" ? "A chave do Gemini foi recusada. Confira em Meu relatório de pronúncia." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="nokey" ? "Cole a chave do Gemini em Meu relatório de pronúncia." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.";
 }
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
@@ -5200,7 +5200,7 @@ function viewPronRep(){
   $("#aiGo",ai).addEventListener("click", async () => {
     const k = $("#apiKey",ai); if(k && k.value.trim()){ try{ localStorage.setItem("nb-key", k.value.trim()); }catch(e){} }
     o.ai = "Pensando…"; render();
-    try{ o.ai = await pronAI(st); }catch(e){ o.ai = e.message==="nokey" ? "Salve a chave gratuita do Gemini (seção “IA que ouve você”) para gerar o plano." : "Não consegui gerar agora ("+e.message+"). Confira a chave e a conexão."; }
+    try{ o.ai = await pronAI(st); }catch(e){ o.ai = e.message==="nokey" ? "Salve a chave gratuita do Gemini (seção “IA que ouve você”) para gerar o plano." : (e.message==="busy" ? "O Gemini está sobrecarregado agora (erro temporário do Google). Toque em Gerar de novo em alguns minutos." : e.message==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente mais tarde." : "Não consegui gerar agora ("+e.message+"). Confira a chave e a conexão."); }
     render();
   });
   el.appendChild(ai);
