@@ -4902,8 +4902,12 @@ function micMini(target, st, key){
       <button class="btn btn-line" id="mmCmp" ${m.url?"":"disabled"}>🔁 Modelo → você</button>
     </div>
     ${r?`<div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><p class="sub" style="font-size:12.5px">${r.pct}% das palavras reconhecidas${m.heard?` · entendi: “${esc(m.heard)}”`:""}</p>`:""}
+    ${m.url && azCfg() ? `<button class="btn btn-line" id="mmAz">${m.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
+    ${m.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(m.az)}</div>` : ""}
     ${m.msg?`<p class="sub" style="font-size:12.5px">${esc(m.msg)}</p>`:""}
   </section>`);
+  const az = $("#mmAz",box);
+  if(az) az.addEventListener("click", async () => { if(m.azBusy) return; m.azBusy = true; m.msg = ""; render(); try{ m.az = await azAssess(m.url, target); }catch(e){ m.msg = azErrMsg(e); } m.azBusy = false; render(); });
   $("#mmGo",box).addEventListener("click", async () => {
     if(m.on){ micStop(); return; }
     m.msg = ""; stopAudio();
@@ -4984,16 +4988,84 @@ function viewSpaced(){
   el.appendChild(row);
   return el;
 }
+/* ---- Azure Pronunciation Assessment (opcional, só no site; chave do próprio usuário) ---- */
+function azCfg(){ try{ const c = JSON.parse(localStorage.getItem("nb-az") || "null"); return c && c.key && c.region ? c : null; }catch(e){ return null; } }
+async function azWav(url){
+  const buf = await (await fetch(url)).arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
+  const dec = await new Promise((res, rej) => { const p = ctx.decodeAudioData(buf, res, rej); if(p && p.catch) p.catch(rej); });
+  try{ ctx.close(); }catch(e){}
+  if(dec.duration > 29) throw new Error("long");
+  const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const oc = new OC(1, Math.max(1600, Math.ceil(dec.duration*16000)), 16000), src = oc.createBufferSource();
+  src.buffer = dec; src.connect(oc.destination); src.start();
+  const rend = await new Promise((res, rej) => { const p = oc.startRendering(); if(p && p.then) p.then(res, rej); else oc.oncomplete = e => res(e.renderedBuffer); });
+  const d = rend.getChannelData(0), n = d.length, dv = new DataView(new ArrayBuffer(44 + n*2));
+  const w = (o, t) => { for(let i=0;i<t.length;i++) dv.setUint8(o+i, t.charCodeAt(i)); };
+  w(0,"RIFF"); dv.setUint32(4, 36+n*2, true); w(8,"WAVE"); w(12,"fmt "); dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true); dv.setUint32(24,16000,true); dv.setUint32(28,32000,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true); w(36,"data"); dv.setUint32(40, n*2, true);
+  for(let i=0;i<n;i++){ const v = Math.max(-1, Math.min(1, d[i])); dv.setInt16(44+i*2, v<0 ? v*0x8000 : v*0x7FFF, true); }
+  return new Blob([dv], {type:"audio/wav"});
+}
+async function azAssess(url, ref){
+  const c = azCfg(); if(!c) throw new Error("nocfg");
+  const wav = await azWav(url);
+  const loc = state.lang === "it" ? "it-IT" : "en-US";
+  const hdr = btoa(JSON.stringify({ReferenceText:ref, GradingSystem:"HundredMark", Granularity:"Phoneme", Dimension:"Comprehensive", EnableMiscue:true}));
+  const res = await fetch(`https://${c.region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${loc}&format=detailed`, {method:"POST", headers:{"Ocp-Apim-Subscription-Key":c.key, "Content-Type":"audio/wav; codecs=audio/pcm; samplerate=16000", "Accept":"application/json", "Pronunciation-Assessment":hdr}, body:wav});
+  if(res.status===401 || res.status===403) throw new Error("key");
+  if(res.status===429) throw new Error("quota");
+  if(!res.ok) throw new Error("http"+res.status);
+  const j = await res.json();
+  if(j.RecognitionStatus && j.RecognitionStatus!=="Success") throw new Error("nomatch");
+  const nb = (j.NBest||[])[0]; if(!nb) throw new Error("nomatch");
+  const pa = nb.PronunciationAssessment || {};
+  const words = (nb.Words||[]).map(x => ({w:x.Word, acc:Math.round((x.PronunciationAssessment||{}).AccuracyScore||0), err:(x.PronunciationAssessment||{}).ErrorType||"None", ph:(x.Phonemes||[]).map(p => ({p:p.Phoneme, acc:Math.round((p.PronunciationAssessment||{}).AccuracyScore||0)}))}));
+  const out = {pron:Math.round(pa.PronScore||0), acc:Math.round(pa.AccuracyScore||0), flu:Math.round(pa.FluencyScore||0), comp:Math.round(pa.CompletenessScore||0), words};
+  const weak = []; words.forEach(x => x.ph.forEach(p => { if(p.acc < 60) weak.push([p.p, p.acc, x.w]); }));
+  const lg = L(); (lg.azLog = lg.azLog || []).push({t:ref, ts:Date.now(), acc:out.acc, flu:out.flu, comp:out.comp, weak}); if(lg.azLog.length > 200) lg.azLog.splice(0, lg.azLog.length-200);
+  addXp(out.acc>=80 ? 3 : 1); persist();
+  return out;
+}
+function azErrMsg(e){
+  const m = e && e.message;
+  return m==="key" ? "A chave do Azure foi recusada. Confira a chave e a região em Meu relatório de pronúncia." : m==="quota" ? "Você passou do limite gratuito do Azure neste mês." : m==="nomatch" ? "O Azure não reconheceu fala neste áudio. Fale mais perto do microfone e tente de novo." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="nocfg" ? "Configure a chave do Azure em Meu relatório de pronúncia." : "Não consegui falar com o Azure ("+(m||"erro")+"). Confira a conexão.";
+}
+function azCard(r){
+  const cl = a => a>=80 ? "ok" : a>=60 ? "" : "miss";
+  const weak = []; r.words.forEach(x => x.ph.forEach(p => { if(p.acc<60) weak.push(p.p+" em “"+x.w+"”"); }));
+  return `<div class="score-big"><b>${r.acc}</b><span class="sub">precisão por som (0 a 100)</span></div>
+    <div class="sub" style="font-size:12.5px">Fluência ${r.flu} · Completude ${r.comp}</div>
+    <div class="words">${r.words.map(x => `<span class="${cl(x.acc)}" title="${esc(x.ph.map(p=>p.p+" "+p.acc).join(" · "))}">${esc(x.w)} <small>${x.acc}</small></span>`).join(" ")}</div>
+    ${weak.length ? `<p class="sub" style="font-size:12.5px"><b>Sons fracos:</b> ${weak.slice(0,6).map(esc).join("; ")}</p>` : `<p class="sub" style="font-size:12.5px">Nenhum som abaixo de 60. Bom!</p>`}
+    <p class="sub" style="font-size:11.5px">Nota do serviço Azure Speech. Mede os sons, mas é referência, não veredicto sobre o seu sotaque.</p>`;
+}
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
   const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Fechar">✕</button><div style="flex:1"></div></div>`);
   $("button",head).addEventListener("click", () => { if(o.back){ overlay = o.back; render(); scrollTo(0,0); } else close(); }); el.appendChild(head);
   el.appendChild(h(`<div><div class="eyebrow">Pronúncia</div><h1 class="headline" style="margin-top:6px">Meu <span class="script" style="font-size:32px">relatório</span></h1></div>`));
+  const cfg = azCfg();
+  const azs = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Nota por som (Azure)</div>
+    <p class="sub" style="font-size:12.5px">${cfg ? "Ativado ("+esc(cfg.region)+"). Depois de gravar, aparece o botão “Nota por som”. O áudio só vai à Microsoft quando você toca nele." : "Opcional. Com uma chave gratuita do Azure Speech, cada gravação ganha nota por palavra e por som. Passos: no portal.azure.com crie um recurso “Speech” (faixa F0, gratuita, 5 horas por mês), abra “Chaves e Ponto de extremidade” e cole abaixo a Chave 1 e a Região."}</p>
+    ${cfg ? "" : `<input id="azKey" class="in" type="password" placeholder="Chave 1 do Azure Speech" autocomplete="off"><input id="azReg" class="in" placeholder="Região (ex.: brazilsouth, eastus)" autocomplete="off" autocapitalize="off">`}
+    <button class="btn ${cfg?"btn-line":"btn-dark"}" id="azSave">${cfg ? "Remover chave" : "Salvar"}</button>
+    <p class="sub" style="font-size:11.5px">A chave fica só neste aparelho. Italiano: nota por precisão, fluência e completude (prosódia e IPA só existem para inglês).</p></section>`);
+  $("#azSave",azs).addEventListener("click", () => {
+    if(cfg){ try{ localStorage.removeItem("nb-az"); }catch(e){} toast("Chave removida."); render(); return; }
+    const k = $("#azKey",azs).value.trim(), r = $("#azReg",azs).value.trim().toLowerCase().replace(/\s+/g,"");
+    if(!k || !r){ toast("Preencha a chave e a região."); return; }
+    try{ localStorage.setItem("nb-az", JSON.stringify({key:k, region:r})); }catch(e){} toast("Salvo. Grave uma frase e toque em Nota por som."); render();
+  });
+  if(!window.claude) el.appendChild(azs);
   if(!st.n){ el.appendChild(h(`<section class="card"><p class="sub">Ainda não há tentativas. Faça o treino de Pronúncia (gravando ou ditando) e volte aqui: o relatório mostra suas palavras e sons mais difíceis.</p></section>`)); return el; }
   el.appendChild(h(`<div class="metrics card" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="metric"><b>${st.n}</b><span>tentativas</span></div><div class="metric"><b>${st.avg}%</b><span>palavras reconhecidas</span></div><div class="metric"><b>${st.trend===null?"–":(st.trend>0?"+":"")+st.trend}</b><span>tendência (10 últimas)</span></div></div>`));
   const li = (a, f) => a.length ? `<ul class="plan">${a.map(f).join("")}</ul>` : `<p class="sub">Nada recorrente ainda.</p>`;
   el.appendChild(h(`<section class="card"><div class="eyebrow">Palavras que mais falharam</div>${li(st.words, w=>`<li><b>${esc(w[0])}</b> · ${w[1]}x</li>`)}</section>`));
   el.appendChild(h(`<section class="card"><div class="eyebrow">Trocas (esperado → reconhecido)</div>${li(st.subs, w=>`<li>${esc(w[0])} · ${w[1]}x</li>`)}<p class="sub" style="font-size:12px">Mostra o que o navegador entendeu no lugar. Pode ser ruído do microfone, não só pronúncia.</p></section>`));
+  { const az = L().azLog || [];
+    if(az.length){ const c = {}; az.forEach(x => (x.weak||[]).forEach(w => { c[w[0]] = (c[w[0]]||0)+1; }));
+      const top = Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,6), av = Math.round(az.reduce((a,x)=>a+x.acc,0)/az.length);
+      el.appendChild(h(`<section class="card"><div class="eyebrow">Nota por som (Azure)</div><p class="sub">${az.length} avaliações · precisão média ${av}</p>${li(top, w=>`<li>som <b>${esc(w[0])}</b> abaixo de 60 em ${w[1]} avaliações</li>`)}</section>`)); } }
   el.appendChild(h(`<section class="card"><div class="eyebrow">Sons para treinar</div>${li(st.sounds, x=>`<li><b>${esc(x.s)}</b> · ${x.n}x (ex.: ${x.ex.map(esc).join(", ")}). ${esc(x.tip)}</li>`)}</section>`));
   const fb = h(`<button class="btn btn-dark btn-block">🎯 Treinar agora as minhas mais difíceis</button>`); fb.addEventListener("click", () => startPronFocus(true)); el.appendChild(fb);
   const fs = h(`<button class="btn btn-line btn-block">🔁 Colocar as difíceis no treino espaçado</button>`); fs.addEventListener("click", () => { const n = spAdd(pronFocusList()); toast(n ? n+" itens entraram no treino espaçado." : "Já estão no treino espaçado."); }); el.appendChild(fs);
@@ -5056,14 +5128,18 @@ function viewPron(){
         <button class="btn btn-line" id="micCmp" ${o.rec?"":"disabled"}>🔁 Modelo → você</button>
       </div>
       ${o.rec?`<audio controls src="${o.rec}" style="width:100%;margin-top:8px"></audio>`:""}
+      ${o.rec && azCfg() ? `<button class="btn btn-line" id="mmAz2">${o.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
+      ${o.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(o.az)}</div>` : ""}
       ${o.micMsg?`<p class="sub" style="font-size:12.5px">${esc(o.micMsg)}</p>`:""}
     </section>`);
+    const az2 = $("#mmAz2",mic);
+    if(az2) az2.addEventListener("click", async () => { if(o.azBusy) return; o.azBusy = true; o.micMsg = ""; render(); try{ o.az = await azAssess(o.rec, it.t); }catch(e){ o.micMsg = azErrMsg(e); } o.azBusy = false; render(); });
     $("#micGo",mic).addEventListener("click", async () => {
       if(o.recording){ micStop(); return; }
       o.micMsg=""; 
       try{
         const r = await micBegin((url, heard) => {
-          o.recording=false; if(o.rec) URL.revokeObjectURL(o.rec); o.rec=url;
+          o.recording=false; o.az=null; if(o.rec) URL.revokeObjectURL(o.rec); o.rec=url;
           if(heard){ grade(heard); } else { o.micMsg = SR_OK() ? "Gravado. O reconhecimento não captou palavras; ouça e tente de novo." : "Gravado. Ouça e compare com o modelo."; render(); }
         });
         o.recording=true; render();
