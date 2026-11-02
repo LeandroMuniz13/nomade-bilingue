@@ -256,14 +256,23 @@ body.focus main{padding-bottom:32px}
 .filter.on{background:var(--night); color:var(--on-night); border-color:var(--night)}
 .rd-bar{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px}
 .rd-body{display:flex; flex-direction:column; gap:2px; padding:10px 12px}
-.rd-s{display:grid; grid-template-columns:30px minmax(0,1fr); gap:8px; padding:8px 4px; border-radius:12px; align-items:start}
+.rd-body{background:linear-gradient(180deg,var(--surface),var(--accent-mist)); border:1px solid var(--line)}
+.rd-s{display:grid; grid-template-columns:30px minmax(0,1fr); column-gap:8px; row-gap:2px; padding:12px 4px; border-radius:12px; align-items:start; border-bottom:1px solid var(--line)}
+.rd-s:last-child{border-bottom:0}
+.rd-s .rd-btns{grid-column:1; grid-row:1 / span 2}
+.rd-s .rd-pt{grid-column:2; grid-row:1}
+.rd-s .rd-t{grid-column:2; grid-row:2}
+.rd-chips{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.rd-chip{display:inline-flex; gap:6px; align-items:center; padding:7px 13px; border-radius:999px; background:var(--accent-soft); color:var(--accent-ink); font-weight:700; font-size:13.5px}
+.rd-fs{display:flex; gap:8px; align-items:center; font-size:13px; color:var(--ink-dim)}
+.rd-fs button{width:44px; height:38px; border-radius:12px; border:1px solid var(--line); background:var(--surface); font-weight:800; color:var(--ink)}
 .rd-s.now{background:var(--accent-mist)}
 .rd-play{width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--surface); font-size:13px; margin-top:2px}
-.rd-t{font-size:18px; line-height:1.65}
+.rd-t{font-family:Georgia,"Iowan Old Style","Source Serif 4","Times New Roman",serif; font-size:var(--rd-fs,20px); line-height:1.6}
 .rd-t .w{border-radius:6px; padding:2px 1px; cursor:pointer}
-.rd-t .w.sel{background:var(--accent-soft)}
+.rd-t .w.sel{background:var(--accent-soft); box-shadow:0 0 0 2px var(--accent); color:var(--ink)}
 .rd-t .w.saved{border-bottom:2px solid var(--gold)}
-.rd-pt{grid-column:2; font-size:14px; color:var(--ink-dim); line-height:1.5}
+.rd-pt{font-size:calc(var(--rd-fs,20px) - 5px); font-weight:650; color:var(--accent-ink); line-height:1.45}
 .rd-sheet{position:fixed; left:12px; right:12px; bottom:max(12px, env(safe-area-inset-bottom,0px)); max-width:436px; margin:0 auto; background:var(--surface); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); padding:14px 16px; z-index:60; display:flex; flex-direction:column; gap:10px}
 .rd-sh-top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
 .rd-w{font-size:22px; font-weight:800}
@@ -2788,18 +2797,19 @@ function filmCapi(box, id, name, getAB){
   async function start(){
     const [A, B] = getAB(), k = key();
     if(capiCache[k]){ S.data = capiCache[k]; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; S.pi = 0; S.pchk = null; S.pdone = []; draw(); return; }
-    S.ph = "loading"; S.err = ""; draw();
+    S.ph = "loading"; S.err = ""; const my = S.req = (S.req || 0) + 1; draw();
     const prompt = `Você é o Capi, uma capivara que é professor de ${lang} de um brasileiro (nível ${lvl}). Use ${src()}${name ? " (cena: " + name + ")" : ""} e dê uma AULA sobre a cena. Use só o que realmente está nela; se algo não estiver claro, não invente.
 Responda SOMENTE um JSON neste formato:
 {"context":"2 frases em português dizendo quem fala e o que acontece, sem inventar","lines":[{"t":"fala curta em ${lang}, fiel ao áudio, até 14 palavras","pt":"tradução natural","note":"1 frase em português: o que a fala quer dizer de verdade, gíria ou pronúncia"}],"questions":[{"q":"pergunta em português sobre o que foi DITO ou entendido","opts":["opção A","opção B","opção C"],"a":0,"why":"explicação em português que cita a fala certa"}],"expressions":[{"t":"expressão em ${lang}","pt":"significado"}],"tip":"1 dica em português de entonação ou pronúncia desta cena"}
 Regras: 5 a 7 itens em lines (as falas mais úteis, em ordem); exatamente 4 questions com 3 opções e o índice "a" correto (varie a posição); 3 expressions; tudo em português, exceto os campos "t".`;
     try{
       const d = await capiAsk(id, A, B, prompt, 2600, S.tr);
+      if(my !== S.req) return;
       const lines = (d.lines || []).filter(x => x && x.t).slice(0, 8), qs = (d.questions || []).filter(q => q && q.q && Array.isArray(q.opts) && q.opts.length >= 2 && Number.isInteger(q.a) && q.a >= 0 && q.a < q.opts.length).slice(0, 5);
       if(!lines.length || !qs.length) throw new Error("shape");
       S.data = {context:String(d.context || ""), lines, questions:qs, expressions:(d.expressions || []).filter(x => x && x.t).slice(0, 4), tip:String(d.tip || "")};
       capiCache[k] = S.data; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; S.pi = 0; S.pchk = null; S.pdone = [];
-    }catch(e){ if(S.cancel){ S.cancel = false; return; } S.ph = "err"; const m = e && e.message; S.err = m === "shape" ? "O Capi não conseguiu montar a aula com este vídeo. Tente outro trecho ou outra cena." : m === "timeout" ? "O Gemini demorou demais para responder (mais de 2 minutos). Tente de novo, escolha um trecho mais curto marcando início e fim, ou use a transcrição." : (e instanceof TypeError || /load failed|failed to fetch|network/i.test(m||"")) ? "A conexão com o Gemini caiu antes da resposta (" + m + "). Isso costuma acontecer quando o vídeo é pesado ou o sinal oscila. Tente de novo; se repetir, marque um trecho curto (Início/Fim) ou use a transcrição." : m === "json" ? "O Gemini respondeu, mas a resposta veio cortada. Tente de novo." : (m === "http400" || m === "http403" || (m && /^http\d+$/.test(m))) ? "O Gemini recusou este pedido (" + m.replace("http", "erro ") + "). Pode ser que ele não consiga abrir este vídeo. Tente outra cena ou a transcrição." + (e.detail ? " Detalhe: " + e.detail : "") : gmErrMsg(e); }
+    }catch(e){ if(my !== S.req) return; S.ph = "err"; const m = e && e.message; S.err = m === "shape" ? "O Capi não conseguiu montar a aula com este vídeo. Tente outro trecho ou outra cena." : m === "timeout" ? "O Gemini demorou demais para responder (mais de 2 minutos). Tente de novo, escolha um trecho mais curto marcando início e fim, ou use a transcrição." : (e instanceof TypeError || /load failed|failed to fetch|network/i.test(m||"")) ? "A conexão com o Gemini caiu antes da resposta (" + m + "). Isso costuma acontecer quando o vídeo é pesado ou o sinal oscila. Tente de novo; se repetir, marque um trecho curto (Início/Fim) ou use a transcrição." : m === "json" ? "O Gemini respondeu, mas a resposta veio cortada. Tente de novo." : (m === "http400" || m === "http403" || (m && /^http\d+$/.test(m))) ? "O Gemini recusou este pedido (" + m.replace("http", "erro ") + "). Pode ser que ele não consiga abrir este vídeo. Tente outra cena ou a transcrição." + (e.detail ? " Detalhe: " + e.detail : "") : gmErrMsg(e); }
     draw();
   }
   async function correct(){
@@ -2858,7 +2868,7 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     box.innerHTML = `<div class="card" style="display:flex;flex-direction:column;gap:12px">${h2}</div>`;
     const g = $("#cpGo", box); if(g) g.addEventListener("click", start);
     clearInterval(S.tmr); const el0 = $("#cpEl", box); if(el0){ const t0 = Date.now(); S.tmr = setInterval(() => { const e2 = $("#cpEl", box); if(!e2 || S.ph !== "loading"){ clearInterval(S.tmr); return; } e2.textContent = Math.round((Date.now() - t0) / 1000); }, 1000); }
-    const cc = $("#cpCancel", box); if(cc) cc.addEventListener("click", () => { S.cancel = true; S.ph = "idle"; draw(); });
+    const cc = $("#cpCancel", box); if(cc) cc.addEventListener("click", () => { S.req = (S.req || 0) + 1; S.ph = "idle"; draw(); });
     const gt = $("#cpGoTr", box); if(gt) gt.addEventListener("click", () => { const v = $("#cpTr", box).value.trim(); if(v.length < 40){ S.err = "Cole um trecho maior da transcrição (pelo menos uma ou duas falas)."; draw(); return; } S.tr = v; S.err = ""; start(); });
     const ck = $("#cpKey", box); if(ck) ck.appendChild(gmKeyCard(() => draw()));
     $$(".cp-o", box).forEach(b => b.addEventListener("click", () => { const q = S.data.questions[S.qi]; S.pick = +b.dataset.o; if(S.pick === q.a) S.score++; draw(); }));
@@ -3355,7 +3365,8 @@ function buildSession(u, extra){
   const ks = Object.keys(seen); if(ks.length>2500) ks.slice(0,1000).forEach(k => delete seen[k]);
   return shuffle(picked);
 }
-const gmJson = raw => {
+const gmJson = raw => { try{ return gmJson0(raw); }catch(e){ throw (e instanceof SyntaxError) ? new Error("json") : e; } };
+const gmJson0 = raw => {
   const t = String(raw).replace(/```(?:json)?/gi,"");
   const st = t.search(/[{[]/); if(st < 0) throw new Error("json");
   const open = t[st], close = open==="{" ? "}" : "]"; let d = 0, ins = false, esc2 = false;
@@ -4894,7 +4905,12 @@ function viewStory(){
   $("button",hd).addEventListener("click", back); el.appendChild(hd);
   const bar = h(`<div class="rd-bar"><button class="btn btn-line" id="rdTr">${o.tr?"Ocultar português":"Mostrar português"}</button><button class="btn btn-line" id="rdAll">▶ Ouvir tudo</button></div>`);
   if(st.book && bookArt(st.id)) el.appendChild(h(`<div class="book-art tall" style="background-image:${bookArt(st.id)}"></div>`));
+  el.appendChild(h(`<div class="rd-chips"><span class="rd-chip">📖 Leia</span><span class="rd-chip">🎧 Ouça</span><span class="rd-chip">🌐 Traduza</span></div>`));
   el.appendChild(bar);
+  const fsz = h(`<div class="rd-fs"><span>Tamanho do texto</span><button id="rdFm" aria-label="Diminuir letra">A−</button><button id="rdFp" aria-label="Aumentar letra">A+</button></div>`);
+  const setFs = n => { state.rdFs = Math.max(16, Math.min(30, n)); persist(); el.style.setProperty("--rd-fs", state.rdFs + "px"); };
+  $("#rdFm",fsz).addEventListener("click", () => setFs((state.rdFs||20) - 2)); $("#rdFp",fsz).addEventListener("click", () => setFs((state.rdFs||20) + 2));
+  el.style.setProperty("--rd-fs", (state.rdFs||20) + "px"); el.appendChild(fsz);
   if(!st.own) el.appendChild(h(`<section class="soft rd-cover"><div class="eyebrow">${st.book?"Do livro":"Antes de ler"}</div><p style="margin-top:4px;line-height:1.5">${st.book?esc(st.book.why):"Cena: <b>"+esc(st.topic||st.title)+"</b>. Leia tocando nas palavras que não conhece. Cada uma tem o significado e vai para o Anki com a frase."}</p></section>`));
   const auto = h(`<label class="rd-auto"><input type="checkbox" ${state.rdAuto?"checked":""}> <span>Palavras que eu tocar vão direto para o Anki</span></label>`);
   $("input",auto).addEventListener("change", e => { state.rdAuto = e.target.checked; persist(); });
@@ -5913,7 +5929,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v97";
+const APP_VER = "v99";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
