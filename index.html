@@ -4743,7 +4743,7 @@ function askAI(){
         if(lastMe && !lastMe.score && (sc.n>0 || sc.ok>0 || sc.err>0)) lastMe.score = sc;
       }
       o.msgs.push({role:"them", text:txt}); o.busy=false; render();
-      if(state.capiVoice !== false){ const fl = txt.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim())); if(fl){ capiSay(fl, {onState:v => { const el = document.getElementById("capiAv"); if(el) el.classList.toggle("talk", !!v); }}); } }
+      if(state.capiVoice !== false){ const fl = txt.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim())); if(fl){ capiSpeak(fl, {onState:v => { const el = document.getElementById("capiAv"); if(el) el.classList.toggle("talk", !!v); }}); } }
     });
   }).catch(err => {
     if(overlay!==o) return;
@@ -4793,7 +4793,7 @@ async function gmTtsFetch(text, style, voice){
   }
   throw lastE || new Error("noaudio");
 }
-async function capiSay(text, opt){
+async function capiSpeak(text, opt){
   opt = opt || {}; text = String(text||"").replace(/^["“]|["”]$/g,"").trim(); if(!text) return false;
   try{ stopAudio(); seqToken++; }catch(e){}
   if(!gmKey() || !navigator.onLine){ speak(text); return false; }
@@ -4930,7 +4930,7 @@ function viewScene(){
   const last = [...o.msgs].reverse().find(m=>m.role==="them");
   if(last){
     const firstLine = last.text.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim()));
-    if(firstLine){ const b=h(`<button class="link" style="align-self:flex-start">🔊 Ouvir a última fala</button>`); b.addEventListener("click",()=>capiSay(firstLine, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }})); el.appendChild(b); }
+    if(firstLine){ const b=h(`<button class="link" style="align-self:flex-start">🔊 Ouvir a última fala</button>`); b.addEventListener("click",()=>capiSpeak(firstLine, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }})); el.appendChild(b); }
   }
   if(!o.busy && o.msgs.some(m => m.role==="me")){
     const eb = h(`<button class="btn btn-line btn-block" id="endBtn">📋 Finalizar aula e ver resumo</button>`);
@@ -4959,7 +4959,7 @@ function viewScene(){
     pn.open = !!o.setOpen; pn.addEventListener("toggle", () => { o.setOpen = pn.open; });
     pn.querySelectorAll("[data-tone]").forEach(b => b.addEventListener("click", () => { state.capiTone = +b.dataset.tone; persist(); render(); }));
     pn.querySelectorAll("[data-voice]").forEach(b => b.addEventListener("click", () => { state.capiVoiceName = b.dataset.voice; persist(); o.setOpen = true; render(); }));
-    $("#csTest", pn).addEventListener("click", async () => { const m = $("#csMsg", pn); m.textContent = "Gerando a voz…"; const smp = {en:"Oh, come on! That was so close. Try it again, I know you can do it!", it:"Dai, ci sei quasi! Riprova, so che ce la fai!"}[state.lang] || "Hello!"; const ok = await capiSay(smp, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }}); m.textContent = ok ? "Tocando a voz do Gemini." : (gmKey() ? "Não consegui a voz do Gemini ("+capiTtsErr+"). Toquei a voz do aparelho." : "Sem chave: toquei a voz do aparelho."); });
+    $("#csTest", pn).addEventListener("click", async () => { const m = $("#csMsg", pn); m.textContent = "Gerando a voz…"; const smp = {en:"Oh, come on! That was so close. Try it again, I know you can do it!", it:"Dai, ci sei quasi! Riprova, so che ce la fai!"}[state.lang] || "Hello!"; const ok = await capiSpeak(smp, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }}); m.textContent = ok ? "Tocando a voz do Gemini." : (gmKey() ? "Não consegui a voz do Gemini ("+capiTtsErr+"). Toquei a voz do aparelho." : "Sem chave: toquei a voz do aparelho."); });
     el.appendChild(pn);
   }
   { const vb = h(`<button class="link" style="align-self:flex-start">${state.capiVoice===false?"🔇 Capi em silêncio":"🔊 Capi fala as respostas"} · tocar para ${state.capiVoice===false?"ligar":"desligar"}</button>`); vb.addEventListener("click", () => { state.capiVoice = state.capiVoice===false; if(state.capiVoice===false){ try{ stopAudio(); }catch(e){} } persist(); render(); }); el.appendChild(vb); }
@@ -6142,7 +6142,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v107";
+const APP_VER = "v108";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
