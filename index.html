@@ -1480,7 +1480,7 @@ let menuOpen = false;
 let trailFilter = "all";
 
 let hubReturn = null;
-function go(t){ tab=t; overlay=null; menuOpen=false; hubReturn=null; render(); scrollTo(0,0); }
+function go(t){ try{ if(overlay && overlay.conv) convStop(overlay, ""); else micShutdown(); }catch(e){} tab=t; overlay=null; menuOpen=false; hubReturn=null; render(); scrollTo(0,0); }
 let planRun = null;
 function open(o){ overlay=o; menuOpen=false; render(); scrollTo(0,0); }
 function close(){
@@ -1518,6 +1518,7 @@ function a11yPass(){
   }catch(e){}
 }
 function render(){
+  try{ if(!overlay && micS && ((micS.keep && micS.keep.active) || (micS.mr && micS.mr.state==="recording"))) micShutdown(); }catch(e){}
   if(podAu && !(overlay && overlay.type==="podp")) podStop();
   applyAppearance();
   const view = $("#view");
@@ -2716,9 +2717,7 @@ function viewCinema(){
     };
     $("#sP", bar).addEventListener("click", async () => {
       if(running){ stopAll(); running = false; micStop(); micKeep(false); $("#sP", bar).textContent = "▶ Começar"; setS("Parado"); return; }
-      o.recs = []; if(o.useMic && micOK()){ if(!gmKey() && !(window.claude && window.claude.use)){ o.vmsg = "Para conversar por voz, cole a chave do Gemini no cartão de chave desta tela."; render(); return; }
-  if(!navigator.onLine){ o.vmsg = "Sem internet: a conversa por voz precisa de conexão."; render(); return; }
-  if(!(await micKeep(true))){ o.useMic = false; toast(micErrMsg(micS.err)); } }
+      o.recs = []; if(o.useMic && micOK()){ if(!(await micKeep(true))){ o.useMic = false; toast(micErrMsg(micS.err)); } }
       stopAll(); const tok = ++cineTok; running = true; $("#sP", bar).textContent = "⏸ Parar";
       for(let i = 0; i < sc.lines.length && tok === cineTok; i++){
         const l = sc.lines[i], chs = l.ch && l.ch.length ? l.ch : [l.t];
@@ -4849,6 +4848,8 @@ async function convStart(o){
   if(o.conv) return;
   try{ stopAudio(); seqToken++; }catch(e){}
   o.vmsg = "";
+  if(!gmKey() && !(window.claude && window.claude.use)){ o.vmsg = "Para conversar por voz, cole a chave do Gemini no cartão de chave desta tela."; render(); return; }
+  if(!navigator.onLine){ o.vmsg = "Sem internet: a conversa por voz precisa de conexão."; render(); return; }
   if(!(await micKeep(true))){ o.vmsg = micErrMsg(micS.err); render(); return; }
   o.conv = true; o.empty = 0; o.cs = "listen"; convListen(o);
 }
@@ -6233,7 +6234,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v120";
+const APP_VER = "v121";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6452,11 +6453,15 @@ function micMini(target, st, key, onNext){
     const fin = () => { if(iv){ clearInterval(iv); iv = null; } if(lv){ lv.close(); lv = null; } };
     try{
       await micBegin((url, heard) => {
-        fin(); m.on = false; m.az = null; m.coach = null; if(m.url) URL.revokeObjectURL(m.url); m.url = url; m.heard = heard;
+        fin(); m.on = false; m.az = null; m.coach = null; if(m.url) URL.revokeObjectURL(m.url); m.url = url; m.heard = heard; m.result = null;
+        const finish = (heard) => { m.heard = heard;
         if(heard){ m.result = scoreSpeech(target, heard); addXp(m.result.pct>=80?2:1); if(m.result.pct>=85){ (L().spk = L().spk || {})[target] = {p:m.result.pct, ts:Date.now()}; persist(); } m.result.pct>=80 ? sfx.right() : sfx.wrong();
           const lg = L(); (lg.pronLog = lg.pronLog || []).push({t:target, h:heard, p:m.result.pct, m:m.result.missed, ts:Date.now()}); if(lg.pronLog.length>300) lg.pronLog.splice(0, lg.pronLog.length-300); }
         else m.msg = SR_OK() ? "Gravado, mas o reconhecimento não captou palavras. Ouça e tente de novo." : "Gravado. Ouça e compare com o modelo.";
         if(m.noVoice && !heard){ m.msg = "Não ouvi sua voz. Toque em Falar e tente de novo."; render(); } else { render(); if(document.getElementById("mmGo") && !(m.result && m.result.pct>=90)) runCoach(); }
+        };
+        if(heard || m.noVoice || !gmKey() || !navigator.onLine) finish(heard);
+        else { m.msg = "Ouvindo o que você falou…"; m.tx = true; render(); voiceToText(url, "").then(t => { m.tx = false; m.msg = ""; finish(t); }).catch(() => { m.tx = false; m.msg = ""; finish(""); }); }
       });
       m.on = true; render();
       /* para sozinho: silêncio depois da fala, ou 9 s sem falar */
