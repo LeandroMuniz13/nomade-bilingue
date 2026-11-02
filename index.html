@@ -6156,7 +6156,32 @@ function viewAbooks(){
     el.appendChild(vozPlayer(o, vozAud, {plain:true}));
     el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap);text-align:center">${esc(HV.credit)}</p>`));
   }
+  el.appendChild(bookTips());
   return el;
+}
+const BOOKTIPS = {
+  en:{intro:"Clássicos em domínio público: texto grátis no Project Gutenberg e, quase sempre, áudio no LibriVox. Comece pelos mais fáceis de ler em pedaços.", groups:[
+    {g:"Para começar (histórias curtas ou ritmo rápido)", b:[["The Adventures of Sherlock Holmes","Conan Doyle","Contos curtos, um por sessão. Ótimo para conversa e vocabulário de dia a dia."],["Alice's Adventures in Wonderland","Lewis Carroll","Frases curtas e muito diálogo. Divertido para vocabulário."],["The Time Machine","H. G. Wells","Livro curto, narrativa direta."],["Treasure Island","R. L. Stevenson","Aventura que prende; bom para leitura contínua."]]},
+    {g:"Quando já estiver confortável", b:[["Pride and Prejudice","Jane Austen","Diálogos elegantes, excelente para aprender como as pessoas conversam."],["Jane Eyre","Charlotte Brontë","Narrada em primeira pessoa, bom para pensar em inglês."],["Little Women","Louisa May Alcott","Vida cotidiana e conversas em família."],["Around the World in 80 Days","Júlio Verne (tradução)","Capítulos curtos e cheios de ação."]]},
+    {g:"Desafio", b:[["Frankenstein","Mary Shelley","Prosa densa, bom para treinar leitura longa."],["Dracula","Bram Stoker","Formato de diários e cartas; ótimo para ouvir em áudio."],["The Picture of Dorian Gray","Oscar Wilde","Frases de efeito e vocabulário rico."],["Great Expectations","Charles Dickens","Inglês do século 19; deixe para depois."]]}
+  ], note:"Livros modernos que muita gente indica, como O Pequeno Príncipe, A Revolução dos Bichos e O Sol é para Todos, ainda têm direitos autorais. Procure edições adaptadas por nível (graded readers)."},
+  it:{intro:"Clássicos em domínio público: texto grátis no Progetto Manuzio/Wikisource e áudio no LibriVox.", groups:[
+    {g:"Para começar", b:[["Le avventure di Pinocchio","Carlo Collodi","Capítulos curtos e linguagem simples. Há áudio no app."],["Cuore","Edmondo De Amicis","Episódios curtos do cotidiano escolar."],["Favole","La Fontaine (tradução)","Fábulas de um minuto, ideais para ouvir."]]},
+    {g:"Desafio", b:[["I promessi sposi","Alessandro Manzoni","Clássico longo; leia só os primeiros capítulos."],["Il fu Mattia Pascal","Luigi Pirandello","Narrativa em primeira pessoa e vocabulário mais rico."]]}
+  ], note:""}
+};
+function bookTips(){
+  const T = BOOKTIPS[state.lang]; const w = h(`<div style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>`);
+  if(!T) return w;
+  w.appendChild(h(`<div class="sec-head"><h2>Dicas de livros</h2></div>`));
+  w.appendChild(h(`<p class="sub">${esc(T.intro)}</p>`));
+  const src = state.lang === "en" ? q => "https://www.gutenberg.org/ebooks/search/?query=" + encodeURIComponent(q) : q => "https://it.wikisource.org/w/index.php?search=" + encodeURIComponent(q);
+  T.groups.forEach(gr => {
+    w.appendChild(h(`<div class="eyebrow" style="margin-top:6px">${esc(gr.g)}</div>`));
+    gr.b.forEach(b => w.appendChild(h(`<section class="card"><b>${esc(b[0])}</b><div class="sub" style="font-size:var(--fs-cap)">${esc(b[1])}</div><p class="sub" style="margin-top:6px">${esc(b[2])}</p><a class="link" href="${src(b[0])}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px">Abrir texto grátis</a></section>`)));
+  });
+  if(T.note) w.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">${esc(T.note)}</p>`));
+  return w;
 }
 /* ---------- Forca ---------- */
 function startForca(){
@@ -6305,7 +6330,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v124";
+const APP_VER = "v125";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
