@@ -146,6 +146,18 @@ body.focus main{padding-bottom:32px}
 .lang-btn .flag{width:26px; height:26px; border-radius:50%; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:15px}
 .lang-btn .chev{color:var(--ink-faint); font-size:11px}
 .chips{display:flex; gap:6px}
+.chip{border:0; cursor:pointer; font-family:inherit}
+.chip-lv{font-size:10.5px; font-weight:700; opacity:.72; margin-left:2px; white-space:nowrap}
+.xp-pop{position:fixed; z-index:99999; transform:translateX(-50%); background:var(--navy,#1F2547); color:#fff; font-weight:800; font-size:13px; padding:4px 10px; border-radius:999px; pointer-events:none; animation:xpup 1.2s ease-out forwards}
+@keyframes xpup{0%{opacity:0; transform:translate(-50%,0)}15%{opacity:1}100%{opacity:0; transform:translate(-50%,-26px)}}
+@media (prefers-reduced-motion:reduce){.xp-pop{animation:none; opacity:1}}
+.pg-dots{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+.pg-dot{width:18px; height:18px; border-radius:6px; background:var(--line,#e6dfcf)}
+.pg-dot.part{background:#bfd8c4}.pg-dot.full{background:#3f7a52}.pg-dot.today{outline:2px solid var(--accent,#5b63b0); outline-offset:1px}
+.ach-list{display:flex; flex-direction:column; gap:10px; margin-top:8px}
+.ach{display:flex; gap:12px; align-items:center; opacity:.62}.ach.on{opacity:1}
+.ach-ring{flex:0 0 44px; height:44px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:12px; border:3px solid var(--line,#e6dfcf); color:var(--ink-2,#555)}
+.ach.on .ach-ring{border-color:#c9962b; background:#fbf1d6; color:#7a5a12; font-size:18px}
 .chip{display:flex; align-items:center; gap:5px; border-radius:999px; padding:6px 10px; font-size:12.5px; font-weight:700}
 .chip svg{width:14px; height:14px}
 .chip.streak{background:var(--gold-soft); color:var(--gold-ink)}
@@ -1032,6 +1044,7 @@ function ensureDay(){
   return L().day;
 }
 function addXp(n){
+  const lv0 = XP_LV(state.xp);
   state.xp += n;
   const t = today();
   state.daily[t] = (state.daily[t]||0) + n;
@@ -1042,7 +1055,10 @@ function addXp(n){
     else state.streak = 1;
     state.lastStudyDate = t;
   }
+  state.best = Math.max(state.best||0, state.streak||0);
   persist();
+  xpPop(n); achCheck();
+  const lv1 = XP_LV(state.xp); if(lv1 > lv0) setTimeout(() => { try{ sfx.right(); }catch(e){} toast("⭐ Nível "+lv1+": "+lvName(lv1)+"!"); }, 900);
 }
 function userLevel(){ return (L().placement && L().placement.level) || "A1"; }
 function typedDiff(target, v){
@@ -1050,6 +1066,53 @@ function typedDiff(target, v){
   const tw = nz(target), vw = nz(v), tset = new Set(tw), vset = new Set(vw);
   const raw = String(v||"").trim().split(/\s+/).filter(Boolean);
   return `<div><div class="eyebrow">Você escreveu</div><div class="words">${raw.length ? raw.map(w => { const k = nz(w)[0]; return `<span class="${k && tset.has(k) ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ") : `<span class="miss">(nada)</span>`}</div></div><div><div class="eyebrow">Esperado</div><div class="words">${String(target||"").trim().split(/\s+/).filter(Boolean).map(w => { const k = nz(w)[0]; return `<span class="${k && vset.has(k) ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ")}</div></div>`;
+}
+/* ---- nível, conquistas e tela de progresso (gamificação) ---- */
+const XP_LV = x => Math.floor(Math.sqrt(Math.max(0, x)/25)) + 1;
+const XP_AT = n => 25*(n-1)*(n-1);
+const LV_NAMES = ["Recém-chegado","Aprendiz","Explorador","Conversador","Viajante","Embaixador","Fluente","Mestre","Lenda"];
+const lvName = n => n <= LV_NAMES.length ? LV_NAMES[n-1] : "Lenda "+(n-LV_NAMES.length+1);
+function achList(){
+  const lgs = Object.values(state.langs||{}), lessons = lgs.reduce((a,l) => a + Object.keys(l.done||{}).length, 0), spk = lgs.reduce((a,l) => a + Object.keys(l.spk||{}).length, 0);
+  const days = Object.keys(state.daily||{}).filter(d => state.daily[d] > 0).length, best = Math.max(state.best||0, state.streak||0), xp = state.xp||0;
+  const A = (id, t, d, cur, goal) => ({id, t, d, cur: Math.min(cur, goal), goal, ok: cur >= goal});
+  return [
+    A("l1","Primeira lição","Conclua uma lição.",lessons,1), A("l10","Dez lições","Conclua 10 lições.",lessons,10), A("l25","Vinte e cinco lições","Conclua 25 lições.",lessons,25),
+    A("s3","Ofensiva de 3 dias","Estude 3 dias seguidos.",best,3), A("s7","Ofensiva de 7 dias","Estude 7 dias seguidos.",best,7), A("s30","Ofensiva de 30 dias","Estude 30 dias seguidos.",best,30),
+    A("x100","100 XP","Some 100 XP.",xp,100), A("x500","500 XP","Some 500 XP.",xp,500), A("x1000","1.000 XP","Some 1.000 XP.",xp,1000), A("x2500","2.500 XP","Some 2.500 XP.",xp,2500),
+    A("p5","Boa pronúncia","Fale bem 5 frases (85% ou mais).",spk,5), A("p25","Voz afinada","Fale bem 25 frases.",spk,25),
+    A("d7","Sete dias de estudo","Estude em 7 dias diferentes.",days,7), A("d30","Trinta dias de estudo","Estude em 30 dias diferentes.",days,30)
+  ];
+}
+function achCheck(){
+  try{
+    const got = state.ach = state.ach || {}, t = today(); let first = !Object.keys(got).length;
+    achList().forEach(a => { if(a.ok && !got[a.id]){ got[a.id] = t; if(!first) setTimeout(() => { try{ sfx.right(); }catch(e){} toast("🏅 Conquista: "+a.t); }, 1400); } });
+  }catch(e){}
+}
+function xpPop(n){
+  try{
+    const c = document.querySelector(".chip.xp"); if(!c || !(n > 0)) return;
+    const r = c.getBoundingClientRect(), d = document.createElement("div"); d.className = "xp-pop"; d.textContent = "+"+n+" XP";
+    d.style.left = Math.round(r.left + r.width/2) + "px"; d.style.top = Math.round(r.bottom) + "px"; document.body.appendChild(d); setTimeout(() => d.remove(), 1300);
+  }catch(e){}
+}
+function viewProgress(){
+  const el = h(`<div class="screen"></div>`), lv = XP_LV(state.xp), a0 = XP_AT(lv), a1 = XP_AT(lv+1), pct = Math.round((state.xp-a0)/(a1-a0)*100);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Fechar">✕</button><div style="flex:1"></div></div>`); $("button",head).addEventListener("click", close); el.appendChild(head);
+  el.appendChild(h(`<section class="soft" style="text-align:center"><div style="display:grid;place-items:center">${capi("cheer",96)}</div><div class="eyebrow">Nível ${lv}</div><h1 class="headline" style="margin-top:4px">${esc(lvName(lv))}</h1>
+    <div class="m-bar" style="margin:10px 0 6px"><i style="width:${pct}%"></i></div><p class="sub">${state.xp} XP no total · faltam <b>${a1-state.xp}</b> para o Nível ${lv+1}</p></section>`));
+  el.appendChild(h(`<section class="card"><div class="eyebrow">O que é XP?</div><p class="sub" style="margin-top:6px">XP são pontos de experiência. Você ganha de 1 a 5 XP a cada atividade: concluir lição, acertar exercício, falar uma frase bem ou conversar com o Capi. Eles medem sua constância e sobem seu nível. Não são nota e nunca diminuem.</p></section>`));
+  const t = today(), dayXp = state.daily[t]||0, gp = Math.min(100, Math.round(dayXp/state.goal*100)), fz = frzSync(), sh = streakShown();
+  const dots = []; for(let i=13;i>=0;i--){ const d = new Date(); d.setDate(d.getDate()-i); const v = state.daily[dayKey(d)]||0; dots.push(`<span class="pg-dot ${v>=state.goal?"full":v>0?"part":""} ${i===0?"today":""}" title="${dayKey(d)}: ${v} XP"></span>`); }
+  el.appendChild(h(`<section class="card"><div class="eyebrow">Ofensiva</div><div class="score-big" style="margin-top:4px"><b>${sh}</b><span class="sub">${sh===1?"dia seguido":"dias seguidos"} · recorde ${Math.max(state.best||0, state.streak||0)}</span></div>
+    <div class="pg-dots">${dots.join("")}</div><p class="sub" style="font-size:var(--fs-cap);margin-top:6px">Últimos 14 dias. Verde cheio: meta batida. Verde claro: estudou, mas abaixo da meta. Você tem ${fz.n} ${fz.n===1?"congelamento":"congelamentos"} esta semana: ele cobre 1 dia sem estudo e mantém a ofensiva.</p></section>`));
+  el.appendChild(h(`<section class="card"><div class="eyebrow">Meta de hoje</div><div class="m-bar" style="margin:8px 0 6px"><i style="width:${gp}%"></i></div><p class="sub">${dayXp} de ${state.goal} XP${dayXp>=state.goal?" · meta batida!":" · faltam "+(state.goal-dayXp)}</p></section>`));
+  const al = achList(), got = al.filter(a => a.ok).length;
+  const box = h(`<section class="card"><div class="sec-head"><h2>Conquistas</h2><span class="chip xp">${got} de ${al.length}</span></div><div class="ach-list"></div></section>`);
+  al.forEach(a => $(".ach-list", box).appendChild(h(`<div class="ach ${a.ok?"on":""}"><div class="ach-ring">${a.ok?"✓":Math.round(a.cur/a.goal*100)+"%"}</div><div style="min-width:0"><b>${esc(a.t)}</b><div class="sub" style="font-size:var(--fs-cap)">${esc(a.d)}${a.ok?"":" ("+a.cur+" de "+a.goal+")"}</div></div></div>`)));
+  el.appendChild(box);
+  return el;
 }
 function recommendedUnit(){
   const lv = LEVEL_ORDER[userLevel()];
@@ -1534,7 +1597,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks};
+    const map = {progress:viewProgress, lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -1555,10 +1618,12 @@ function renderTop(){
     </div>
     <div class="chips">
       <button class="me-btn" id="srBtn" aria-label="Buscar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></button>
-      <span class="chip streak" title="Dias seguidos">${ICON.flame}${streakShown()}</span>
-      <span class="chip xp" title="XP total">${ICON.star}${state.xp}</span>
+      <button class="chip streak" id="chipS" title="Ofensiva: dias seguidos estudando" aria-label="Ofensiva: ${streakShown()} dias. Abrir progresso">${ICON.flame}${streakShown()}</button>
+      <button class="chip xp" id="chipX" title="XP total e nível" aria-label="${state.xp} XP, nível ${XP_LV(state.xp)}. Abrir progresso">${ICON.star}${state.xp}<small class="chip-lv">XP · Nv ${XP_LV(state.xp)}</small></button>
       <button class="me-btn" id="meBtn" aria-label="Seu progresso e ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></svg></button>
     </div>`;
+  $("#chipS").addEventListener("click", () => open({type:"progress"}));
+  $("#chipX").addEventListener("click", () => open({type:"progress"}));
   $("#meBtn").addEventListener("click", () => go("you"));
   $("#srBtn").addEventListener("click", () => open({type:"search", q:""}));
   $("#langBtn").addEventListener("click", e => { e.stopPropagation(); menuOpen=!menuOpen; renderTop(); });
@@ -6240,7 +6305,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v123";
+const APP_VER = "v124";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
