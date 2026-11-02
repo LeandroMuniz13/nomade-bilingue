@@ -470,7 +470,7 @@ ul.plan{margin:10px 0 0; padding-left:18px; display:flex; flex-direction:column;
 .six-t{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--line);background:var(--six-bg,var(--surface));border-radius:20px;padding:14px;min-height:128px}
 .six-ic{font-size:38px;line-height:1;margin-bottom:6px}
 .six-t b{font-size:16px}
-.six-t small{font-size:12.5px;color:var(--ink-dim);line-height:1.3}
+.six-t small{font-size:13px;color:var(--ink-dim);line-height:1.3}
 .fc-word{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
 .fc-word span{width:30px;height:40px;border-bottom:3px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
 .fc-word span.lost{color:var(--bad,#B4443A)}
@@ -1573,7 +1573,7 @@ function viewOnboard(){
       <p class="sub" style="margin-top:4px">Escolha um idioma para começar. Dá para trocar quando quiser, e cada um guarda o próprio progresso.</p>
       <div class="hero-grid">
         <div style="display:flex;flex-direction:column;gap:16px;padding-left:4px">
-          ${[["2","idiomas: inglês e italiano"],["10 min","por dia já bastam"],["A1 → B1","do zero à conversa"]].map(([n,t])=>`<div><div style="font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1">${n}</div><div class="sub" style="font-size:12.5px;margin-top:2px">${t}</div></div>`).join("")}
+          ${[["2","idiomas: inglês e italiano"],["5–10 min","por lição, no seu ritmo"],["Situações","reais do dia a dia"]].map(([n,t])=>`<div><div style="font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1">${n}</div><div class="sub" style="font-size:12.5px;margin-top:2px">${t}</div></div>`).join("")}
         </div>
         <div class="scene" style="display:grid;place-items:center">${capi("hi",150)}<div class="quote script">oi, eu sou o Capi!</div></div>
       </div>
@@ -2789,7 +2789,7 @@ function viewHome(){
     </div>
     <div class="next-card">
       <div style="min-width:0"><div class="eyebrow">${step.k} · ${step.min}</div><div class="nc-t">${esc(step.t)}</div><div class="sub" style="font-size:13px">${esc(step.s)}</div></div>
-      <button class="btn btn-dark nc-go" id="goNext">${first ? "Começar" : "Continuar"} <span class="arr">→</span></button>
+      <button class="btn btn-dark nc-go" id="goNext">${first ? "Começar lição de 5 min" : "Continuar"} <span class="arr">→</span></button>
     </div>
   </section>`);
   $("#goNext",hero).addEventListener("click", () => journeyGo(j));
@@ -5355,7 +5355,7 @@ function viewVozes(){
     el.appendChild(sp);
     const txt = h(`<section class="card vz-txt"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="eyebrow">O que a pessoa está dizendo</div><button class="link" data-a="pt">${o.pt?"Ocultar":"Mostrar"} tradução</button></div>
       <div class="vz-lines">${VOZ_CHUNKS.map((c,k) => `<button class="vz-line" data-k="${k}"><span class="vz-en">${vozGlossHtml(c[0])}</span>${o.pt ? `<span class="vz-pt">${esc(c[1])}</span>` : ""}</button>`).join("")}</div>
-      <p class="sub" style="font-size:11.5px;margin-top:8px">Toque numa frase para ouvir só ela. Toque numa palavra sublinhada para ver o significado. O destaque acompanha o áudio de forma aproximada.</p><div class="vz-gl" aria-live="polite"></div></section>`);
+      <p class="sub" style="font-size:11.5px;margin-top:8px">Toque numa frase para ouvir só ela. Toque numa palavra sublinhada para ver o significado. O destaque é aproximado: as gravações não trazem a marcação exata de cada frase.</p><div class="vz-gl" aria-live="polite"></div></section>`);
     const lines = [...txt.querySelectorAll(".vz-line")], gl = $(".vz-gl", txt);
     $('[data-a="pt"]', txt).addEventListener("click", () => { o.pt = !o.pt; render(); });
     lines.forEach(b => b.addEventListener("click", ev => {
@@ -5412,17 +5412,17 @@ function viewVoicesTab(el){
 function sixWays(){
   const sst = srsStats();
   return [
-    {k:"film", ic:"🎬", bg:"var(--tint-1)", t:"Filmes e séries", s:"Cenas reais com legenda", act:() => { newsSub = "videos"; go("news"); }},
-    {k:"books", ic:"📚", bg:"var(--tint-2)", t:"Livros", s:"Histórias no seu nível", act:() => { newsSub = books().length ? "books" : "stories"; go("news"); }},
-    {k:"vocab", ic:"🗂️", bg:"var(--tint-3)", t:"Vocabulário", s:sst.due ? sst.due+" para revisar hoje" : "Cartões, revisão e erros", act:() => open({type:"hub", k:"vocab"})},
-    {k:"tutor", ic:"🤖", bg:"var(--tint-4)", t:"Tutor de IA", s:"Converse e seja corrigido", act:() => go("chat")},
-    {k:"audio", ic:"🎧", bg:"var(--tint-2)", t:"Audiolivros e áudio", s:"Vozes reais, podcasts, música", act:() => open({type:"hub", k:"audio"})},
-    {k:"games", ic:"🎮", bg:"var(--tint-1)", t:"Jogos", s:"Aprender brincando", act:() => open({type:"hub", k:"games"})}
+    {k:"film", ic:"🎬", bg:"var(--tint-1)", t:"Filmes e séries", s:"Cenas com legenda · 3–5 min · escuta", act:() => { newsSub = "videos"; go("news"); }},
+    {k:"books", ic:"📚", bg:"var(--tint-2)", t:"Livros", s:"Leitura · 3–5 min · toque nas palavras", act:() => { newsSub = books().length ? "books" : "stories"; go("news"); }},
+    {k:"vocab", ic:"🗂️", bg:"var(--tint-3)", t:"Vocabulário", s:sst.due ? "Revise hoje: "+sst.due+" cartões" : "Palavras · 3 min · cartões e revisão", act:() => open({type:"hub", k:"vocab"})},
+    {k:"tutor", ic:"🤖", bg:"var(--tint-4)", t:"Tutor de IA", s:"Conversa · 5 min · escrita e leitura", act:() => go("chat")},
+    {k:"audio", ic:"🎧", bg:"var(--tint-2)", t:"Audiolivros e áudio", s:"Escuta · 3–10 min · vozes reais e livros", act:() => open({type:"hub", k:"audio"})},
+    {k:"games", ic:"🎮", bg:"var(--tint-1)", t:"Jogos", s:"Palavras · 2–3 min · rápido, sem internet", act:() => open({type:"hub", k:"games"})}
   ];
 }
 function sixCard(){
-  const sec = h(`<section><div class="sec-head"><h2>Seis formas de aprender</h2></div><div class="six"></div></section>`);
-  sixWays().forEach(x => { const b = h(`<button class="six-t" style="--six-bg:${x.bg}"><span class="six-ic">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></button>`); b.addEventListener("click", x.act); $(".six",sec).appendChild(b); });
+  const sec = h(`<section><div class="sec-head"><h2>Ou escolha como praticar</h2></div><p class="sub" style="margin:-4px 0 8px;font-size:13px">Tudo usa o mesmo vocabulário das suas lições. Salve palavras num lugar e elas voltam na revisão e nos jogos.</p><div class="six"></div></section>`);
+  sixWays().forEach(x => { const b = h(`<button class="six-t" aria-label="${esc(x.t+". "+x.s)}" style="--six-bg:${x.bg}"><span class="six-ic">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></button>`); b.addEventListener("click", x.act); $(".six",sec).appendChild(b); });
   return sec;
 }
 function hubItems(k){
@@ -5637,7 +5637,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v81";
+const APP_VER = "v82";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
