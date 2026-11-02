@@ -6233,7 +6233,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v118";
+const APP_VER = "v119";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6398,13 +6398,14 @@ async function pronAI(st){
 function micMini(target, st, key, onNext){
   if(!micOK()) return null;
   const m = st[key] || (st[key] = {});
-  const r = m.result;
+  const r = m.result, mast = (L().spk || {})[target];
   const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px">
     <div class="eyebrow">Sua vez: fale em voz alta</div>
     <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
       <button class="btn ${m.on?"btn-dark":"btn-line"}" id="mmGo">${m.on?"⏹ Parar":"🎙️ Falar"}</button>
       <button class="btn btn-line" id="mmCmp" ${m.url?"":"disabled"}>🔁 Modelo → você</button>
     </div>
+    ${mast && !m.url && !m.on ? `<p class="sub" style="font-size:var(--fs-sub)">✅ Você já mandou bem nesta frase (${mast.p}%). Não gravo nem chamo a IA sozinho. Toque em Falar se quiser treinar de novo.</p>` : ""}
     ${m.url?`<audio controls src="${m.url}" style="width:100%"></audio>`:""}
     ${r?`<div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><p class="sub" style="font-size:var(--fs-cap)">${r.pct}% das palavras reconhecidas${m.heard?` · entendi: “${esc(m.heard)}”`:""}</p>`:""}
     ${m.url && azCfg() ? `<button class="btn btn-line" id="mmAz">${m.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
@@ -6437,10 +6438,10 @@ function micMini(target, st, key, onNext){
     try{
       await micBegin((url, heard) => {
         fin(); m.on = false; m.az = null; m.coach = null; if(m.url) URL.revokeObjectURL(m.url); m.url = url; m.heard = heard;
-        if(heard){ m.result = scoreSpeech(target, heard); addXp(m.result.pct>=80?2:1); m.result.pct>=80 ? sfx.right() : sfx.wrong();
+        if(heard){ m.result = scoreSpeech(target, heard); addXp(m.result.pct>=80?2:1); if(m.result.pct>=85){ (L().spk = L().spk || {})[target] = {p:m.result.pct, ts:Date.now()}; persist(); } m.result.pct>=80 ? sfx.right() : sfx.wrong();
           const lg = L(); (lg.pronLog = lg.pronLog || []).push({t:target, h:heard, p:m.result.pct, m:m.result.missed, ts:Date.now()}); if(lg.pronLog.length>300) lg.pronLog.splice(0, lg.pronLog.length-300); }
         else m.msg = SR_OK() ? "Gravado, mas o reconhecimento não captou palavras. Ouça e tente de novo." : "Gravado. Ouça e compare com o modelo.";
-        if(m.noVoice && !heard){ m.msg = "Não ouvi sua voz. Toque em Falar e tente de novo."; render(); } else { render(); if(document.getElementById("mmGo")) runCoach(); }
+        if(m.noVoice && !heard){ m.msg = "Não ouvi sua voz. Toque em Falar e tente de novo."; render(); } else { render(); if(document.getElementById("mmGo") && !(m.result && m.result.pct>=90)) runCoach(); }
       });
       m.on = true; render();
       /* para sozinho: silêncio depois da fala, ou 9 s sem falar */
@@ -6461,7 +6462,7 @@ function micMini(target, st, key, onNext){
   };
   $("#mmGo",box).addEventListener("click", () => startRec(false));
   /* abre o microfone sozinho quando o cartão aparece (uma vez por frase), depois que a voz do modelo termina */
-  if(!m.url && !m.auto && !m.on){
+  if(!m.url && !m.auto && !m.on && !mast){
     m.auto = true; let tries = 0;
     const kick = () => {
       if(!document.getElementById("mmGo")){ if(tries++ < 6) return setTimeout(kick, 300); return; }
