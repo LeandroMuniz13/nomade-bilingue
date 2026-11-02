@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com https://upload.wikimedia.org; media-src 'self' blob: data: https://accent.gmu.edu https://archive.org https://*.archive.org https://tatoeba.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com https://upload.wikimedia.org; media-src 'self' blob: data: https: https://accent.gmu.edu https://archive.org https://*.archive.org https://tatoeba.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://podcasts.files.bbci.co.uk https://feeds.megaphone.fm https://esl.culips.com https://rss.buzzsprout.com https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#D9DDF7">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
@@ -175,6 +175,10 @@ body.focus main{padding-bottom:32px}
 .m-photo{height:132px; border-radius:20px; background-color:var(--accent-soft); background-size:cover; background-position:center; position:relative; overflow:hidden; margin-bottom:2px}
 .m-photo::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(15,18,38,0) 45%,rgba(15,18,38,.62))}
 .m-photo b{position:absolute; left:14px; bottom:10px; z-index:1; color:#fff; font-family:var(--display); font-weight:var(--display-w); font-size:19px; letter-spacing:-.01em; text-shadow:0 1px 10px rgba(0,0,0,.35)}
+@keyframes swr{from{opacity:.55; transform:translateX(-28px)} to{opacity:1; transform:none}}
+@keyframes swl{from{opacity:.55; transform:translateX(28px)} to{opacity:1; transform:none}}
+#view.sw-r{animation:swr .22s ease-out}
+#view.sw-l{animation:swl .22s ease-out}
 .nbi{display:inline-block; width:1.2em; height:1.2em; vertical-align:-.22em; line-height:0}
 .nbi svg{width:100%; height:100%; display:block}
 .nbe{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
@@ -358,6 +362,20 @@ body.focus main{padding-bottom:32px}
 #fstage iframe,#ytp{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
 .fv-sticky{position:sticky; top:env(safe-area-inset-top,0px); z-index:8; background:var(--bg); width:min(100vw,460px); margin-left:calc(50% - min(50vw,230px)); display:flex; flex-direction:column; box-shadow:0 8px 18px -12px rgba(0,0,0,.45)}
 .fv-vid{position:relative; width:100%; aspect-ratio:16/9; background:#000}
+.pp-list{display:flex;flex-direction:column;gap:6px}
+.pp-ep{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:var(--fs-sub);min-height:44px}
+.pp-ep.on{border-color:var(--gold-ui);background:var(--surface-2)}
+.pp-pi{color:var(--gold-ui);font-size:12px;flex:none}
+.pp-et{flex:1;min-width:0;line-height:1.3}
+.pp-ed{color:var(--ink-faint);font-size:var(--fs-cap);flex:none}
+.pp-bar{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.pp-now{font-weight:600;line-height:1.3}
+.pp-ctl{display:flex;align-items:center;justify-content:center;gap:14px}
+.pp-ctl .iconbtn{font-size:13px;font-weight:600}
+.pp-play{width:56px;height:56px;background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:18px}
+.pp-rate{min-width:56px;padding:8px 10px}
+.pp-seek{width:100%;accent-color:var(--gold-ui);min-height:28px}
+.pp-t{display:flex;justify-content:space-between;color:var(--ink-faint);font-size:var(--fs-cap)}
 .fv-bar{padding:8px 14px 10px; display:flex; flex-direction:column; gap:6px}
 .fv-time{display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--ink-2,#555); font-variant-numeric:tabular-nums}
 .fv-seek{width:100%; height:28px; accent-color:var(--accent); margin:0}
@@ -1475,6 +1493,7 @@ function a11yPass(){
   }catch(e){}
 }
 function render(){
+  if(podAu && !(overlay && overlay.type==="podp")) podStop();
   applyAppearance();
   const view = $("#view");
   view.innerHTML = "";
@@ -5422,21 +5441,76 @@ function startKara(sg){ sg = sg || nextSong(); if(!sg){ toast("Ainda não há ca
    ========================================================= */
 const PODS = {
   en:[
-    {id:"p-6min", n:"6 Minute English", by:"BBC Learning English", acc:"Britânico", lv:"A2–B1", len:"6 min", d:"Dois apresentadores conversam sobre um tema do dia a dia. Termina com o vocabulário-chave explicado.", how:"Ouça uma vez sem ler. Depois leia a transcrição no site e repita as 5 expressões do final.", site:"https://www.bbc.co.uk/learningenglish/english/features/6-minute-english", q:"6 Minute English BBC"},
-    {id:"p-tews", n:"The English We Speak", by:"BBC Learning English", acc:"Britânico", lv:"A2–B1", len:"3 min", d:"Uma expressão idiomática por episódio, em diálogo curto. Ótimo para o metrô.", how:"Ouça duas vezes, tente adivinhar o sentido e confira no fim. Repita a expressão em voz alta.", site:"https://www.bbc.co.uk/learningenglish/english/features/the-english-we-speak", q:"The English We Speak BBC"},
-    {id:"p-aee", n:"All Ears English", by:"Lindsay e Michelle", acc:"Americano", lv:"B1–B2", len:"15–20 min", d:"Conversa natural sobre cultura e dia a dia nos EUA, com dicas de como os nativos realmente falam.", how:"Ouça em velocidade normal e anote 3 expressões novas. Reouça um trecho curto no dia seguinte.", site:"https://www.allearsenglish.com/", q:"All Ears English podcast"},
-    {id:"p-culips", n:"Culips ESL Podcast", by:"Culips", acc:"Vários", lv:"B1–B2", len:"15–25 min", d:"Conversas informais com expressões e gírias explicadas, com transcrição no site.", how:"Ouça sem transcrição, depois com. Foque em ligação entre palavras e gírias.", site:"https://www.culips.com/", q:"Culips ESL podcast"},
+    {id:"p-6min", feed:"https://podcasts.files.bbci.co.uk/p02pc9tn.rss", n:"6 Minute English", by:"BBC Learning English", acc:"Britânico", lv:"A2–B1", len:"6 min", d:"Dois apresentadores conversam sobre um tema do dia a dia. Termina com o vocabulário-chave explicado.", how:"Ouça uma vez sem ler. Depois leia a transcrição no site e repita as 5 expressões do final.", site:"https://www.bbc.co.uk/learningenglish/english/features/6-minute-english", q:"6 Minute English BBC"},
+    {id:"p-tews", feed:"https://podcasts.files.bbci.co.uk/p02pc9zn.rss", n:"The English We Speak", by:"BBC Learning English", acc:"Britânico", lv:"A2–B1", len:"3 min", d:"Uma expressão idiomática por episódio, em diálogo curto. Ótimo para o metrô.", how:"Ouça duas vezes, tente adivinhar o sentido e confira no fim. Repita a expressão em voz alta.", site:"https://www.bbc.co.uk/learningenglish/english/features/the-english-we-speak", q:"The English We Speak BBC"},
+    {id:"p-aee", feed:"https://feeds.megaphone.fm/allearsenglish", n:"All Ears English", by:"Lindsay e Michelle", acc:"Americano", lv:"B1–B2", len:"15–20 min", d:"Conversa natural sobre cultura e dia a dia nos EUA, com dicas de como os nativos realmente falam.", how:"Ouça em velocidade normal e anote 3 expressões novas. Reouça um trecho curto no dia seguinte.", site:"https://www.allearsenglish.com/", q:"All Ears English podcast"},
+    {id:"p-culips", feed:"https://esl.culips.com/feed/podcast/", n:"Culips ESL Podcast", by:"Culips", acc:"Vários", lv:"B1–B2", len:"15–25 min", d:"Conversas informais com expressões e gírias explicadas, com transcrição no site.", how:"Ouça sem transcrição, depois com. Foque em ligação entre palavras e gírias.", site:"https://www.culips.com/", q:"Culips ESL podcast"},
     {id:"p-eslpod", n:"ESLPod", by:"Dr. Jeff McQuillan", acc:"Americano", lv:"A2–B1", len:"10–15 min", d:"Diálogos lentos e depois naturais, com explicação do vocabulário. Bom para quem ainda se perde na fala rápida.", how:"Ouça a versão lenta e depois a natural. Compare o que muda no ritmo.", site:"https://www.eslpod.com/", q:"ESLPod"},
     {id:"p-luke", n:"Luke's English Podcast", by:"Luke Thompson", acc:"Britânico", lv:"B2+", len:"30–60 min", d:"Histórias e conversas longas, com humor. Desafio para quem quer treinar escuta de verdade.", how:"Escolha um episódio de assunto que você gosta e ouça 10 minutos por dia, sem pausar.", site:"https://teacherluke.co.uk/", q:"Luke's English Podcast"}
   ],
   it:[
     {id:"p-cbi", n:"Coffee Break Italian", by:"Coffee Break Languages", acc:"Italiano padrão", lv:"A1–B1", len:"15–20 min", d:"Aulas em dupla: um professor e uma aluna, passo a passo, em inglês. Boas para começar.", how:"Ouça com um caderno e repita as frases em voz alta nas pausas.", site:"https://coffeebreaklanguages.com/coffeebreakitalian/", q:"Coffee Break Italian"},
-    {id:"p-pi", n:"Podcast Italiano", by:"Davide", acc:"Italiano padrão", lv:"A2–B2", len:"15–30 min", d:"Italiano claro e natural, sobre temas variados, com transcrição para assinantes e dicas de aprendizado.", how:"Comece pelos episódios para iniciantes e ouça sem legenda, depois com.", site:"https://www.podcastitaliano.com/", q:"Podcast Italiano Davide"}
+    {id:"p-pi", feed:"https://rss.buzzsprout.com/2413795.rss", n:"Podcast Italiano", by:"Davide", acc:"Italiano padrão", lv:"A2–B2", len:"15–30 min", d:"Italiano claro e natural, sobre temas variados, com transcrição para assinantes e dicas de aprendizado.", how:"Comece pelos episódios para iniciantes e ouça sem legenda, depois com.", site:"https://www.podcastitaliano.com/", q:"Podcast Italiano Davide"},
+    {id:"p-pip", feed:"https://rss.buzzsprout.com/2632944.rss", n:"Podcast Italiano Principiante", by:"Davide", acc:"Italiano padrão", lv:"A1–A2", len:"10–20 min", d:"Italiano lento e claro, feito para quem está começando, com temas simples do dia a dia.", how:"Ouça sem legenda, depois de novo anotando 3 palavras novas. Repita frases em voz alta.", site:"https://www.podcastitaliano.com/", q:"Podcast Italiano Principiante"}
   ]
 };
 const pods = () => PODS[state.lang] || [];
 function dailyPod(){ const l = pods(); if(!l.length) return null; const d = Math.floor(Date.now()/86400000); const lv = userLevel(); const ok = l.filter(p => { const m = p.lv.match(/[ABC]\d/g) || []; return m.length && LEVEL_ORDER[m[0]] <= LEVEL_ORDER[lv]+0; }); const pool = ok.length ? ok : l; return pool[d % pool.length]; }
 function podLinks(p){ const q = encodeURIComponent(p.q || p.n); return `<div class="links"><a href="${esc(safeUrl(p.site))}" target="_blank" rel="noopener">Site oficial ↗</a><a href="https://podcasts.apple.com/search?term=${q}" target="_blank" rel="noopener">Apple Podcasts ↗</a><a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Spotify ↗</a><a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">YouTube ↗</a></div>`; }
+const podCache = {}; let podAu = null;
+function podStop(){ if(podAu){ try{ podAu.pause(); podAu.removeAttribute("src"); podAu.load(); }catch(e){} podAu = null; } }
+async function podEpisodes(p){
+  if(podCache[p.id]) return podCache[p.id];
+  const r = await fetch(p.feed); if(!r.ok) throw new Error("http "+r.status);
+  const d = new DOMParser().parseFromString(await r.text(), "text/xml");
+  const eps = [...d.querySelectorAll("item")].slice(0,10).map(i => {
+    const en = i.querySelector("enclosure"); let u = en && en.getAttribute("url"); if(!u) return null;
+    u = u.replace(/^http:\/\//,"https://").replace("/proto/http/","/proto/https/");
+    const dur = (i.getElementsByTagNameNS("*","duration")[0]||{}).textContent||"";
+    return {t:(i.querySelector("title")||{}).textContent||"Episódio", u, dur, dt:(i.querySelector("pubDate")||{}).textContent||""};
+  }).filter(Boolean);
+  if(!eps.length) throw new Error("vazio");
+  return podCache[p.id] = eps;
+}
+function podT(s){ s = Math.max(0, Math.round(s||0)); const m = Math.floor(s/60); return m+":"+String(s%60).padStart(2,"0"); }
+function podPlayer(p){
+  try{ stopAudio(); }catch(e){}
+  const c = h(`<section class="card pp"><div class="eyebrow">Ouvir aqui</div><div class="pp-list sub" style="margin-top:8px">Carregando episódios…</div></section>`);
+  const au = new Audio(); au.preload = "none"; let eps = [], cur = -1, listened = 0, last = 0;
+  podStop(); podAu = au;
+  const box = $(".pp-list", c);
+  const bar = h(`<div class="pp-bar" style="display:none"><div class="pp-now"></div><div class="pp-ctl"><button class="iconbtn" data-a="b" aria-label="Voltar 15 segundos">−15</button><button class="iconbtn pp-play" data-a="p" aria-label="Tocar">▶</button><button class="iconbtn" data-a="f" aria-label="Avançar 15 segundos">+15</button><button class="btn btn-line pp-rate" data-a="r">1×</button></div><input type="range" class="pp-seek noswipe" min="0" max="1000" value="0" aria-label="Posição"><div class="pp-t"><span class="pp-c">0:00</span><span class="pp-d">0:00</span></div><div class="pp-ok sub"></div></div>`);
+  c.appendChild(bar);
+  const play = $(".pp-play", bar), seek = $(".pp-seek", bar), rate = $(".pp-rate", bar);
+  const rates = [1,1.25,1.5,0.85]; let ri = 0;
+  const upd = () => { const d = au.duration||0; $(".pp-c",bar).textContent = podT(au.currentTime); $(".pp-d",bar).textContent = d?podT(d):"…"; if(!seeking) seek.value = d? Math.round(au.currentTime/d*1000):0; };
+  let seeking = false;
+  const load = i => { cur = i; au.src = eps[i].u; au.playbackRate = rates[ri]; $(".pp-now",bar).textContent = eps[i].t; bar.style.display = ""; box.querySelectorAll(".pp-ep").forEach((b,k) => b.classList.toggle("on", k===i));
+    if("mediaSession" in navigator){ try{ navigator.mediaSession.metadata = new MediaMetadata({title:eps[i].t, artist:p.by, album:p.n}); }catch(e){} }
+    au.play().catch(() => {}); };
+  const err = m => { $(".pp-ok",bar).textContent = m; };
+  au.addEventListener("play", () => { play.textContent = "❚❚"; play.setAttribute("aria-label","Pausar"); last = au.currentTime; err(""); });
+  au.addEventListener("pause", () => { play.textContent = "▶"; play.setAttribute("aria-label","Tocar"); });
+  au.addEventListener("timeupdate", () => { if(!au.paused){ const dt = au.currentTime-last; if(dt>0 && dt<2) listened += dt; } last = au.currentTime; upd(); const ok = $(".pp-ok",bar); const m = Math.floor(listened/60); if(m>=1) ok.textContent = "Você ouviu "+m+" min aqui. Registre abaixo em “Depois de ouvir”."; });
+  au.addEventListener("loadedmetadata", upd);
+  au.addEventListener("waiting", () => err("Carregando…"));
+  au.addEventListener("playing", () => err(""));
+  au.addEventListener("error", () => err(navigator.onLine ? "Não consegui tocar este episódio. Tente outro." : "Sem internet. Os episódios precisam de conexão."));
+  au.addEventListener("ended", () => { if(cur+1 < eps.length) load(cur+1); });
+  seek.addEventListener("input", () => { seeking = true; $(".pp-c",bar).textContent = podT((au.duration||0)*seek.value/1000); });
+  seek.addEventListener("change", () => { if(au.duration) au.currentTime = au.duration*seek.value/1000; seeking = false; });
+  bar.addEventListener("click", e => { const b = e.target.closest("[data-a]"); if(!b) return; const a = b.dataset.a;
+    if(a==="p"){ au.paused ? au.play().catch(()=>{}) : au.pause(); }
+    else if(a==="b") au.currentTime = Math.max(0, au.currentTime-15);
+    else if(a==="f") au.currentTime = Math.min(au.duration||1e9, au.currentTime+15);
+    else if(a==="r"){ ri = (ri+1)%rates.length; au.playbackRate = rates[ri]; b.textContent = String(rates[ri]).replace(".",",")+"×"; } });
+  podEpisodes(p).then(list => { eps = list; box.innerHTML = ""; box.className = "pp-list";
+    list.forEach((e,i) => { const dur = /^\d+$/.test(e.dur) ? podT(+e.dur) : e.dur.replace(/^00:/,"");
+      const b = h(`<button class="pp-ep"><span class="pp-pi">▶</span><span class="pp-et">${esc(e.t)}</span><span class="pp-ed">${esc(dur)}</span></button>`);
+      b.addEventListener("click", () => load(i)); box.appendChild(b); });
+  }).catch(() => { box.innerHTML = `<span>Não consegui carregar os episódios${navigator.onLine?"":" (sem internet)"}.</span>${podLinks(p)}`; });
+  return c;
+}
 function startPod(p){ p = p || dailyPod(); if(!p){ toast("Ainda não há podcasts neste idioma."); return; } open({type:"podp", pid:p.id}); }
 function viewPodp(){
   const o = overlay, p = pods().find(x => x.id===o.pid) || pods()[0], el = h(`<div class="screen"></div>`);
@@ -5444,11 +5518,12 @@ function viewPodp(){
   $("button",head).addEventListener("click", () => { if(planRun) planRun = null; close(); });
   el.appendChild(head);
   el.appendChild(h(`<div><h1 class="headline">🎧 ${esc(p.n)}</h1><p class="sub" style="margin-top:4px">${esc(p.by)} · sotaque ${esc(p.acc.toLowerCase())} · nível ${esc(p.lv)} · ${esc(p.len)}</p></div>`));
-  el.appendChild(h(`<section class="card"><p style="line-height:1.5">${esc(p.d)}</p><div class="m-goal" style="margin-top:10px">💡 Como estudar: ${esc(p.how)}</div>${podLinks(p)}</section>`));
+  el.appendChild(h(`<section class="card"><p style="line-height:1.5">${esc(p.d)}</p><div class="m-goal" style="margin-top:10px">💡 Como estudar: ${esc(p.how)}</div></section>`));
+  if(p.feed) el.appendChild(podPlayer(p)); else el.appendChild(h(`<section class="card"><div class="eyebrow">Onde ouvir</div><p class="sub" style="margin:6px 0 8px">Este podcast não libera o áudio para tocar dentro do app. Abra no site ou no seu app de podcasts.</p>${podLinks(p)}</section>`));
   const done = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Depois de ouvir</div><p class="sub" style="font-size:var(--fs-sub)">Quanto você ouviu? Conta para a missão e para o seu XP.</p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[5,10,20,30].map(m => `<button class="btn btn-line" data-m="${m}">${m} min</button>`).join("")}</div></section>`);
   done.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { const m = +b.dataset.m; const lg = L(); (lg.aud = lg.aud || []).push({id:p.id, d:today(), m}); if(lg.aud.length>200) lg.aud.splice(0,lg.aud.length-200); addXp(Math.max(3, Math.round(m/2))); persist(); toast("Registrado: "+m+" min de escuta. +"+Math.max(3, Math.round(m/2))+" XP"); close(); }));
   el.appendChild(done);
-  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">Os episódios tocam no app de podcasts ou no site oficial; o Nômade registra o seu tempo de escuta.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">Áudio direto do feed oficial do podcast. O Nômade registra o seu tempo de escuta.</p>`));
   return el;
 }
 function viewPodsTab(el){
@@ -5952,7 +6027,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v103";
+const APP_VER = "v105";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6833,6 +6908,38 @@ function viewYou(){
   el.appendChild(cr);
   return el;
 }
+
+/* ---------- gesto de arrastar: voltar / trocar de aba ---------- */
+(function(){
+  const ORDER = ["home", "learn", "play", "news"], SAFE = {story:1, article:1, hub:1, film:1, vozit:1, abooks:1, cinema:1, voz:1, song:1, dict:1};
+  const NOSWIPE = "input,textarea,select,[contenteditable],iframe,video,audio,canvas,.fv-vid,.fv-bar,.rd-sheet,[role=slider],.noswipe";
+  let t0 = null;
+  const hScroll = el => { for(let n = el; n && n !== document.body; n = n.parentElement){ const o = getComputedStyle(n).overflowX; if((o === "auto" || o === "scroll") && n.scrollWidth > n.clientWidth + 2) return true; } return false; };
+  document.addEventListener("touchstart", e => {
+    if(e.touches.length !== 1){ t0 = null; return; }
+    const t = e.touches[0], tg = e.target;
+    t0 = (tg.closest && (tg.closest(NOSWIPE) || hScroll(tg))) ? null : {x:t.clientX, y:t.clientY, at:Date.now()};
+  }, {passive:true});
+  document.addEventListener("touchcancel", () => { t0 = null; }, {passive:true});
+  document.addEventListener("touchend", e => {
+    if(!t0 || !state.lang) return;
+    const t = e.changedTouches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y, dt = Date.now() - t0.at, edge = t0.x < 32; t0 = null;
+    if(Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * .5 || dt > 700) return;
+    if(document.querySelector(".rd-sheet")) return;
+    const anim = d => { const v = document.getElementById("view"); if(v && !matchMedia("(prefers-reduced-motion:reduce)").matches){ v.classList.remove("sw-l", "sw-r"); void v.offsetWidth; v.classList.add(d > 0 ? "sw-r" : "sw-l"); } };
+    if(overlay){
+      if(dx < 0 || !(edge || SAFE[overlay.type])) return;
+      const b = document.querySelector("#view .run-head > button, #view .run-head .iconbtn, #view button[aria-label='Voltar'], #view button[aria-label='Fechar']");
+      if(b){ anim(dx); b.click(); }
+      return;
+    }
+    const i = ORDER.indexOf(tab);
+    const to = dx > 0 ? (i > 0 ? ORDER[i - 1] : (i < 0 ? "home" : null)) : (i >= 0 && i < ORDER.length - 1 ? ORDER[i + 1] : null);
+    if(!to) return;
+    if(to === "news") newsSub = "now";
+    anim(dx); go(to); try{ scrollTo(0, 0); }catch(err){}
+  }, {passive:true});
+})();
 
 /*ICONS-START*/
 const NB_ICONS = {
