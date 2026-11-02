@@ -2796,7 +2796,7 @@ function viewHome(){
   if(first) el.appendChild(hero); else el.appendChild(h(`<div><p class="hello">${greeting()} · ${chapLine}</p><h1 class="headline" style="margin-top:2px">O que fazer <span class="script" style="font-size:32px">hoje</span></h1></div>`));
   /* status compacto */
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
-  if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); el.appendChild(sixCard()); }
+  if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); el.appendChild(learnCard()); el.appendChild(sixCard()); }
   else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); el.appendChild(sixCard()); }
   /* atalhos: no máximo 4, só depois da 1ª lição */
   if(!first){
@@ -4272,7 +4272,7 @@ function viewMemory(){
 
 /* desafio relâmpago */
 function startBlitz(){
-  const voc = allVocab();
+  const my = myWords().filter(v => v.t.length<=34 && v.pt.length<=40), voc = allVocab().concat(my, my, my);
   const first = {type:"blitz", voc, left:60, score:0, total:0, q:null, end:false, timer:null};
   overlay = first; nextBlitz(); overlay = null;
   open(first);
@@ -4424,7 +4424,7 @@ function viewChat(){
     <div><p class="hello">Conversar · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Pratique <span class="script" style="font-size:32px">de verdade</span></h1>
     <p class="sub" style="margin-top:6px">Uma pessoa da cena responde no seu nível, traduz e corrige seus erros. Escreva no idioma — ou em português, que ela te mostra como dizer.</p></div>
   </div>`);
-  if(!aiAvail()) el.appendChild(gmKeyCard());
+  if(!aiAvail()){ el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); }
   CATS.filter(c=>c.id!=="base").forEach(c => {
     const list = SCENES[state.lang].filter(s=>s.cat===c.id);
     if(!list.length) return;
@@ -5433,7 +5433,7 @@ function hubItems(k){
     {ic:"📒", t:"Caderno de erros", s:nbs.all ? `${nbs.due} para hoje` : "Seus erros ficam aqui", act:() => open({type:"notebook", f:"all"})},
     {ic:"🪜", t:"Prova de domínio", s:"Só conta como sabida com prova", act:startLadder},
     {ic:"🎯", t:"Palavras difíceis", s:"As que você mais erra", act:() => startPronFocus(false)},
-    {ic:"🧠", t:"Complete a frase", s:"A palavra certa no contexto", act:startCloze}]};
+    {ic:"🧠", t:"Complete a frase", s:myCount() ? "Frases das suas leituras" : "A palavra certa no contexto", act:startCloze}]};
   if(k==="audio") return {t:"Audiolivros e áudio", s:"Ouça gente de verdade e textos longos. Comece devagar e aumente a velocidade.", items:[
     {ic:"📖", t:"Audiolivros", s:"Livros e histórias com o texto acompanhando", act:() => open({type:"abooks"})},
     ...(en ? [{ic:"🌍", t:"Vozes reais", s:"Entenda cada sotaque, com texto", act:() => startVozes(dailyAccent())}] : []),
@@ -5442,9 +5442,9 @@ function hubItems(k){
     {ic:"👂", t:"Ouça e escolha", s:"Frases rápidas, 1 minuto", act:startEar},
     {ic:"✍️", t:"Ditado", s:"Escreva o que ouviu", act:startDict}]};
   return {t:"Jogos", s:"Rápidos, para o metrô. Tudo funciona sem internet.", items:[
-    {ic:"⚡", t:"Desafio relâmpago", s:"60 segundos de traduções", act:startBlitz},
+    {ic:"⚡", t:"Desafio relâmpago", s:myCount() ? "60 s · inclui as suas palavras" : "60 segundos de traduções", act:startBlitz},
     {ic:"🧩", t:"Jogo da memória", s:"Expressão e tradução", act:startMemory},
-    {ic:"🪢", t:"Forca", s:"Descubra a palavra letra a letra", act:startForca},
+    {ic:"🪢", t:"Forca", s:myCount() ? "Usa as suas "+myCount()+" palavras salvas" : "Descubra a palavra letra a letra", act:startForca},
     {ic:"🔤", t:"Monte a frase", s:"Coloque na ordem certa", act:startOrderGame},
     {ic:"⌨️", t:"Traduza e escreva", s:"Do português, digitando", act:startTyped},
     ...(en ? [{ic:"🌍", t:"Ditado de sotaques", s:"Que palavra você ouviu? (online)", act:() => startVozes(dailyAccent(), "ditado")}] : [])]};
@@ -5493,10 +5493,11 @@ function viewAbooks(){
 }
 /* ---------- Forca ---------- */
 function startForca(){
-  const pool = allVocab().filter(v => /^[a-zA-Z]{4,10}$/.test(v.t.trim()));
-  if(!pool.length){ toast("Faça algumas lições para liberar a forca."); return; }
+  const ok = v => /^[a-zA-Z]{4,10}$/.test(String(v.t).trim()), pool = allVocab().filter(ok), saved = myWords().filter(ok);
+  if(!pool.length && !saved.length){ toast("Faça algumas lições para liberar a forca."); return; }
   const done = Object.keys(L().done), mine = pool.filter(v => done.includes(v.unitId)), base = mine.length >= 8 ? mine : pool;
-  open({type:"forca", words:shuffle(base).slice(0, 5), i:0, got:{}, miss:0, wins:0, end:false});
+  const pick = shuffle(saved).slice(0, 3).concat(shuffle(base).slice(0, 5)).slice(0, 5);
+  open({type:"forca", words:shuffle(pick), i:0, got:{}, miss:0, wins:0, end:false});
 }
 function viewForca(){
   const o = overlay, el = h(`<div class="screen"></div>`);
@@ -5637,7 +5638,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v82";
+const APP_VER = "v83";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5953,22 +5954,93 @@ function gmKeyCard(after){
 function gmKey(){ try{ return localStorage.getItem("nb-gm") || ""; }catch(e){ return ""; } }
 const GM_MODELS = ["gemini-flash-latest","gemini-3.8-flash","gemini-3.6-flash","gemini-flash-lite-latest","gemini-3.5-flash-lite"];
 /* IA unificada: usa o Claude quando o app está aberto nele; no site usa o Gemini (chave gratuita) */
-function aiAvail(){ return !!(window.claude && window.claude.use) || !!gmKey(); }
+/* ---------- Atividades conectadas: suas palavras salvas alimentam jogos e revisão ---------- */
+function myWords(){
+  const arr = Object.values(SRS().cards).filter(c => c.t && c.pt && c.pt!=="(sem tradução)" && c.kind!=="u" || (c.kind==="u" && c.t && c.pt));
+  return arr.sort((a,b) => String(b.added||"").localeCompare(String(a.added||""))).map(c => ({id:"my:"+c.id, t:c.t, pt:c.pt, unit:"Suas palavras", unitId:"_my", ex:(c.ctx && c.ctx.t && c.ctx.hl) ? {t:c.ctx.t, pt:c.ctx.pt||"", hl:c.ctx.hl} : null, my:true, due:c.state!=="new" && c.due<=today()}));
+}
+const myCount = () => myWords().length;
+function learnCard(){
+  const mw = myWords(), st = srsStats(), j = journeyNext();
+  const nxt = j.unit ? "Lição: "+j.unit.title : j.story ? "Leitura: "+j.story.title : j.m ? "Prova: "+j.m.final : "Continue a jornada";
+  const c = h(`<section class="card"><div class="eyebrow">Seu vocabulário, conectado</div>
+    <button class="shrow" data-r="w"><span class="sh-ic">🌱</span><span><b>Você está aprendendo</b><small>${mw.length ? esc(mw.slice(0,3).map(x => x.t).join(" · "))+" · "+mw.length+(mw.length===1?" palavra salva":" palavras salvas") : "Toque numa palavra ao ler ou ouvir e salve. Ela volta aqui, na revisão e nos jogos."}</small></span><span class="tl-chev">›</span></button>
+    <button class="shrow" data-r="r"><span class="sh-ic">🔁</span><span><b>Revise hoje</b><small>${st.due ? st.due+" para revisar agora" : "Nada atrasado. Boa!"}</small></span><span class="tl-chev">›</span></button>
+    <button class="shrow" data-r="n"><span class="sh-ic">➡️</span><span><b>Próximo passo</b><small>${esc(nxt)}</small></span><span class="tl-chev">›</span></button>
+    ${mw.length >= 4 ? `<button class="btn btn-line btn-block" data-r="g">🪢 Jogar com as suas palavras</button>` : ""}</section>`);
+  const on = (k, f) => { const b = c.querySelector(`[data-r="${k}"]`); if(b) b.addEventListener("click", f); };
+  on("w", () => mw.length ? open({type:"hub", k:"vocab"}) : (newsSub = "stories", go("news")));
+  on("r", startSrs); on("n", () => journeyGo(j)); on("g", startForca);
+  return c;
+}
+/* ---------- Provedores grátis de reserva (formato OpenAI) ---------- */
+const FREE_PROV = [
+  {id:"groq", n:"Groq", base:"https://api.groq.com/openai/v1", model:"llama-3.3-70b-versatile", url:"https://console.groq.com/keys", tip:"Muito rápido. Sem cartão."},
+  {id:"cerebras", n:"Cerebras", base:"https://api.cerebras.ai/v1", model:"", url:"https://cloud.cerebras.ai/", tip:"Rápido. Sem cartão."},
+  {id:"openrouter", n:"OpenRouter", base:"https://openrouter.ai/api/v1", model:"openrouter/free", url:"https://openrouter.ai/keys", tip:"Escolhe sozinho um modelo gratuito."}
+];
+const provKey = id => { try{ return localStorage.getItem("nb-k-"+id) || ""; }catch(e){ return ""; } };
+const provAny = () => FREE_PROV.some(p => provKey(p.id));
+async function provModel(p, key){
+  if(p.model) return p.model;
+  let m = ""; try{ m = localStorage.getItem("nb-km-"+p.id) || ""; }catch(e){}
+  if(m) return m;
+  const r = await fetch(p.base+"/models", {headers:{Authorization:"Bearer "+key}}); if(!r.ok) throw new Error("http"+r.status);
+  const ids = ((await r.json()).data || []).map(x => x.id), pick = ids.find(i => /llama.*(70b|3\.3)/i.test(i)) || ids.find(i => /llama|gpt-oss|qwen/i.test(i)) || ids[0];
+  if(!pick) throw new Error("model"); try{ localStorage.setItem("nb-km-"+p.id, pick); }catch(e){} return pick;
+}
+function toChat(inp){
+  if(typeof inp === "string") return [{role:"user", content:inp}];
+  return (inp||[]).map(m => ({role:m.role==="assistant" ? "assistant" : m.role==="system" ? "system" : "user", content:String(m.content||"")}));
+}
+async function provCall(inp, maxTok, json){
+  let last = null;
+  for(const p of FREE_PROV){
+    const key = provKey(p.id); if(!key) continue;
+    try{
+      const model = await provModel(p, key);
+      const body = {model, messages:toChat(inp), max_tokens:maxTok||900, temperature:0.4}; if(json) body.response_format = {type:"json_object"};
+      let res = await fetch(p.base+"/chat/completions", {method:"POST", headers:{Authorization:"Bearer "+key, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+      if(res.status===400 && json){ delete body.response_format; body.messages = toChat(inp).concat([{role:"user", content:"Responda somente com JSON válido."}]); res = await fetch(p.base+"/chat/completions", {method:"POST", headers:{Authorization:"Bearer "+key, "Content-Type":"application/json"}, body:JSON.stringify(body)}); }
+      if(res.status===401 || res.status===403){ last = new Error("key"); continue; }
+      if(!res.ok){ last = new Error(res.status===429 ? "quota" : "busy"); continue; }
+      const j = await res.json(), txt = (((j.choices||[])[0]||{}).message||{}).content;
+      if(txt && String(txt).trim()) return String(txt).trim();
+      last = new Error("empty");
+    }catch(e){ last = e; }
+  }
+  throw last || new Error("nokey");
+}
+async function aiTextAny(inp, maxTok, json){
+  let err = null;
+  if(gmKey()){ try{ return await gmCall({contents:gmContents(inp)}, maxTok, json, true); }catch(e){ err = e; if(e && e.message==="key" && !provAny()) throw e; } }
+  if(provAny()) return provCall(inp, maxTok, json);
+  throw err || new Error("nokey");
+}
+const gmContents = inp => {
+  if(typeof inp === "string") return [{role:"user", parts:[{text:inp}]}];
+  const out = [];
+  (inp||[]).forEach(m => { const r = m.role==="assistant" ? "model" : "user", t = String(m.content||""); const l = out[out.length-1]; if(l && l.role===r) l.parts[0].text += "\n\n"+t; else out.push({role:r, parts:[{text:t}]}); });
+  return out;
+};
+function provKeyCard(){
+  const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">IAs gratuitas de reserva</div>
+    <p class="sub" style="font-size:12.5px">Quando o Gemini estiver ocupado ou sem cota, o app tenta estas automaticamente. Todas têm plano grátis, sem cartão. Cole só as que quiser.</p>
+    ${FREE_PROV.map(p => `<div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:14px">${p.n}${provKey(p.id) ? " · ativa ✓" : ""}</b><a class="link" href="${p.url}" target="_blank" rel="noopener" style="font-size:12.5px">Criar chave ↗</a></div><p class="sub" style="font-size:12px">${p.tip}</p>${provKey(p.id) ? `<button class="btn btn-line" data-rm="${p.id}">Remover</button>` : `<input class="in" type="password" data-p="${p.id}" placeholder="Chave ${p.n}" autocomplete="off">`}</div>`).join("")}
+    <button class="btn btn-dark" id="pvSave">Salvar chaves</button>
+    <p class="sub" style="font-size:11.5px">As chaves ficam só neste aparelho. Os provedores gratuitos podem usar o conteúdo enviado para melhorar os produtos deles. A fala gravada continua indo apenas para o Gemini.</p></section>`);
+  c.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => { try{ localStorage.removeItem("nb-k-"+b.dataset.rm); localStorage.removeItem("nb-km-"+b.dataset.rm); }catch(e){} render(); }));
+  $("#pvSave",c).addEventListener("click", () => { let n = 0; c.querySelectorAll("[data-p]").forEach(i => { const v = i.value.trim(); if(v){ try{ localStorage.setItem("nb-k-"+i.dataset.p, v); n++; }catch(e){} } }); toast(n ? "Chaves salvas." : "Cole uma chave."); if(n) render(); });
+  return c;
+}
+function aiAvail(){ return !!(window.claude && window.claude.use) || !!gmKey() || provAny(); }
 function aiSampleGet(){
   if(window.claude && window.claude.use) return window.claude.use("sample");
-  if(!gmKey()) return Promise.resolve(null);
-  const toContents = inp => {
-    if(typeof inp === "string") return [{role:"user", parts:[{text:inp}]}];
-    const out = [];
-    (inp||[]).forEach(m => { const r = m.role==="assistant" ? "model" : "user", t = String(m.content||""); const l = out[out.length-1]; if(l && l.role===r) l.parts[0].text += "\n\n"+t; else out.push({role:r, parts:[{text:t}]}); });
-    return out;
-  };
-  const f = async (inp, o) => ({text: await gmCall({contents:toContents(inp)}, (o && o.maxTokens) || 1200, false, true)});
-  f.json = async (inp, o) => gmJson(await gmCall({contents:toContents(inp)}, 2800, true, true));
+  if(!gmKey() && !provAny()) return Promise.resolve(null);
+  const f = async (inp, o) => ({text: await aiTextAny(inp, (o && o.maxTokens) || 1200, false)});
+  f.json = async (inp, o) => gmJson(await aiTextAny(inp, 2800, true));
   return Promise.resolve(f);
 }
-let gmNoThink = false;
-function gmPref(){ try{ return localStorage.getItem("nb-gm-model") || ""; }catch(e){ return ""; } }
 async function gmCall(parts, maxTok, json, fast){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
@@ -6197,7 +6269,7 @@ function viewPron(){
    COMPLETE A FRASE (contexto)
    ========================================================= */
 function startCloze(){
-  const all = allVocab().filter(v => v.ex && v.ex.hl && v.ex.t.includes(v.ex.hl));
+  const all = allVocab().concat(myWords(), myWords()).filter(v => v.ex && v.ex.hl && v.ex.t.includes(v.ex.hl));
   open({type:"cloze", all, pool:shuffle(all).slice(0,10), i:0, ok:0, ans:null});
 }
 function viewCloze(){
@@ -6366,7 +6438,7 @@ function viewYou(){
   $("#retest",set).addEventListener("click", () => open({type:"placement", idx:0, answers:[]}));
   el.appendChild(set);
   { const ap = accentPicker(false); if(ap) el.appendChild(ap); }
-  if(!window.claude) el.appendChild(gmKeyCard());
+  if(!window.claude){ el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); }
 
   const sc = h(`<section class="card"><div class="sec-head"><h2>Notas por aula</h2><span class="sub">${LANGS[state.lang].name}</span></div><div style="margin-top:6px"></div></section>`);
   const box = $("div:last-child",sc);
