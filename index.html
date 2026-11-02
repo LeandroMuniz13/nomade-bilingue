@@ -1484,6 +1484,7 @@ function go(t){ tab=t; overlay=null; menuOpen=false; hubReturn=null; render(); s
 let planRun = null;
 function open(o){ overlay=o; menuOpen=false; render(); scrollTo(0,0); }
 function close(){
+  try{ if(overlay && overlay.conv) convStop(overlay, ""); else { micStop(); micKeep(false); micRelease(); } }catch(e){}
   if(overlay && overlay.timer) clearInterval(overlay.timer); overlay=null;
   const hr = hubReturn; hubReturn = null;
   let adv = null;
@@ -2715,7 +2716,9 @@ function viewCinema(){
     };
     $("#sP", bar).addEventListener("click", async () => {
       if(running){ stopAll(); running = false; micStop(); micKeep(false); $("#sP", bar).textContent = "▶ Começar"; setS("Parado"); return; }
-      o.recs = []; if(o.useMic && micOK()){ if(!(await micKeep(true))){ o.useMic = false; toast(micErrMsg(micS.err)); } }
+      o.recs = []; if(o.useMic && micOK()){ if(!gmKey() && !(window.claude && window.claude.use)){ o.vmsg = "Para conversar por voz, cole a chave do Gemini no cartão de chave desta tela."; render(); return; }
+  if(!navigator.onLine){ o.vmsg = "Sem internet: a conversa por voz precisa de conexão."; render(); return; }
+  if(!(await micKeep(true))){ o.useMic = false; toast(micErrMsg(micS.err)); } }
       stopAll(); const tok = ++cineTok; running = true; $("#sP", bar).textContent = "⏸ Parar";
       for(let i = 0; i < sc.lines.length && tok === cineTok; i++){
         const l = sc.lines[i], chs = l.ch && l.ch.length ? l.ch : [l.t];
@@ -4581,7 +4584,7 @@ function viewBlitz(){
       if(o.lock) return; o.lock=true; o.total++;
       const ok = t===o.q.v.pt; noteVocab(o.q.v, ok);
       if(ok){ o.score++; sfx.right(); b.classList.add("right"); } else { sfx.wrong(); b.classList.add("wrong"); $$(".opt",opts).forEach(x=>{ if(x.textContent===o.q.v.pt) x.classList.add("right"); }); }
-      setTimeout(()=>{ o.lock=false; if(!o.end){ nextBlitz(); render(); } }, ok?380:900);
+      setTimeout(()=>{ o.lock=false; if(overlay===o && !o.end){ nextBlitz(); render(); } }, ok?380:900);
     });
     opts.appendChild(b);
   });
@@ -4850,6 +4853,7 @@ async function convStart(o){
   o.conv = true; o.empty = 0; o.cs = "listen"; convListen(o);
 }
 function convStop(o, msg){
+  try{ if(vadCtx && vadCtx.state!=="closed") vadCtx.close(); }catch(e){} vadCtx = null;
   o.conv = false; o.cs = ""; o._now = false; if(msg) o.vmsg = msg;
   try{ micStop(); }catch(e){} try{ micKeep(false); }catch(e){} try{ stopAudio(); }catch(e){}
   const av = document.getElementById("capiAv"); if(av) av.classList.remove("talk");
@@ -4893,7 +4897,7 @@ async function convListen(o){
     else {
       if(r > thr){ voiced++; last = now; if(voiced >= 2) o._sp = true; } else voiced = 0;
       const bar = document.getElementById("cvLvl"); if(bar) bar.style.width = Math.min(100, Math.round(r/Math.max(thr*3,0.06)*100)) + "%";
-      if(o._sp && now - last > 1250){ fin(); micStop(); }
+      if(o._sp && now - last > 950){ fin(); micStop(); }
       else if(!o._sp && now - t0 > 9000){ fin(); micStop(); }
     }
   }, 80);
@@ -6229,7 +6233,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v117";
+const APP_VER = "v118";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6273,6 +6277,9 @@ function micRelease(){
   try{ if(micS.sr){ micS.sr.abort ? micS.sr.abort() : micS.sr.stop(); } }catch(e){} micS.sr = null;
   try{ if(micS.stream && !(micS.keep && micS.stream===micS.keep)) micS.stream.getTracks().forEach(t => { try{ t.stop(); }catch(e){} }); }catch(e){}
 }
+function micShutdown(){ try{ micStop(); micKeep(false); micRelease(); }catch(e){} }
+document.addEventListener("visibilitychange", () => { if(document.hidden){ try{ if(overlay && overlay.conv) convStop(overlay, "Pausei a conversa porque você saiu do app."); else micShutdown(); }catch(e){} } });
+window.addEventListener("pagehide", micShutdown);
 async function micBegin(done0){
   const done = (u, h) => { try{ micRelease(); }catch(e){} done0(u, h); };
   /* iPhone: a voz do navegador e players mudam a sessão de áudio e podem silenciar o microfone */
@@ -6433,12 +6440,12 @@ function micMini(target, st, key, onNext){
         if(heard){ m.result = scoreSpeech(target, heard); addXp(m.result.pct>=80?2:1); m.result.pct>=80 ? sfx.right() : sfx.wrong();
           const lg = L(); (lg.pronLog = lg.pronLog || []).push({t:target, h:heard, p:m.result.pct, m:m.result.missed, ts:Date.now()}); if(lg.pronLog.length>300) lg.pronLog.splice(0, lg.pronLog.length-300); }
         else m.msg = SR_OK() ? "Gravado, mas o reconhecimento não captou palavras. Ouça e tente de novo." : "Gravado. Ouça e compare com o modelo.";
-        render(); if(document.getElementById("mmGo")) runCoach();
+        if(m.noVoice && !heard){ m.msg = "Não ouvi sua voz. Toque em Falar e tente de novo."; render(); } else { render(); if(document.getElementById("mmGo")) runCoach(); }
       });
       m.on = true; render();
       /* para sozinho: silêncio depois da fala, ou 9 s sem falar */
       lv = micS.stream ? vadMeter(micS.stream) : null;
-      const t0 = Date.now(); let n = 0, noise = 0, thr = 0.03, voiced = 0, last = 0, sp = false;
+      const t0 = Date.now(); let n = 0, noise = 0, thr = 0.03, voiced = 0, last = 0, sp = false; m.noVoice = false;
       iv = setInterval(() => {
         if(!m.on){ fin(); return; }
         if(!document.getElementById("mmGo")){ fin(); micStop(); return; }   /* saiu do cartão: desliga o microfone */
@@ -6447,8 +6454,8 @@ function micMini(target, st, key, onNext){
         const r = lv.read(); n++;
         if(n <= 5){ noise += r/5; if(n===5) thr = Math.max(0.022, noise*3.2); return; }
         if(r > thr){ voiced++; last = now; if(voiced >= 2) sp = true; } else voiced = 0;
-        if(sp && now - last > 1300){ fin(); micStop(); }
-        else if(!sp && now - t0 > 9000){ fin(); micStop(); }
+        if(sp && now - last > 1000){ fin(); micStop(); }
+        else if(!sp && now - t0 > 9000){ fin(); m.noVoice = true; micStop(); }
       }, 80);
     }catch(e){ fin(); m.on = false; m.msg = micErrMsg(e); render(); }
   };
@@ -6463,7 +6470,7 @@ function micMini(target, st, key, onNext){
       if(m.url || m.on) return;
       startRec(true);
     };
-    setTimeout(kick, 900);
+    setTimeout(kick, 450);
   }
   $("#mmCmp",box).addEventListener("click", () => {
     if(!m.url) return; speak(target);
@@ -6734,23 +6741,24 @@ function aiSampleGet(){
   f.json = async (inp, o) => gmJson(await aiTextAny(inp, 2800, true));
   return Promise.resolve(f);
 }
-let gmNoThink = false;
+const gmNoThinkBy = {};
+const gmThink = m => /^gemini-3\.8-flash$/.test(m) ? {thinkingLevel:"low"} : /flash-lite|3\.6-flash/.test(m) ? {thinkingLevel:"minimal"} : {thinkingLevel:"low"};
 function gmPref(){ try{ return localStorage.getItem("nb-gm-model") || ""; }catch(e){ return ""; } }
 async function gmCall(parts, maxTok, json, fast){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
-  const order = (fast ? ["gemini-flash-lite-latest","gemini-3.5-flash-lite","gemini-flash-latest"] : GM_MODELS).concat(GM_MODELS);
+  const order = (fast ? ["gemini-3.5-flash-lite","gemini-flash-lite-latest","gemini-3.8-flash"] : GM_MODELS).concat(GM_MODELS);
   const models = [...new Set((fast ? [] : [gmPref()]).concat(order).filter(Boolean))];
   const contents = (parts && parts.contents) ? parts.contents : [{role:"user", parts}], stream = !!(parts && parts.stream);
   for(const m of models){
     for(let att = 0; att < 2; att++){
-      const gen = Object.assign({temperature:0.4, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {}, gmNoThink ? {} : {thinkingConfig:{thinkingBudget:0}});
+      const gen = Object.assign({maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {}, gmNoThinkBy[m] ? {} : {thinkingConfig:gmThink(m)});
       let res; try{ res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:${stream ? "streamGenerateContent?alt=sse" : "generateContent"}`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents, generationConfig:gen})}); }catch(ne){ if(att === 0){ await new Promise(r => setTimeout(r, 1500)); continue; } throw ne; }
-      if(res.status===400){ const t = await res.text(); if(!gmNoThink && /thinking/i.test(t)){ gmNoThink = true; continue; } const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http400"); er.detail = t.replace(/\s+/g," ").slice(0,220); if(er.message==="key") throw er; last = er; break; }
+      if(res.status===400){ const t = await res.text(); const isKey = /API key|API_KEY/i.test(t); if(!isKey && !gmNoThinkBy[m]){ gmNoThinkBy[m] = true; continue; } const er = new Error(isKey ? "key" : "http400"); er.detail = t.replace(/\s+/g," ").slice(0,220); if(isKey) throw er; last = er; break; }
       if(res.status===404){ last = new Error("model"); break; }
       if(res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error("busy"); break; }
       if(res.status===403){ const t = await res.text(); const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http403"); er.detail = t.replace(/\s+/g," ").slice(0,220); throw er; }
-      if(res.status===429) throw new Error("quota");
+      if(res.status===429){ last = new Error("quota"); break; }
       if(!res.ok){ const er = new Error("http"+res.status); try{ er.detail = (await res.text()).replace(/\s+/g," ").slice(0,220); }catch(e2){} throw er; }
       let txt = "";
       if(stream){
@@ -6802,7 +6810,7 @@ function coachCard(c){
 }
 function gmErrMsg(e){
   const m = e && e.message;
-  return m==="busy" ? "Os servidores do Gemini estão sobrecarregados agora (erro temporário do Google). Tente de novo em alguns minutos." : m==="key" ? "A chave do Gemini foi recusada. Confira em Você › Ajustes." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="nokey" ? "Cole a chave do Gemini em Você › Ajustes." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.";
+  return m==="busy" ? "Os servidores do Gemini estão sobrecarregados agora (erro temporário do Google). Tente de novo em alguns minutos." : m==="key" ? "A chave do Gemini foi recusada. Confira em Você › Ajustes." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="nokey" ? "Cole a chave do Gemini em Você › Ajustes." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : (m==="http400" && e.detail ? "O Gemini recusou o pedido ("+String(e.detail).slice(0,90)+")." : (m==="Failed to fetch" || m==="net") ? "Sem conexão com o Gemini agora. Confira a internet." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.");
 }
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
