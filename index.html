@@ -4425,12 +4425,12 @@ function viewPlay(){
     {ic:"🔊", bg:"var(--gold-soft)", title:"Treino de pronúncia", sub:"Ouça, repita em voz alta e confira pelo ditado do teclado", act:()=>startPron(pronPool(), {})}
   ];
   const G = t => games.find(g => g.title===t);
-  const short = {"Revisão do dia (Anki)":"Revisão do dia","Meu caderno de erros":"Caderno de erros","Treino espaçado de fala":"Fala espaçada","Treino das palavras difíceis":"Palavras difíceis","Ouça e escolha":"Ouça e escolha","Ditado":"Ditado","Prova de domínio":"Prova de domínio","Laboratório de erros":"Laboratório de erros","Conversar com a IA":"Conversar com a IA","Treino de pronúncia":"Pronúncia","Meu relatório de pronúncia":"Relatório de fala","Traduza e escreva":"Traduza e escreva","Monte a frase":"Monte a frase","Complete a frase":"Complete a frase","Desafio relâmpago":"Relâmpago","Jogo da memória":"Memória"};
-  const tsub = {"Revisão do dia (Anki)":`${sst.due} a revisar`,"Meu caderno de erros":nbs.all?`${nbs.due} para hoje`:"Seus erros ficam aqui","Treino espaçado de fala":spDue().length?`${spDue().length} para hoje`:"Volta em 1, 2, 4, 8 dias","Treino das palavras difíceis":"O que você mais erra","Ouça e escolha":"Ouvir e achar a tradução","Ditado":"Ouvir e escrever","Prova de domínio":"Lembrar, aplicar, usar","Laboratório de erros":"Erros típicos de brasileiros","Conversar com a IA":"Cenas reais com correção","Treino de pronúncia":"Repita e confira","Meu relatório de pronúncia":"Onde você mais erra","Traduza e escreva":"Do português, digitando","Monte a frase":"Ordene as palavras","Complete a frase":"A palavra certa","Desafio relâmpago":"60 segundos","Jogo da memória":"Combine pares"};
+  const short = {"Revisão do dia (Anki)":"Revisão do dia","Meu caderno de erros":"Caderno de erros","Treino espaçado de fala":"Fala espaçada","Treino das palavras difíceis":"Palavras difíceis","Ouça e escolha":"Ouça e escolha","Ditado":"Ditado","Prova de domínio":"Prova de domínio","Laboratório de erros":"Laboratório de erros","Treino de pronúncia":"Pronúncia","Meu relatório de pronúncia":"Relatório de fala","Traduza e escreva":"Traduza e escreva","Monte a frase":"Monte a frase","Complete a frase":"Complete a frase","Desafio relâmpago":"Relâmpago","Jogo da memória":"Memória"};
+  const tsub = {"Revisão do dia (Anki)":`${sst.due} a revisar`,"Meu caderno de erros":nbs.all?`${nbs.due} para hoje`:"Seus erros ficam aqui","Treino espaçado de fala":spDue().length?`${spDue().length} para hoje`:"Volta em 1, 2, 4, 8 dias","Treino das palavras difíceis":"O que você mais erra","Ouça e escolha":"Ouvir e achar a tradução","Ditado":"Ouvir e escrever","Prova de domínio":"Lembrar, aplicar, usar","Laboratório de erros":"Erros típicos de brasileiros","Treino de pronúncia":"Repita e confira","Meu relatório de pronúncia":"Onde você mais erra","Traduza e escreva":"Do português, digitando","Monte a frase":"Ordene as palavras","Complete a frase":"A palavra certa","Desafio relâmpago":"60 segundos","Jogo da memória":"Combine pares"};
   const groups = [
     ["Revisar", ["Revisão do dia (Anki)","Meu caderno de erros","Treino espaçado de fala","Treino das palavras difíceis"]],
     ["Ouvir", ["Ouça e escolha","Ditado","Prova de domínio","Laboratório de erros"]],
-    ["Falar", ["Conversar com a IA","Treino de pronúncia","Meu relatório de pronúncia"]],
+    ["Falar", ["Conversar com o Capi","Treino de pronúncia","Meu relatório de pronúncia"]],
     ["Escrever", ["Traduza e escreva","Monte a frase","Complete a frase"]],
     ["Jogos rápidos", ["Desafio relâmpago","Jogo da memória"]]
   ];
@@ -6147,7 +6147,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v109";
+const APP_VER = "v110";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
