@@ -2769,8 +2769,9 @@ function capiVideoPart(id, A, B){
 }
 async function capiAsk(id, A, B, text, maxTok, tr){
   if(tr){ const raw = await aiTextAny(text + "\n\nTRANSCRIÇÃO DA CENA (use só isto):\n" + tr.slice(0, 5000), maxTok, true); return gmJson(raw); }
-  const raw = await gmCall({contents:[{role:"user", parts:[capiVideoPart(id, A, B), {text}]}]}, maxTok, true, false);
-  return gmJson(raw);
+  let tm; const lim = new Promise((_, rej) => { tm = setTimeout(() => rej(new Error("timeout")), 120000); });
+  try{ const raw = await Promise.race([gmCall({stream:true, contents:[{role:"user", parts:[capiVideoPart(id, A, B), {text}]}]}, maxTok, true, false), lim]); return gmJson(raw); }
+  finally{ clearTimeout(tm); }
 }
 function capiSaveLine(t, pt){
   const s2 = SRS(), cid = wordCardId(t); if(s2.cards[cid]) return false;
@@ -2798,7 +2799,7 @@ Regras: 5 a 7 itens em lines (as falas mais úteis, em ordem); exatamente 4 ques
       if(!lines.length || !qs.length) throw new Error("shape");
       S.data = {context:String(d.context || ""), lines, questions:qs, expressions:(d.expressions || []).filter(x => x && x.t).slice(0, 4), tip:String(d.tip || "")};
       capiCache[k] = S.data; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; S.pi = 0; S.pchk = null; S.pdone = [];
-    }catch(e){ S.ph = "err"; S.err = e && e.message === "shape" ? "O Capi não conseguiu montar a aula com este vídeo. Tente outro trecho ou outra cena." : (e && (e.message === "http400" || e.message === "http403") ? "O Gemini não aceitou abrir este vídeo (ele só lê vídeos públicos e pode recusar alguns). Tente outra cena." : gmErrMsg(e)); }
+    }catch(e){ if(S.cancel){ S.cancel = false; return; } S.ph = "err"; const m = e && e.message; S.err = m === "shape" ? "O Capi não conseguiu montar a aula com este vídeo. Tente outro trecho ou outra cena." : m === "timeout" ? "O Gemini demorou demais para responder (mais de 2 minutos). Tente de novo, escolha um trecho mais curto marcando início e fim, ou use a transcrição." : (e instanceof TypeError || /load failed|failed to fetch|network/i.test(m||"")) ? "A conexão com o Gemini caiu antes da resposta (" + m + "). Isso costuma acontecer quando o vídeo é pesado ou o sinal oscila. Tente de novo; se repetir, marque um trecho curto (Início/Fim) ou use a transcrição." : m === "json" ? "O Gemini respondeu, mas a resposta veio cortada. Tente de novo." : (m === "http400" || m === "http403" || (m && /^http\d+$/.test(m))) ? "O Gemini recusou este pedido (" + m.replace("http", "erro ") + "). Pode ser que ele não consiga abrir este vídeo. Tente outra cena ou a transcrição." + (e.detail ? " Detalhe: " + e.detail : "") : gmErrMsg(e); }
     draw();
   }
   async function correct(){
@@ -2832,7 +2833,7 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
           `<textarea id="cpTr" class="in" rows="4" style="width:100%" placeholder="Cole aqui a transcrição da cena">${esc(S.tr)}</textarea>` +
           (aiAvail() ? `<button class="btn btn-dark btn-block" id="cpGoTr">🎓 Começar a aula com o texto</button>` : note("Ligue a IA sem chave em Você › Ajustes para usar esta opção.")) + (S.err ? note(esc(S.err)) : ""));
     }else if(S.ph === "loading"){
-      h2 = head("O Capi está assistindo à cena…") + note("Já já a aula aparece. Enquanto isso, você pode assistir ao vídeo lá em cima.");
+      h2 = head("O Capi está assistindo à cena…") + note("Leva de 20 segundos a 2 minutos. Enquanto isso, assista ao vídeo lá em cima. Tempo: <b id=\"cpEl\">0</b> s") + `<button class="btn btn-line btn-block" id="cpCancel">Cancelar</button>`;
     }else if(S.ph === "err"){
       h2 = head("Não deu certo") + note(esc(S.err)) + `<button class="btn btn-dark btn-block" id="cpGo">Tentar de novo</button>`;
     }else{
@@ -2856,6 +2857,8 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     }
     box.innerHTML = `<div class="card" style="display:flex;flex-direction:column;gap:12px">${h2}</div>`;
     const g = $("#cpGo", box); if(g) g.addEventListener("click", start);
+    clearInterval(S.tmr); const el0 = $("#cpEl", box); if(el0){ const t0 = Date.now(); S.tmr = setInterval(() => { const e2 = $("#cpEl", box); if(!e2 || S.ph !== "loading"){ clearInterval(S.tmr); return; } e2.textContent = Math.round((Date.now() - t0) / 1000); }, 1000); }
+    const cc = $("#cpCancel", box); if(cc) cc.addEventListener("click", () => { S.cancel = true; S.ph = "idle"; draw(); });
     const gt = $("#cpGoTr", box); if(gt) gt.addEventListener("click", () => { const v = $("#cpTr", box).value.trim(); if(v.length < 40){ S.err = "Cole um trecho maior da transcrição (pelo menos uma ou duas falas)."; draw(); return; } S.tr = v; S.err = ""; start(); });
     const ck = $("#cpKey", box); if(ck) ck.appendChild(gmKeyCard(() => draw()));
     $$(".cp-o", box).forEach(b => b.addEventListener("click", () => { const q = S.data.questions[S.qi]; S.pick = +b.dataset.o; if(S.pick === q.a) S.score++; draw(); }));
@@ -5910,7 +5913,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v96";
+const APP_VER = "v97";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6382,19 +6385,23 @@ async function gmCall(parts, maxTok, json, fast){
   let last = null;
   const order = (fast ? ["gemini-flash-lite-latest","gemini-3.5-flash-lite","gemini-flash-latest"] : GM_MODELS).concat(GM_MODELS);
   const models = [...new Set([gmPref()].concat(order).filter(Boolean))];
-  const contents = (parts && parts.contents) ? parts.contents : [{role:"user", parts}];
+  const contents = (parts && parts.contents) ? parts.contents : [{role:"user", parts}], stream = !!(parts && parts.stream);
   for(const m of models){
     for(let att = 0; att < 2; att++){
       const gen = Object.assign({temperature:0.4, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {}, gmNoThink ? {} : {thinkingConfig:{thinkingBudget:0}});
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents, generationConfig:gen})});
-      if(res.status===400){ const t = await res.text(); if(!gmNoThink && /thinking/i.test(t)){ gmNoThink = true; continue; } throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http400"); }
+      let res; try{ res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:${stream ? "streamGenerateContent?alt=sse" : "generateContent"}`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents, generationConfig:gen})}); }catch(ne){ if(att === 0){ await new Promise(r => setTimeout(r, 1500)); continue; } throw ne; }
+      if(res.status===400){ const t = await res.text(); if(!gmNoThink && /thinking/i.test(t)){ gmNoThink = true; continue; } const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http400"); er.detail = t.replace(/\s+/g," ").slice(0,220); throw er; }
       if(res.status===404){ last = new Error("model"); break; }
       if(res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error("busy"); break; }
-      if(res.status===403){ const t = await res.text(); throw new Error(/API key|API_KEY/i.test(t) ? "key" : "http403"); }
+      if(res.status===403){ const t = await res.text(); const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http403"); er.detail = t.replace(/\s+/g," ").slice(0,220); throw er; }
       if(res.status===429) throw new Error("quota");
-      if(!res.ok) throw new Error("http"+res.status);
-      const j = await res.json(), c = ((j.candidates||[])[0]||{}).content;
-      const txt = ((c && c.parts) || []).map(x => x.text || "").join("").trim();
+      if(!res.ok){ const er = new Error("http"+res.status); try{ er.detail = (await res.text()).replace(/\s+/g," ").slice(0,220); }catch(e2){} throw er; }
+      let txt = "";
+      if(stream){
+        let raw = ""; try{ if(res.body && res.body.getReader){ const rd = res.body.getReader(), dc = new TextDecoder(); for(;;){ const {done, value} = await rd.read(); if(done) break; raw += dc.decode(value, {stream:true}); } } else raw = await res.text(); }catch(se){ throw se; }
+        raw.split(/\r?\n/).forEach(ln => { if(ln.indexOf("data:") !== 0) return; try{ const jj = JSON.parse(ln.slice(5)), cc = ((jj.candidates||[])[0]||{}).content; txt += ((cc && cc.parts) || []).map(x => x.text || "").join(""); }catch(e3){} });
+        txt = txt.trim();
+      } else { const j = await res.json(), c = ((j.candidates||[])[0]||{}).content; txt = ((c && c.parts) || []).map(x => x.text || "").join("").trim(); }
       if(!txt) throw new Error("empty");
       try{ localStorage.setItem("nb-gm-model", m); }catch(e){}
       return txt;
