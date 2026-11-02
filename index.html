@@ -5655,7 +5655,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v87";
+const APP_VER = "v88";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5922,10 +5922,10 @@ async function azWav(url){
 }
 async function azAssess(url, ref){
   const c = azCfg(); if(!c) throw new Error("nocfg");
+  if(!/^[a-z0-9-]{3,30}$/i.test(String(c.region))) throw new Error("region");
   const wav = await azWav(url);
   const loc = state.lang === "it" ? "it-IT" : "en-US";
   const hdr = btoa(JSON.stringify({ReferenceText:ref, GradingSystem:"HundredMark", Granularity:"Phoneme", Dimension:"Comprehensive", EnableMiscue:true}));
-  if(!/^[a-z0-9-]{3,30}$/i.test(String(c.region))) throw new Error("region");
   const res = await fetch(`https://${c.region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${loc}&format=detailed`, {method:"POST", headers:{"Ocp-Apim-Subscription-Key":c.key, "Content-Type":"audio/wav; codecs=audio/pcm; samplerate=16000", "Accept":"application/json", "Pronunciation-Assessment":hdr}, body:wav});
   if(res.status===401 || res.status===403) throw new Error("key");
   if(res.status===429) throw new Error("quota");
