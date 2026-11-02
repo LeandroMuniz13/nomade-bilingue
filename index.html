@@ -6229,7 +6229,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v116";
+const APP_VER = "v117";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6266,7 +6266,15 @@ function pcmRecorder(stream, done){
   };
   return rec;
 }
-async function micBegin(done){
+function micRelease(){
+  /* solta tudo que mantém o microfone "em uso" no iPhone (ponto laranja): medidor de volume e sessão de áudio */
+  try{ if(!(micS.keep && micS.keep.active) && vadCtx && vadCtx.state!=="closed"){ vadCtx.close(); vadCtx = null; } }catch(e){}
+  try{ if(!(micS.keep && micS.keep.active)) audSess("playback"); }catch(e){}
+  try{ if(micS.sr){ micS.sr.abort ? micS.sr.abort() : micS.sr.stop(); } }catch(e){} micS.sr = null;
+  try{ if(micS.stream && !(micS.keep && micS.stream===micS.keep)) micS.stream.getTracks().forEach(t => { try{ t.stop(); }catch(e){} }); }catch(e){}
+}
+async function micBegin(done0){
+  const done = (u, h) => { try{ micRelease(); }catch(e){} done0(u, h); };
   /* iPhone: a voz do navegador e players mudam a sessão de áudio e podem silenciar o microfone */
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); document.querySelectorAll("audio").forEach(a => { try{ a.pause(); }catch(e){} }); }catch(e){}
   audSess("play-and-record");
@@ -6738,7 +6746,7 @@ async function gmCall(parts, maxTok, json, fast){
     for(let att = 0; att < 2; att++){
       const gen = Object.assign({temperature:0.4, maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {}, gmNoThink ? {} : {thinkingConfig:{thinkingBudget:0}});
       let res; try{ res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:${stream ? "streamGenerateContent?alt=sse" : "generateContent"}`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents, generationConfig:gen})}); }catch(ne){ if(att === 0){ await new Promise(r => setTimeout(r, 1500)); continue; } throw ne; }
-      if(res.status===400){ const t = await res.text(); if(!gmNoThink && /thinking/i.test(t)){ gmNoThink = true; continue; } const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http400"); er.detail = t.replace(/\s+/g," ").slice(0,220); throw er; }
+      if(res.status===400){ const t = await res.text(); if(!gmNoThink && /thinking/i.test(t)){ gmNoThink = true; continue; } const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http400"); er.detail = t.replace(/\s+/g," ").slice(0,220); if(er.message==="key") throw er; last = er; break; }
       if(res.status===404){ last = new Error("model"); break; }
       if(res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error("busy"); break; }
       if(res.status===403){ const t = await res.text(); const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http403"); er.detail = t.replace(/\s+/g," ").slice(0,220); throw er; }
