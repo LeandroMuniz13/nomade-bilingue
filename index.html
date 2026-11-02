@@ -333,6 +333,25 @@ body.focus main{padding-bottom:32px}
 .subtabs.sub2{margin-top:-4px}
 .m-cov{width:46px;height:66px;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25);background:var(--line)} .m-cov img{width:100%;height:100%;object-fit:cover;display:block}
 #fstage iframe,#ytp{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
+.fv-sticky{position:sticky; top:env(safe-area-inset-top,0px); z-index:8; background:var(--bg); width:min(100vw,460px); margin-left:calc(50% - min(50vw,230px)); display:flex; flex-direction:column; box-shadow:0 8px 18px -12px rgba(0,0,0,.45)}
+.fv-vid{position:relative; width:100%; aspect-ratio:16/9; background:#000}
+.fv-bar{padding:8px 14px 10px; display:flex; flex-direction:column; gap:6px}
+.fv-time{display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--ink-2,#555); font-variant-numeric:tabular-nums}
+.fv-seek{width:100%; height:28px; accent-color:var(--accent); margin:0}
+.fv-row{display:grid; grid-template-columns:1fr 1.25fr 1fr 1fr; gap:8px}
+.fv-b{min-height:56px; border-radius:18px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-weight:800; font-size:15px; cursor:pointer}
+.fv-b small{font-size:10.5px; font-weight:700; opacity:.7}
+.fv-b svg{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.fv-play{background:var(--ink); color:var(--bg); border-color:var(--ink)} .fv-play svg{width:30px; height:30px}
+.fv-b:active{transform:scale(.96)}
+.fv-row3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px}
+.fv-c{min-height:52px; border-radius:16px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center; gap:7px; font-weight:700; font-size:13.5px; cursor:pointer; padding:6px}
+.fv-c svg{width:20px; height:20px; flex:none; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.cp-q{display:flex; flex-direction:column; gap:8px}
+.cp-o{text-align:left; padding:13px 14px; border-radius:16px; border:1.5px solid var(--line); background:var(--surface); font-size:15px; line-height:1.35; cursor:pointer; color:var(--ink)}
+.cp-o.ok{border-color:var(--ok); background:color-mix(in srgb, var(--ok) 14%, var(--surface))} .cp-o.bad{border-color:var(--bad); background:color-mix(in srgb, var(--bad) 12%, var(--surface))}
+.cp-line{padding:10px 0; border-top:1px solid var(--line); display:flex; gap:10px; align-items:flex-start}
+.cp-line:first-child{border-top:none}
 .book-art{height:110px; border-radius:16px; background-size:cover; background-position:center; border:1px solid var(--line)}
 .book-art.tall{height:130px; flex:none}
 .rd-body.has-art{position:relative; overflow:hidden; isolation:isolate}
@@ -2724,6 +2743,94 @@ const FILM_PICKS = [
  {l:"it",f:"Shrek Terzo (dublado)",t:"Shrek no colégio medieval",id:"0EJoc7CMp2o",lv:"B1"},
  {l:"it",f:"Shrek (dublado)",t:"Cena final",id:"XsTvr3-kAmI",lv:"A2"}
 ];
+/* ===== Aula com o Capi: o Gemini assiste ao vídeo, explica, pergunta e corrige ===== */
+const capiCache = {};
+function capiVideoPart(id, A, B){
+  const part = {fileData:{fileUri:"https://www.youtube.com/watch?v=" + id}};
+  if(A > 0 || B > 0){ part.videoMetadata = {startOffset:Math.max(0, Math.round(A)) + "s"}; if(B > A) part.videoMetadata.endOffset = Math.round(B) + "s"; }
+  return part;
+}
+async function capiAsk(id, A, B, text, maxTok){
+  const raw = await gmCall({contents:[{role:"user", parts:[capiVideoPart(id, A, B), {text}]}]}, maxTok, true, false);
+  return gmJson(raw);
+}
+function capiSaveLine(t, pt){
+  const s2 = SRS(), cid = wordCardId(t); if(s2.cards[cid]) return false;
+  s2.cards[cid] = {id:cid, kind:"r", t, pt:pt || "", note:"", ctx:{t, pt:pt || "", hl:t}, ivl:0, ease:2.5, reps:0, lapses:0, state:"new", due:today(), added:today()};
+  persist(); return true;
+}
+function filmCapi(box, id, name, getAB){
+  const lang = LANGS[state.lang].name, lvl = userLevel();
+  const S = {ph:"idle", data:null, qi:0, pick:null, score:0, essay:"", fb:null, busy:false, err:""};
+  const key = () => { const [A, B] = getAB(); return id + "|" + A + "|" + B; };
+  const note = m => `<p class="sub" style="font-size:12.5px">${m}</p>`;
+  const head = txt => `<div style="display:flex;gap:12px;align-items:center"><div style="flex:none" aria-hidden="true">${capi("hi", 64)}</div><div><div class="eyebrow">Aula com o Capi</div><div style="font-weight:700;margin-top:2px">${txt}</div></div></div>`;
+  async function start(){
+    const [A, B] = getAB(), k = key();
+    if(capiCache[k]){ S.data = capiCache[k]; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; draw(); return; }
+    S.ph = "loading"; S.err = ""; draw();
+    const prompt = `Você é o Capi, uma capivara que é professor de ${lang} de um brasileiro (nível ${lvl}). Assista ao vídeo${name ? " (" + name + ")" : ""} e dê uma AULA sobre a cena. Use só o que você realmente vê e ouve; se não entender uma fala, não invente.
+Responda SOMENTE um JSON neste formato:
+{"context":"2 frases em português dizendo quem fala e o que acontece, sem inventar","lines":[{"t":"fala curta em ${lang}, fiel ao áudio, até 14 palavras","pt":"tradução natural","note":"1 frase em português: o que a fala quer dizer de verdade, gíria ou pronúncia"}],"questions":[{"q":"pergunta em português sobre o que foi DITO ou entendido","opts":["opção A","opção B","opção C"],"a":0,"why":"explicação em português que cita a fala certa"}],"expressions":[{"t":"expressão em ${lang}","pt":"significado"}],"tip":"1 dica em português de entonação ou pronúncia desta cena"}
+Regras: 5 a 7 itens em lines (as falas mais úteis, em ordem); exatamente 4 questions com 3 opções e o índice "a" correto (varie a posição); 3 expressions; tudo em português, exceto os campos "t".`;
+    try{
+      const d = await capiAsk(id, A, B, prompt, 2600);
+      const lines = (d.lines || []).filter(x => x && x.t).slice(0, 8), qs = (d.questions || []).filter(q => q && q.q && Array.isArray(q.opts) && q.opts.length >= 2 && Number.isInteger(q.a) && q.a >= 0 && q.a < q.opts.length).slice(0, 5);
+      if(!lines.length || !qs.length) throw new Error("shape");
+      S.data = {context:String(d.context || ""), lines, questions:qs, expressions:(d.expressions || []).filter(x => x && x.t).slice(0, 4), tip:String(d.tip || "")};
+      capiCache[k] = S.data; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = "";
+    }catch(e){ S.ph = "err"; S.err = e && e.message === "shape" ? "O Capi não conseguiu montar a aula com este vídeo. Tente outro trecho ou outra cena." : (e && (e.message === "http400" || e.message === "http403") ? "O Gemini não aceitou abrir este vídeo (ele só lê vídeos públicos e pode recusar alguns). Tente outra cena." : gmErrMsg(e)); }
+    draw();
+  }
+  async function correct(){
+    const [A, B] = getAB(); S.busy = true; S.err = ""; draw();
+    const prompt = `Você é o Capi, professor de ${lang} de um brasileiro (nível ${lvl}). Assista ao vídeo e compare com o que o aluno entendeu da cena:
+"""${S.essay.slice(0, 900)}"""
+Responda SOMENTE um JSON: {"score":0 a 100,"right":["o que o aluno acertou, em português, 1 frase cada, até 3"],"missed":["o que ele não percebeu ou errou, em português, até 3"],"fixes":[{"you":"trecho do que ele escreveu","better":"como dizer melhor em ${lang}","why":"motivo em português"}],"next":"1 sugestão curta de o que treinar agora"}
+Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em português, "fixes" pode ficar vazio.`;
+    try{ const d = await capiAsk(id, A, B, prompt, 1500); S.fb = {score:Math.max(0, Math.min(100, +d.score || 0)), right:(d.right || []).slice(0, 4), missed:(d.missed || []).slice(0, 4), fixes:(d.fixes || []).filter(x => x && x.better).slice(0, 4), next:String(d.next || "")}; addXp(3); }
+    catch(e){ S.err = gmErrMsg(e); }
+    S.busy = false; draw();
+  }
+  function draw(){
+    let h2 = "";
+    if(S.ph === "idle"){
+      h2 = head("O Capi assiste à cena com você") + note("Ele ouve o vídeo, explica o que foi dito, faz perguntas, corrige o que você errou e mostra como dizer melhor. Leva uns 20 a 40 segundos para preparar a aula.") +
+        (gmKey() ? `<button class="btn btn-dark btn-block" id="cpGo">🎓 Começar a aula</button>` : note("Para o Capi assistir ao vídeo é preciso a chave do Gemini (grátis). Ela fica só neste aparelho.") + `<div id="cpKey"></div>`);
+    }else if(S.ph === "loading"){
+      h2 = head("O Capi está assistindo à cena…") + note("Já já a aula aparece. Enquanto isso, você pode assistir ao vídeo lá em cima.");
+    }else if(S.ph === "err"){
+      h2 = head("Não deu certo") + note(esc(S.err)) + `<button class="btn btn-dark btn-block" id="cpGo">Tentar de novo</button>`;
+    }else{
+      const d = S.data, done = S.qi >= d.questions.length;
+      h2 = head("Vamos entender o que foi dito") + (d.context ? `<p style="font-size:15px;line-height:1.5">${esc(d.context)}</p>` : "") + (d.tip ? note("🎯 " + esc(d.tip)) : "");
+      if(!done){
+        const q = d.questions[S.qi];
+        h2 += `<div class="cp-q"><div class="eyebrow">Pergunta ${S.qi + 1} de ${d.questions.length}</div><b style="font-size:16px;line-height:1.4">${esc(q.q)}</b>` +
+          q.opts.map((o, i) => `<button class="cp-o ${S.pick !== null ? (i === q.a ? "ok" : i === S.pick ? "bad" : "") : ""}" data-o="${i}" ${S.pick !== null ? "disabled" : ""}>${esc(o)}</button>`).join("") +
+          (S.pick !== null ? `<div class="feedback ${S.pick === q.a ? "good" : "bad"}"><b>${S.pick === q.a ? "Acertou!" : "Quase."}</b><div class="tips">${esc(q.why || "")}</div></div><button class="btn btn-dark btn-block" id="cpNext">${S.qi + 1 < d.questions.length ? "Próxima pergunta" : "Ver o resultado"}</button>` : "") + `</div>`;
+      }else{
+        h2 += `<div class="feedback good"><b>Você acertou ${S.score} de ${d.questions.length}</b><div class="tips">${S.score === d.questions.length ? "Perfeito: você pegou tudo." : S.score >= d.questions.length / 2 ? "Bom. Reveja as falas abaixo e assista de novo sem legenda." : "Sem problema: leia as falas abaixo, assista de novo e tente outra vez."}</div></div>
+          <div><div class="eyebrow">Falas-chave</div>${d.lines.map((l, i) => `<div class="cp-line"><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(l.t)}</b><div class="sub" style="font-size:13px">${esc(l.pt || "")}</div>${l.note ? `<div class="sub" style="font-size:12.5px;margin-top:2px">💡 ${esc(l.note)}</div>` : ""}</div><button class="btn btn-line" data-sl="${i}" style="padding:8px 12px;font-size:12.5px" aria-label="Salvar frase">Salvar</button></div>`).join("")}</div>` +
+          (d.expressions.length ? `<div><div class="eyebrow">Expressões</div>${d.expressions.map((x, i) => `<div class="cp-line"><div style="flex:1"><b>${esc(x.t)}</b><div class="sub" style="font-size:13px">${esc(x.pt || "")}</div></div><button class="btn btn-line" data-se="${i}" style="padding:8px 12px;font-size:12.5px">Salvar</button></div>`).join("")}</div>` : "") +
+          `<div class="eyebrow">Agora é você</div><p class="sub" style="font-size:13.5px">Sem olhar as falas: conte com suas palavras o que aconteceu e o que foi dito (em ${esc(lang)} se conseguir, ou em português). O Capi compara com o vídeo e corrige.</p>
+          <textarea id="cpEs" class="in" rows="4" style="width:100%" placeholder="Ex.: Ele disse que...">${esc(S.essay)}</textarea>
+          <button class="btn btn-dark btn-block" id="cpFb" ${S.busy ? "disabled" : ""}>${S.busy ? "O Capi está corrigindo…" : "Pedir a correção do Capi"}</button>` + (S.err ? note(esc(S.err)) : "") +
+          (S.fb ? `<div class="feedback good"><b>Nota do Capi: ${S.fb.score}/100</b>${S.fb.right.length ? `<div class="tips"><b>✓ O que você acertou</b><br>${S.fb.right.map(esc).join("<br>")}</div>` : ""}${S.fb.missed.length ? `<div class="tips" style="margin-top:8px"><b>✗ O que faltou ou errou</b><br>${S.fb.missed.map(esc).join("<br>")}</div>` : ""}${S.fb.fixes.length ? `<div class="tips" style="margin-top:8px"><b>✎ Como dizer melhor</b><br>${S.fb.fixes.map(f => `“${esc(f.you || "")}” → <b>${esc(f.better)}</b>${f.why ? " · " + esc(f.why) : ""}`).join("<br>")}</div>` : ""}${S.fb.next ? `<div class="tips" style="margin-top:8px">🎯 ${esc(S.fb.next)}</div>` : ""}</div>` : "");
+      }
+    }
+    box.innerHTML = `<div class="card" style="display:flex;flex-direction:column;gap:12px">${h2}</div>`;
+    const g = $("#cpGo", box); if(g) g.addEventListener("click", start);
+    const ck = $("#cpKey", box); if(ck) ck.appendChild(gmKeyCard(() => draw()));
+    $$(".cp-o", box).forEach(b => b.addEventListener("click", () => { const q = S.data.questions[S.qi]; S.pick = +b.dataset.o; if(S.pick === q.a) S.score++; draw(); }));
+    const nx = $("#cpNext", box); if(nx) nx.addEventListener("click", () => { S.qi++; S.pick = null; if(S.qi >= S.data.questions.length) addXp(2); draw(); try{ box.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){} });
+    $$("[data-sl]", box).forEach(b => b.addEventListener("click", () => { const l = S.data.lines[+b.dataset.sl]; toast(capiSaveLine(l.t, l.pt) ? "Frase salva no Anki" : "Já estava salva"); }));
+    $$("[data-se]", box).forEach(b => b.addEventListener("click", () => { const x = S.data.expressions[+b.dataset.se]; toast(capiSaveLine(x.t, x.pt) ? "Expressão salva no Anki" : "Já estava salva"); }));
+    const es = $("#cpEs", box); if(es) es.addEventListener("input", () => { S.essay = es.value; });
+    const fb = $("#cpFb", box); if(fb) fb.addEventListener("click", () => { S.essay = $("#cpEs", box).value.trim(); if(S.essay.length < 8){ toast("Escreva um pouco mais para o Capi corrigir."); return; } correct(); });
+  }
+  draw();
+}
 function startFilm(){ open({type:"film"}); }
 function viewFilm(){
   const o = overlay, el = h(`<div class="screen"></div>`), lg = LANGS[state.lang];
@@ -2755,24 +2862,38 @@ function viewFilm(){
   };
   async function openVideo(id, a, b, name){
     kill(); A = a || 0; B = b || 0; stage.style.display = "flex"; setTimeout(() => { try{ stage.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){} }, 60);
-    stage.innerHTML = `<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden"><div id="ytp" style="position:absolute;inset:0"></div></div>
-      <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="eyebrow">3. Treine o trecho</div>
-      <div id="ftime" style="font-weight:700">Trecho: <span id="fa">${fmtClock(A)}</span> → <span id="fb">${B ? fmtClock(B) : "fim"}</span></div>
-      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px"><button class="btn btn-line" id="fb3">⏪ 3 s</button><button class="btn btn-dark" id="fpp">⏯</button><button class="btn btn-line" id="ff3">3 s ⏩</button><button class="btn btn-line" id="fsp">1x</button></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-line" id="fsa">Marcar início aqui</button><button class="btn btn-line" id="fsb">Marcar fim aqui</button></div>
-      <button class="btn btn-line" id="fsv">Salvar este trecho</button>
-      <p class="sub" style="font-size:12.5px">Roteiro: 1) assista uma vez com legenda; 2) em 0,5x ou 0,75x, escute o trecho em loop; 3) pause no fim de cada fala e repita em voz alta, imitando o ritmo; 4) tire a legenda e repita de novo.</p></div>`;
+    const IC = {
+      back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v4.2h4.2"/></svg>',
+      fwd:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.5v4.2h-4.2"/></svg>',
+      play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6L19 12z" fill="currentColor" stroke="none"/></svg>',
+      pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></svg>',
+      flagA:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20V4M6 5h11l-2 4 2 4H6"/></svg>',
+      flagB:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V4M18 5H7l2 4-2 4h11"/></svg>',
+      save:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg>'
+    };
+    stage.innerHTML = `<div class="fv-sticky"><div class="fv-vid"><div id="ytp"></div></div>
+      <div class="fv-bar"><input id="fseek" class="fv-seek" type="range" min="0" max="1000" value="0" aria-label="Posição do vídeo">
+        <div class="fv-time"><span id="fcur">0:00</span><span id="ftime">Trecho: <span id="fa">${fmtClock(A)}</span> → <span id="fb">${B ? fmtClock(B) : "fim"}</span></span><span id="fdur">0:00</span></div>
+        <div class="fv-row"><button class="fv-b" id="fb3" aria-label="Voltar 3 segundos">${IC.back}<small>3 s</small></button><button class="fv-b fv-play" id="fpp" aria-label="Tocar ou pausar">${IC.play}</button><button class="fv-b" id="ff3" aria-label="Avançar 3 segundos">${IC.fwd}<small>3 s</small></button><button class="fv-b" id="fsp" aria-label="Velocidade"><b id="fspv">1x</b><small>veloc.</small></button></div></div></div>
+      <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="eyebrow">Treine um trecho em loop</div>
+        <div class="fv-row3"><button class="fv-c" id="fsa">${IC.flagA}<span>Início aqui</span></button><button class="fv-c" id="fsb">${IC.flagB}<span>Fim aqui</span></button><button class="fv-c" id="fsv">${IC.save}<span>Salvar</span></button></div>
+        <p class="sub" style="font-size:12.5px">Marque onde a fala começa e termina: o trecho repete sozinho. Assista com legenda, depois a 0,5x, repita em voz alta e por fim sem legenda.</p></div>
+      <section id="fcapi"></section>`;
     $("#fa", stage); const rates = [1, 0.75, 0.5]; let ri = 0;
     try{ await ytLoad(); }catch(e){ $("#fmsg", ld).textContent = "Não consegui carregar o player do YouTube. Confira a internet e tente de novo."; return; }
-    player = new YT.Player("ytp", {width:"100%", height:"100%", videoId:id, playerVars:{playsinline:1, rel:0, start:A, cc_load_policy:1, cc_lang_pref:state.lang, hl:state.lang, modestbranding:1}, events:{onError:() => { $("#fmsg", ld).textContent = "Este vídeo não permite ser aberto aqui. Escolha outro."; }}});
-    poll = setInterval(() => { try{ if(B && player.getCurrentTime && player.getCurrentTime() >= B - 0.15) player.seekTo(A, true); }catch(e){} }, 200);
+    player = new YT.Player("ytp", {width:"100%", height:"100%", videoId:id, playerVars:{playsinline:1, rel:0, start:A, controls:0, disablekb:1, iv_load_policy:3, fs:0, cc_load_policy:1, cc_lang_pref:state.lang, hl:state.lang, modestbranding:1}, events:{onError:() => { $("#fmsg", ld).textContent = "Este vídeo não permite ser aberto aqui. Escolha outro."; }, onStateChange:e => { const b = $("#fpp", stage); if(b) b.innerHTML = e.data === 1 ? IC.pause : IC.play; }}});
+    let dragging = false; const sk = $("#fseek", stage);
+    sk.addEventListener("input", () => { dragging = true; const d = player.getDuration() || 0; $("#fcur", stage).textContent = fmtClock(d * sk.value / 1000); });
+    sk.addEventListener("change", () => { try{ const d = player.getDuration() || 0; player.seekTo(d * sk.value / 1000, true); }catch(e){} dragging = false; });
+    poll = setInterval(() => { try{ if(!player.getCurrentTime) return; const t = player.getCurrentTime(), d = player.getDuration() || 0; if(B && t >= B - 0.15) player.seekTo(A, true); if(!dragging && d){ sk.value = Math.round(t / d * 1000); $("#fcur", stage).textContent = fmtClock(t); $("#fdur", stage).textContent = fmtClock(d); } }catch(e){} }, 200);
     $("#fpp", stage).addEventListener("click", () => { try{ player.getPlayerState() === 1 ? player.pauseVideo() : player.playVideo(); }catch(e){} });
     $("#fb3", stage).addEventListener("click", () => { try{ player.seekTo(Math.max(A, player.getCurrentTime() - 3), true); }catch(e){} });
     $("#ff3", stage).addEventListener("click", () => { try{ player.seekTo(player.getCurrentTime() + 3, true); }catch(e){} });
-    $("#fsp", stage).addEventListener("click", () => { ri = (ri + 1) % rates.length; try{ player.setPlaybackRate(rates[ri]); }catch(e){} $("#fsp", stage).textContent = (rates[ri] + "x").replace(".", ","); });
+    $("#fsp", stage).addEventListener("click", () => { ri = (ri + 1) % rates.length; try{ player.setPlaybackRate(rates[ri]); }catch(e){} $("#fspv", stage).textContent = (rates[ri] + "x").replace(".", ","); });
     $("#fsa", stage).addEventListener("click", () => { try{ A = Math.floor(player.getCurrentTime()); if(B && B <= A) B = 0; $("#fa", stage).textContent = fmtClock(A); $("#fb", stage).textContent = B ? fmtClock(B) : "fim"; }catch(e){} });
     $("#fsb", stage).addEventListener("click", () => { try{ const t = Math.ceil(player.getCurrentTime()); if(t > A){ B = t; $("#fb", stage).textContent = fmtClock(B); player.seekTo(A, true); } }catch(e){} });
     $("#fsv", stage).addEventListener("click", () => { const n = (prompt("Nome para este trecho:", name || "") || "").trim(); if(!n) return; const v = filmStore.get(); v.unshift({id, a:A, b:B || A + 20, n, l:state.lang}); filmStore.set(v.slice(0, 30)); drawSaved(); toast("Trecho salvo."); if(!ensureDay().game){ ensureDay().game = true; } });
+    filmCapi($("#fcapi", stage), id, name, () => [A, B]);
     stage.scrollIntoView({behavior:"smooth", block:"start"});
   }
   $("#fo", ld).addEventListener("click", () => { const p = ytParse($("#fl", ld).value); if(!p.id){ $("#fmsg", ld).textContent = "Não reconheci o link. Cole o endereço completo do vídeo do YouTube."; return; } $("#fmsg", ld).textContent = ""; openVideo(p.id, p.t, 0, ""); });
@@ -5671,7 +5792,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v91";
+const APP_VER = "v92";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
