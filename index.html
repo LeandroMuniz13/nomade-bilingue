@@ -1386,13 +1386,16 @@ let overlay = null;   // {type:'lesson'|'placement'|'deck'|'memory'|'blitz'|'sce
 let menuOpen = false;
 let trailFilter = "all";
 
-function go(t){ tab=t; overlay=null; menuOpen=false; render(); scrollTo(0,0); }
+let hubReturn = null;
+function go(t){ tab=t; overlay=null; menuOpen=false; hubReturn=null; render(); scrollTo(0,0); }
 let planRun = null;
 function open(o){ overlay=o; menuOpen=false; render(); scrollTo(0,0); }
 function close(){
   if(overlay && overlay.timer) clearInterval(overlay.timer); overlay=null;
+  const hr = hubReturn; hubReturn = null;
   let adv = null;
   if(planRun){ const r = planRun; planRun = null; if(state.xp > r.xp0){ planMark(r.key); if(r.auto) adv = true; } }
+  if(hr && !adv) overlay = {type:"hub", k:hr};
   render(); scrollTo(0,0);
   if(adv) setTimeout(planAdvance, 350);
 }
@@ -3169,7 +3172,17 @@ function buildSession(u, extra){
   const ks = Object.keys(seen); if(ks.length>2500) ks.slice(0,1000).forEach(k => delete seen[k]);
   return shuffle(picked);
 }
-const gmJson = raw => JSON.parse(String(raw).replace(/^[^{[]*/,"").replace(/[^}\]]*$/,""));
+const gmJson = raw => {
+  const t = String(raw).replace(/```(?:json)?/gi,"");
+  const st = t.search(/[{[]/); if(st < 0) throw new Error("json");
+  const open = t[st], close = open==="{" ? "}" : "]"; let d = 0, ins = false, esc2 = false;
+  for(let i = st; i < t.length; i++){
+    const c = t[i];
+    if(ins){ if(esc2) esc2 = false; else if(c==="\\") esc2 = true; else if(c==='"') ins = false; continue; }
+    if(c==='"') ins = true; else if(c===open) d++; else if(c===close){ d--; if(d===0) return JSON.parse(t.slice(st, i+1)); }
+  }
+  return JSON.parse(t.slice(st).replace(/[^}\]]*$/,""));
+};
 function profCtx(){
   const p = state.prof; if(!p) return "";
   return `\nPerfil do aluno (use para personalizar situações, exemplos e vocabulário): objetivo: ${p.goal||"-"}; contextos de uso: ${(p.contexts||[]).join(", ")||"-"}; interesses: ${(p.interests||[]).join(", ")||"-"}; dificuldades: ${(p.weak||[]).join(", ")||"-"}; estilo: ${p.style||"-"}.`;
@@ -3182,7 +3195,7 @@ async function aiFresh(u){
 Crie 4 perguntas NOVAS de múltipla escolha, diferentes entre si, em situações realistas e criativas (ligadas ao perfil do aluno quando fizer sentido). Pelo menos uma deve ser “o que você diria/responderia nesta situação”, não só tradução.
 Responda só com JSON: {"exercises":[{"q":"pergunta em português","options":["a","b","c","d"],"correct":0,"explain":"explicação curta em português"}]}
 Regras: 4 opções distintas, uma correta, opções no idioma estudado quando fizer sentido, nada vulgar; varie a posição da correta.`;
-  const j = gmJson(await gmCall([{text:prompt}], 2200, true));
+  const j = gmJson(await aiTextAny(prompt, 2200, true));
   return (j.exercises||[]).filter(e => e && e.q && Array.isArray(e.options) && e.options.length===4 && new Set(e.options).size===4 && Number.isInteger(e.correct) && e.correct>=0 && e.correct<4 && e.explain).slice(0,4).map(e => Object.assign({type:"mcq"}, e));
 }
 /* ---- conversa inicial com a IA: monta o perfil de estudo ---- */
@@ -3215,7 +3228,7 @@ ${convo || "(início)"}
 Aulas disponíveis (id|título|categoria|nível):
 ${us}
 Responda SOMENTE com JSON. Para continuar: {"done":false,"say":"pergunta","chips":["até 4 respostas rápidas e curtas"]}. Quando tiver informação suficiente ou após 6 respostas: {"done":true,"say":"1-2 frases dizendo o que você vai priorizar","profile":{"goal":"","contexts":[""],"interests":[""],"weak":[""],"style":"","summary":"2 frases sobre o aluno","unit_ids":["até 6 ids de aulas na ordem recomendada"]}}`;
-    const j = gmJson(await gmCall([{text:prompt}], 1800, true));
+    const j = gmJson(await aiTextAny(prompt, 1800, true));
     if(j.done && j.profile){ profSave(j.profile); o.msgs.push({r:"ai", t:j.say||"Pronto! Já montei o seu plano."}); o.done = true; }
     else if(j.say){ o.msgs.push({r:"ai", t:j.say, chips:(j.chips||[]).slice(0,4)}); }
     else throw new Error("empty");
@@ -3295,7 +3308,7 @@ function profCard(){
 }
 function viewLesson(){
   const o = overlay, u = o.unit;
-  if(!o.practice && !o._pf){ o._pf = true; if(gmKey() && navigator.onLine) aiFresh(u).then(a => { o.aiEx = a; }).catch(()=>{}); }
+  if(!o.practice && !o._pf){ o._pf = true; if((gmKey() || provAny()) && navigator.onLine) aiFresh(u).then(a => { o.aiEx = a; }).catch(()=>{}); }
   if(o.stage==="ex" && !o.exs) o.exs = o.practice ? u.exercises : buildSession(u, o.aiEx);
   const EXS = o.exs || u.exercises;
   const total = 2 + u.vocab.length + EXS.length;
@@ -4479,7 +4492,7 @@ function askAI(){
     });
   }).catch(err => {
     if(overlay!==o) return;
-    o.busy=false; o.msgs.push({role:"sys", text: err && err.code==="rate_limited" ? "Muitas mensagens seguidas — espere um pouquinho." : "Não consegui responder agora. Tente de novo."}); render();
+    o.busy=false; o.msgs.push({role:"sys", text: err && err.code==="rate_limited" ? "Muitas mensagens seguidas — espere um pouquinho." : (err && ["key","quota","busy"].includes(err.message)) ? gmErrMsg(err) : "Não consegui responder agora. Tente de novo."}); render();
   });
 }
 
@@ -5455,7 +5468,7 @@ function viewHub(){
   $("button",head).addEventListener("click", close); el.appendChild(head);
   el.appendChild(h(`<div><h1 class="headline">${esc(H2.t)}</h1><p class="sub" style="margin-top:4px">${esc(H2.s)}</p></div>`));
   const g = h(`<div class="pgrid"></div>`);
-  H2.items.forEach(x => { const b = h(`<button class="ptile"><span class="game-ic" style="background:var(--accent-soft)">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></button>`); b.addEventListener("click", x.act); g.appendChild(b); });
+  H2.items.forEach(x => { const b = h(`<button class="ptile"><span class="game-ic" style="background:var(--accent-soft)">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></button>`); b.addEventListener("click", () => { hubReturn = o.k; x.act(); }); g.appendChild(b); });
   el.appendChild(g);
   return el;
 }
@@ -5519,7 +5532,7 @@ function viewForca(){
     if(!o.end){ o.end = true; if(won){ o.wins++; try{ sfx.right(); }catch(e){} } else { try{ sfx.wrong(); }catch(e){} } try{ speak(w.t); }catch(e){} }
     const nb = h(`<section class="card" style="text-align:center"><b>${won ? "Acertou!" : "Era esta:"} ${esc(w.t)}</b>${w.ex ? `<p class="sub" style="margin-top:6px">${esc(w.ex.t)}</p>` : ""}<button class="speak" style="margin:8px auto 0" aria-label="Ouvir">${ICON.speak}</button></section>`);
     $(".speak",nb).addEventListener("click", () => speak(w.ex ? w.ex.t : w.t)); el.appendChild(nb);
-    const nx = h(`<button class="btn btn-dark btn-block">Próxima <span class="arr">→</span></button>`); nx.addEventListener("click", () => { o.i++; o.got = {}; o.miss = 0; o.end = false; render(); }); el.appendChild(nx);
+    const nx = h(`<button class="btn btn-dark btn-block">Próxima <span class="arr">→</span></button>`); nx.addEventListener("click", () => { o.i++; o.got = {}; o.tried = {}; o.miss = 0; o.end = false; render(); }); el.appendChild(nx);
     return el;
   }
   const kb = h(`<div class="fc-kb"></div>`);
@@ -5638,7 +5651,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v83";
+const APP_VER = "v84";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5766,7 +5779,7 @@ async function pronAI(st){
   if(window.claude && window.claude.use){
     const sample = await window.claude.use("sample"); const r = await sample(prompt, {cache:false}); return typeof r==="string" ? r : (r && r.text) || String(r);
   }
-  if(gmKey()) return await gmCall([{text:prompt}], 900);
+  if(gmKey() || provAny()) return await aiTextAny(prompt, 900, false);
   let key = ""; try{ key = localStorage.getItem("nb-key") || ""; }catch(e){}
   if(!key) throw new Error("nokey");
   const res = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}, body:JSON.stringify({model:"claude-sonnet-5-5", max_tokens:700, messages:[{role:"user", content:prompt}]})});
@@ -5976,17 +5989,16 @@ function learnCard(){
 /* ---------- Provedores grátis de reserva (formato OpenAI) ---------- */
 const FREE_PROV = [
   {id:"groq", n:"Groq", base:"https://api.groq.com/openai/v1", model:"llama-3.3-70b-versatile", url:"https://console.groq.com/keys", tip:"Muito rápido. Sem cartão."},
-  {id:"cerebras", n:"Cerebras", base:"https://api.cerebras.ai/v1", model:"", url:"https://cloud.cerebras.ai/", tip:"Rápido. Sem cartão."},
   {id:"openrouter", n:"OpenRouter", base:"https://openrouter.ai/api/v1", model:"openrouter/free", url:"https://openrouter.ai/keys", tip:"Escolhe sozinho um modelo gratuito."}
 ];
 const provKey = id => { try{ return localStorage.getItem("nb-k-"+id) || ""; }catch(e){ return ""; } };
 const provAny = () => FREE_PROV.some(p => provKey(p.id));
-async function provModel(p, key){
-  if(p.model) return p.model;
+async function provModel(p, key, force){
   let m = ""; try{ m = localStorage.getItem("nb-km-"+p.id) || ""; }catch(e){}
-  if(m) return m;
+  if(!force && m) return m;
+  if(p.model && !force) return p.model;
   const r = await fetch(p.base+"/models", {headers:{Authorization:"Bearer "+key}}); if(!r.ok) throw new Error("http"+r.status);
-  const ids = ((await r.json()).data || []).map(x => x.id), pick = ids.find(i => /llama.*(70b|3\.3)/i.test(i)) || ids.find(i => /llama|gpt-oss|qwen/i.test(i)) || ids[0];
+  const ids = ((await r.json()).data || []).map(x => x.id).filter(i => p.id!=="openrouter" || /:free$/.test(i)), pick = ids.find(i => /llama.*(70b|3\.3)/i.test(i)) || ids.find(i => /llama|gpt-oss|qwen/i.test(i)) || ids[0];
   if(!pick) throw new Error("model"); try{ localStorage.setItem("nb-km-"+p.id, pick); }catch(e){} return pick;
 }
 function toChat(inp){
@@ -6002,6 +6014,7 @@ async function provCall(inp, maxTok, json){
       const body = {model, messages:toChat(inp), max_tokens:maxTok||900, temperature:0.4}; if(json) body.response_format = {type:"json_object"};
       let res = await fetch(p.base+"/chat/completions", {method:"POST", headers:{Authorization:"Bearer "+key, "Content-Type":"application/json"}, body:JSON.stringify(body)});
       if(res.status===400 && json){ delete body.response_format; body.messages = toChat(inp).concat([{role:"user", content:"Responda somente com JSON válido."}]); res = await fetch(p.base+"/chat/completions", {method:"POST", headers:{Authorization:"Bearer "+key, "Content-Type":"application/json"}, body:JSON.stringify(body)}); }
+      if((res.status===404 || res.status===400) && !p.__retried){ p.__retried = true; try{ const m2 = await provModel(p, key, true); body.model = m2; res = await fetch(p.base+"/chat/completions", {method:"POST", headers:{Authorization:"Bearer "+key, "Content-Type":"application/json"}, body:JSON.stringify(body)}); }catch(e){} }
       if(res.status===401 || res.status===403){ last = new Error("key"); continue; }
       if(!res.ok){ last = new Error(res.status===429 ? "quota" : "busy"); continue; }
       const j = await res.json(), txt = (((j.choices||[])[0]||{}).message||{}).content;
@@ -6041,6 +6054,8 @@ function aiSampleGet(){
   f.json = async (inp, o) => gmJson(await aiTextAny(inp, 2800, true));
   return Promise.resolve(f);
 }
+let gmNoThink = false;
+function gmPref(){ try{ return localStorage.getItem("nb-gm-model") || ""; }catch(e){ return ""; } }
 async function gmCall(parts, maxTok, json, fast){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
