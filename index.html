@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com; media-src 'self' blob: data: https://accent.gmu.edu https://archive.org https://*.archive.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com; media-src 'self' blob: data: https://accent.gmu.edu https://archive.org https://*.archive.org https://tatoeba.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#D9DDF7">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
@@ -1452,7 +1452,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, hub:viewHub, forca:viewForca, abooks:viewAbooks};
+    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -1820,6 +1820,7 @@ function planCandidates(){
   }
   { const sg = nextSong(); if(sg) out.sing = {key:"sing", ic:"🎤", t:"Karaokê: "+sg.title, s:"Cante junto com a base · 4 min", min:4, p:P("listen")-6, act:() => startKara(sg)}; }
   if(state.lang==="en"){ const da = dailyAccent(); out.voz = {key:"voz", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Pessoa real falando · texto e ditado", min:3, p:P("listen")-4, act:() => startVozes(da)}; }
+  else if(state.lang==="it"){ out.voz = {key:"voz", ic:"🌍", t:"Vozes reais em italiano", s:"Voz humana · ouvir com texto e ditado", min:3, p:P("listen")-4, act:() => startItVozes()}; }
   { const dp = dailyPod(); if(dp) out.pod = {key:"pod", ic:"🎧", t:"Podcast: "+dp.n, s:dp.acc+" · "+dp.len+" · escuta longa", min:8, p:P("listen")-10, act:() => startPod(dp)}; }
   return out;
 }
@@ -2741,7 +2742,15 @@ const FILM_PICKS = [
  {l:"it",f:"Shrek 2 (dublado)",t:"Cerco un eroe",id:"kM5v0Msb11Q",lv:"B1"},
  {l:"it",f:"Shrek Terzo (dublado)",t:"Primeiro dia como rei",id:"vHB0q_yY53g",lv:"B1"},
  {l:"it",f:"Shrek Terzo (dublado)",t:"Shrek no colégio medieval",id:"0EJoc7CMp2o",lv:"B1"},
- {l:"it",f:"Shrek (dublado)",t:"Cena final",id:"XsTvr3-kAmI",lv:"A2"}
+ {l:"it",f:"Shrek (dublado)",t:"Cena final",id:"XsTvr3-kAmI",lv:"A2"},
+ {l:"it",f:"Il Postino",t:"Dialogo sulla spiaggia",id:"3njKn_XKLi0",lv:"B1"},
+ {l:"it",f:"Il Postino",t:"La dedica",id:"j0DKUq9Q3Ys",lv:"B1"},
+ {l:"it",f:"La vita è bella",t:"Buongiorno, principessa!",id:"btRNa3CItMc",lv:"B1"},
+ {l:"it",f:"Matrix (dublado)",t:"Pillola azzurra o pillola rossa",id:"pltT-ZTur7I",lv:"B1"},
+ {l:"it",f:"L'amica geniale",t:"Le bambole",id:"5KwxA1GxBqQ",lv:"B2"},
+ {l:"it",f:"L'amica geniale",t:"Fuga al mare",id:"3NHas3LO4Bk",lv:"B2"},
+ {l:"it",f:"Smetto quando voglio",t:"Il colloquio",id:"g-5cWNtokB0",lv:"B2"},
+ {l:"it",f:"Smetto quando voglio",t:"I benzinai",id:"OSGY5NiZGPE",lv:"B2"}
 ];
 /* ===== Aula com o Capi: o Gemini assiste ao vídeo, explica, pergunta e corrige ===== */
 const capiCache = {};
@@ -2750,7 +2759,8 @@ function capiVideoPart(id, A, B){
   if(A > 0 || B > 0){ part.videoMetadata = {startOffset:Math.max(0, Math.round(A)) + "s"}; if(B > A) part.videoMetadata.endOffset = Math.round(B) + "s"; }
   return part;
 }
-async function capiAsk(id, A, B, text, maxTok){
+async function capiAsk(id, A, B, text, maxTok, tr){
+  if(tr){ const raw = await aiTextAny(text + "\n\nTRANSCRIÇÃO DA CENA (use só isto):\n" + tr.slice(0, 5000), maxTok, true); return gmJson(raw); }
   const raw = await gmCall({contents:[{role:"user", parts:[capiVideoPart(id, A, B), {text}]}]}, maxTok, true, false);
   return gmJson(raw);
 }
@@ -2761,20 +2771,21 @@ function capiSaveLine(t, pt){
 }
 function filmCapi(box, id, name, getAB){
   const lang = LANGS[state.lang].name, lvl = userLevel();
-  const S = {ph:"idle", data:null, qi:0, pick:null, score:0, essay:"", fb:null, busy:false, err:""};
-  const key = () => { const [A, B] = getAB(); return id + "|" + A + "|" + B; };
+  const S = {tr:"", ph:"idle", data:null, qi:0, pick:null, score:0, essay:"", fb:null, busy:false, err:""};
+  const key = () => { const [A, B] = getAB(); return id + "|" + A + "|" + B + "|" + S.tr.length; };
+  const src = () => S.tr ? "a transcrição que vem abaixo (você não vê o vídeo)" : "o vídeo";
   const note = m => `<p class="sub" style="font-size:12.5px">${m}</p>`;
   const head = txt => `<div style="display:flex;gap:12px;align-items:center"><div style="flex:none" aria-hidden="true">${capi("hi", 64)}</div><div><div class="eyebrow">Aula com o Capi</div><div style="font-weight:700;margin-top:2px">${txt}</div></div></div>`;
   async function start(){
     const [A, B] = getAB(), k = key();
     if(capiCache[k]){ S.data = capiCache[k]; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; draw(); return; }
     S.ph = "loading"; S.err = ""; draw();
-    const prompt = `Você é o Capi, uma capivara que é professor de ${lang} de um brasileiro (nível ${lvl}). Assista ao vídeo${name ? " (" + name + ")" : ""} e dê uma AULA sobre a cena. Use só o que você realmente vê e ouve; se não entender uma fala, não invente.
+    const prompt = `Você é o Capi, uma capivara que é professor de ${lang} de um brasileiro (nível ${lvl}). Use ${src()}${name ? " (cena: " + name + ")" : ""} e dê uma AULA sobre a cena. Use só o que realmente está nela; se algo não estiver claro, não invente.
 Responda SOMENTE um JSON neste formato:
 {"context":"2 frases em português dizendo quem fala e o que acontece, sem inventar","lines":[{"t":"fala curta em ${lang}, fiel ao áudio, até 14 palavras","pt":"tradução natural","note":"1 frase em português: o que a fala quer dizer de verdade, gíria ou pronúncia"}],"questions":[{"q":"pergunta em português sobre o que foi DITO ou entendido","opts":["opção A","opção B","opção C"],"a":0,"why":"explicação em português que cita a fala certa"}],"expressions":[{"t":"expressão em ${lang}","pt":"significado"}],"tip":"1 dica em português de entonação ou pronúncia desta cena"}
 Regras: 5 a 7 itens em lines (as falas mais úteis, em ordem); exatamente 4 questions com 3 opções e o índice "a" correto (varie a posição); 3 expressions; tudo em português, exceto os campos "t".`;
     try{
-      const d = await capiAsk(id, A, B, prompt, 2600);
+      const d = await capiAsk(id, A, B, prompt, 2600, S.tr);
       const lines = (d.lines || []).filter(x => x && x.t).slice(0, 8), qs = (d.questions || []).filter(q => q && q.q && Array.isArray(q.opts) && q.opts.length >= 2 && Number.isInteger(q.a) && q.a >= 0 && q.a < q.opts.length).slice(0, 5);
       if(!lines.length || !qs.length) throw new Error("shape");
       S.data = {context:String(d.context || ""), lines, questions:qs, expressions:(d.expressions || []).filter(x => x && x.t).slice(0, 4), tip:String(d.tip || "")};
@@ -2784,11 +2795,11 @@ Regras: 5 a 7 itens em lines (as falas mais úteis, em ordem); exatamente 4 ques
   }
   async function correct(){
     const [A, B] = getAB(); S.busy = true; S.err = ""; draw();
-    const prompt = `Você é o Capi, professor de ${lang} de um brasileiro (nível ${lvl}). Assista ao vídeo e compare com o que o aluno entendeu da cena:
+    const prompt = `Você é o Capi, professor de ${lang} de um brasileiro (nível ${lvl}). Use ${src()} e compare com o que o aluno entendeu da cena:
 """${S.essay.slice(0, 900)}"""
 Responda SOMENTE um JSON: {"score":0 a 100,"right":["o que o aluno acertou, em português, 1 frase cada, até 3"],"missed":["o que ele não percebeu ou errou, em português, até 3"],"fixes":[{"you":"trecho do que ele escreveu","better":"como dizer melhor em ${lang}","why":"motivo em português"}],"next":"1 sugestão curta de o que treinar agora"}
 Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em português, "fixes" pode ficar vazio.`;
-    try{ const d = await capiAsk(id, A, B, prompt, 1500); S.fb = {score:Math.max(0, Math.min(100, +d.score || 0)), right:(d.right || []).slice(0, 4), missed:(d.missed || []).slice(0, 4), fixes:(d.fixes || []).filter(x => x && x.better).slice(0, 4), next:String(d.next || "")}; addXp(3); }
+    try{ const d = await capiAsk(id, A, B, prompt, 1500, S.tr); S.fb = {score:Math.max(0, Math.min(100, +d.score || 0)), right:(d.right || []).slice(0, 4), missed:(d.missed || []).slice(0, 4), fixes:(d.fixes || []).filter(x => x && x.better).slice(0, 4), next:String(d.next || "")}; addXp(3); }
     catch(e){ S.err = gmErrMsg(e); }
     S.busy = false; draw();
   }
@@ -2796,7 +2807,11 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     let h2 = "";
     if(S.ph === "idle"){
       h2 = head("O Capi assiste à cena com você") + note("Ele ouve o vídeo, explica o que foi dito, faz perguntas, corrige o que você errou e mostra como dizer melhor. Leva uns 20 a 40 segundos para preparar a aula.") +
-        (gmKey() ? `<button class="btn btn-dark btn-block" id="cpGo">🎓 Começar a aula</button>` : note("Para o Capi assistir ao vídeo é preciso a chave do Gemini (grátis). Ela fica só neste aparelho.") + `<div id="cpKey"></div>`);
+        (gmKey() ? `<button class="btn btn-dark btn-block" id="cpGo">🎓 Começar a aula</button>` :
+          note("Com a chave do Gemini (grátis) o Capi assiste ao vídeo sozinho.") + `<div id="cpKey"></div>` +
+          `<div class="eyebrow" style="margin-top:4px">Ou sem chave: cole a transcrição</div>` + note("As IAs sem chave não enxergam vídeo. No YouTube abra “···  › Mostrar transcrição”, copie o texto da cena e cole aqui. O Capi dá a aula em cima do texto.") +
+          `<textarea id="cpTr" class="in" rows="4" style="width:100%" placeholder="Cole aqui a transcrição da cena">${esc(S.tr)}</textarea>` +
+          (aiAvail() ? `<button class="btn btn-dark btn-block" id="cpGoTr">🎓 Começar a aula com o texto</button>` : note("Ligue a IA sem chave em Você › Ajustes para usar esta opção.")) + (S.err ? note(esc(S.err)) : ""));
     }else if(S.ph === "loading"){
       h2 = head("O Capi está assistindo à cena…") + note("Já já a aula aparece. Enquanto isso, você pode assistir ao vídeo lá em cima.");
     }else if(S.ph === "err"){
@@ -2821,6 +2836,7 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     }
     box.innerHTML = `<div class="card" style="display:flex;flex-direction:column;gap:12px">${h2}</div>`;
     const g = $("#cpGo", box); if(g) g.addEventListener("click", start);
+    const gt = $("#cpGoTr", box); if(gt) gt.addEventListener("click", () => { const v = $("#cpTr", box).value.trim(); if(v.length < 40){ S.err = "Cole um trecho maior da transcrição (pelo menos uma ou duas falas)."; draw(); return; } S.tr = v; S.err = ""; start(); });
     const ck = $("#cpKey", box); if(ck) ck.appendChild(gmKeyCard(() => draw()));
     $$(".cp-o", box).forEach(b => b.addEventListener("click", () => { const q = S.data.questions[S.qi]; S.pick = +b.dataset.o; if(S.pick === q.a) S.score++; draw(); }));
     const nx = $("#cpNext", box); if(nx) nx.addEventListener("click", () => { S.qi++; S.pick = null; if(S.qi >= S.data.questions.length) addXp(2); draw(); try{ box.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){} });
@@ -2844,7 +2860,7 @@ function viewFilm(){
     const b = h(`<button class="btn btn-dark btn-block">Ir para as cenas de cinema <span class="arr">→</span></button>`); b.addEventListener("click", () => startCinema()); el.appendChild(b); return el;
   }
   const pk = FILM_PICKS.filter(x => x.l === state.lang);
-  const pks = h(`<section class="card"><div class="eyebrow">Cenas prontas · toque para abrir</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${pk.map((x, i) => `<button class="pl-row" data-k="${i}"><span class="pl-ic">${({Friends:"☕",Shrek:"🧅","A Era":"🧊",Matrix:"💊",Shameless:"🏚️",Sherlock:"🔍","The Office":"🗂️",Peaky:"🎩",Fawlty:"🏨"}[Object.keys({Friends:1,Shrek:1,"A Era":1,Matrix:1,Shameless:1,Sherlock:1,"The Office":1,Peaky:1,Fawlty:1}).find(k => x.f.startsWith(k))] || "🐠")}</span><span class="pl-tx"><b>${esc(x.f)}</b><small>${esc(x.t)} · nível estimado ${x.lv}</small></span></button>`).join("")}</div><p class="sub" style="font-size:12.5px;margin-top:8px">São vídeos públicos do YouTube, abertos no player oficial. Eu não consegui conferir um a um se o dono permite abrir aqui; se algum não abrir, use a busca abaixo. O nível é uma estimativa minha: desenho animado costuma ser mais fácil que sitcom.</p></section>`);
+  const pks = h(`<section class="card"><div class="eyebrow">Cenas prontas · toque para abrir</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${pk.map((x, i) => `<button class="pl-row" data-k="${i}"><span class="pl-ic">${({Friends:"☕",Shrek:"🧅","A Era":"🧊",Matrix:"💊",Shameless:"🏚️",Sherlock:"🔍","The Office":"🗂️",Peaky:"🎩",Fawlty:"🏨","Il Postino":"✉️","La vita":"🌹","L'amica":"📕","Smetto":"🧪"}[Object.keys({Friends:1,Shrek:1,"A Era":1,Matrix:1,Shameless:1,Sherlock:1,"The Office":1,Peaky:1,Fawlty:1,"Il Postino":1,"La vita":1,"L'amica":1,"Smetto":1}).find(k => x.f.startsWith(k))] || "🐠")}</span><span class="pl-tx"><b>${esc(x.f)}</b><small>${esc(x.t)} · nível estimado ${x.lv}</small></span></button>`).join("")}</div><p class="sub" style="font-size:12.5px;margin-top:8px">São vídeos públicos do YouTube, abertos no player oficial. Eu não consegui conferir um a um se o dono permite abrir aqui; se algum não abrir, use a busca abaixo. O nível é uma estimativa minha: desenho animado costuma ser mais fácil que sitcom.</p></section>`);
   el.appendChild(pks);
   const q = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">1. Ache a cena</div><input id="fq" type="text" placeholder="Nome do filme ou cena, ou uma expressão" autocomplete="off" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-line" id="fy">Buscar no YouTube</button><button class="btn btn-line" id="fg">Ouvir no YouGlish</button></div><p class="sub" style="font-size:12.5px">Os dois abrem em outra aba. Copie o link do vídeo que gostou e cole abaixo. Prefira os clipes oficiais dos estúdios. O YouGlish mostra a expressão dita por muitas pessoas; o crédito é dele.</p></section>`);
   $("#fy", q).addEventListener("click", () => { const v = $("#fq", q).value.trim(); if(v) window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(v + (state.lang === "en" ? " movie scene english subtitles" : " scena film italiano sottotitoli")), "_blank", "noopener"); });
@@ -5070,6 +5086,7 @@ function libNow(){
   const sg = nextSong();
   if(sg) out.push({k:"Ouvir · Karaokê", ic:"🎤", t:sg.title, s:"Cante junto, as palavras acendem · "+sg.level, act:() => startKara(sg)});
   if(state.lang==="en"){ const da = dailyAccent(); out.push({k:"Ouvir · Vozes reais", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Entenda pessoas reais: texto, tradução e ditado", act:() => startVozes(da)}); }
+  else if(state.lang==="it"){ out.push({k:"Ouvir · Vozes reais", ic:"🌍", t:"Vozes reais em italiano", s:"Frases com voz humana: texto, tradução e ditado", act:() => startItVozes()}); }
   const dp = dailyPod();
   if(dp) out.push({k:"Ouvir · Podcast", ic:"🎧", t:dp.n, s:dp.acc+" · "+dp.len+" · "+dp.lv, act:() => startPod(dp)});
   const bk = books().find(b => !ss[b.id]);
@@ -5432,7 +5449,7 @@ function vozTimes(dur){
 let vozAud = null, vozSegEnd = null;
 function vozStop(){ if(vozAud){ try{ vozAud.onerror = null; vozAud.ontimeupdate = null; vozAud.onended = null; vozAud.pause(); vozAud.removeAttribute("src"); vozAud.load(); }catch(e){} vozAud = null; } vozSegEnd = null; }
 function dailyAccent(){ const ks = Object.keys(VOICES).filter(k => k!=="br"); return ks[Math.floor(Date.now()/86400000) % ks.length]; }
-function startVozes(acc, mode){ if(state.lang!=="en"){ toast("As vozes reais são de inglês. Troque o idioma para Inglês."); return; } stopAudio(); open({type:"vozes", acc:acc||"us", i:0, speed:1, vol:1, loop:false, mode:mode==="ditado"?"ditado":"ouvir", pt:false, xpg:{}, cur:-1, dit:null, ditN:0, ditOk:0}); }
+function startVozes(acc, mode){ if(state.lang==="it") return startItVozes(mode); if(state.lang!=="en"){ toast("As vozes reais ainda não existem para este idioma."); return; } stopAudio(); open({type:"vozes", acc:acc||"us", i:0, speed:1, vol:1, loop:false, mode:mode==="ditado"?"ditado":"ouvir", pt:false, xpg:{}, cur:-1, dit:null, ditN:0, ditOk:0}); }
 function vozAudio(acc, i){
   const v = VOICES[acc][i], key = acc+v[0];
   if(!vozAud || vozAud.__key !== key){ vozStop(); const a = new Audio(voiceUrl(acc, v[0])); a.preload = "auto"; a.__key = key; vozAud = a; try{ a.preservesPitch = true; a.webkitPreservesPitch = true; }catch(e){} }
@@ -5590,7 +5607,7 @@ function hubItems(k){
     {ic:"🧠", t:"Complete a frase", s:myCount() ? "Frases das suas leituras" : "A palavra certa no contexto", act:startCloze}]};
   if(k==="audio") return {t:"Audiolivros e áudio", s:"Ouça gente de verdade e textos longos. Comece devagar e aumente a velocidade.", items:[
     {ic:"📖", t:"Audiolivros", s:"Livros e histórias com o texto acompanhando", act:() => open({type:"abooks"})},
-    ...(en ? [{ic:"🌍", t:"Vozes reais", s:"Entenda cada sotaque, com texto", act:() => startVozes(dailyAccent())}] : []),
+    ...(en ? [{ic:"🌍", t:"Vozes reais", s:"Entenda cada sotaque, com texto", act:() => startVozes(dailyAccent())}] : state.lang==="it" ? [{ic:"🌍", t:"Vozes reais", s:"Frases com voz humana, texto e ditado", act:() => startItVozes()}] : []),
     ...(pods().length ? [{ic:"🎙️", t:"Podcasts", s:"Episódios para o seu nível", act:() => { newsSub = "pods"; go("news"); }}] : []),
     {ic:"🎤", t:"Música e karaokê", s:"Cante com a letra", act:() => { newsSub = "music"; go("news"); }},
     {ic:"👂", t:"Ouça e escolha", s:"Frases rápidas, 1 minuto", act:startEar},
@@ -5601,7 +5618,7 @@ function hubItems(k){
     {ic:"🪢", t:"Forca", s:myCount() ? "Usa as suas "+myCount()+" palavras salvas" : "Descubra a palavra letra a letra", act:startForca},
     {ic:"🔤", t:"Monte a frase", s:"Coloque na ordem certa", act:startOrderGame},
     {ic:"⌨️", t:"Traduza e escreva", s:"Do português, digitando", act:startTyped},
-    ...(en ? [{ic:"🌍", t:"Ditado de sotaques", s:"Que palavra você ouviu? (online)", act:() => startVozes(dailyAccent(), "ditado")}] : [])]};
+    ...(en ? [{ic:"🌍", t:"Ditado de sotaques", s:"Que palavra você ouviu? (online)", act:() => startVozes(dailyAccent(), "ditado")}] : state.lang==="it" ? [{ic:"🌍", t:"Ditado com voz humana", s:"Escreva o que a pessoa disse (online)", act:() => startItVozes("ditado")}] : [])]};
 }
 function viewHub(){
   const o = overlay, H2 = hubItems(o.k), el = h(`<div class="screen"></div>`);
@@ -5613,6 +5630,65 @@ function viewHub(){
   el.appendChild(g);
   return el;
 }
+/* ---------- Vozes reais · italiano (voz humana do Tatoeba) ---------- */
+const IT_VOZ = [["1004818","Non c'è alcun errore.","Não tem erro."],["1010086","Lui ritornò in Giappone.","Ele voltou ao Japão."],["1001360","Ha perso il lavoro.","Ele perdeu o emprego."],["1004656","Questo libro è pesante.","Este livro é pesado."],["1010090","Tom non sa leggere in francese.","Tom não pode ler em francês."],["1004742","Non ho visto nessuno.","Eu não vi ninguém."],["1004746","Lui è il figlio più grande.","Ele é o filho mais velho."],["1006471","Mia sorella è sposata.","Minha irmã é casada."],["1001390","Questo è il mio libro.","Este é o meu livro."],["1003263","Chiedo scusa per questo.","Sinto muito por isso."],["1001329","Sono un po' stanco.","Estou um pouco cansado."],["1010024","Il fuoco è molto pericoloso.","O fogo é muito perigoso."],["1009996","Giocare a tennis è divertente.","Jogar tênis é divertido."],["1010126","Non dimenticherò mai Tom.","Jamais me esquecerei de Tom."],["1001337","Corro tutti i giorni.","Corro todos os dias."],["1006470","Sei arrivato in treno?","Você veio de trem?"],["1006419","Tieni la porta chiusa!","Mantenha a porta fechada!"],["1004022","È ciò che ho detto.","Foi o que eu disse."],["1006364","Stai zitto un momento.","Fique quieto por um momento."],["1006445","Si è avverato il tuo desiderio?","Seu desejo se realizou?"],["993387","Ho visto un cane.","Eu vi um cachorro."],["1004000","Laverò la mia macchina.","Vou lavar meu carro."],["1003254","Voglio molto di più.","Eu quero muito mais."],["1004035","Non sono in sovrappeso.","Não estou acima do peso."],["1006413","Non dimenticarti di noi!","Não se esqueça de nós!"],["1010065","Dimmi quello che vuoi.","Diga-me o que você quer."],["1006438","Non lo puoi provare.","Você não pode provar isso."],["1010035","Tutti conoscono la legge.","Todo mundo conhece a lei."],["1003265","Mi fa male la spalla.","Meu ombro dói."],["1009997","Mi piace giocare a tennis.","Gosto de jogar tênis."],["1010096","Questa minestra ha un buon sapore.","Esta sopa está gostosa."],["1004772","Ti sei rotto il braccio.","Você quebrou o braço."],["1003278","Questo è tutto quello che posseggo.","Isso é tudo o que tenho."],["1010007","La scatola era troppo pesante.","A caixa estava pesada demais."],["1004008","C'è qualcuno lì dentro?","Tem alguém aí dentro?"],["1001416","Mi serve del latte.","Preciso de leite."],["1010133","Puoi aprire questa porta?","Você pode abrir esta porta?"],["1003196","Resta qui con noi.","Fique aqui conosco."],["1006377","Quand'è il tuo compleanno?","Quando é o seu aniversário?"],["1003194","Chiamò il mio nome.","Ele chamou o meu nome."],["1003984","Mia madre è arrabbiata.","Minha mãe está brava."],["1003281","Ora o mai più.","É agora ou nunca."],["1000237","Ho bisogno di amici.","Eu preciso de amigos."],["1004733","Tom non ti aiuterà.","Tom não vai ajudar você."],["1003907","Nessuno mi può aiutare.","Ninguém pode me ajudar."],["1006371","Qual è la tua chitarra?","Qual é o seu violão?"],["1010026","Ti proibisco di fumare.","Eu te proíbo de fumar."],["1003958","Stai andando anche tu?","Você também vai?"],["1001331","La mia macchina è tedesca.","Meu carro é alemão."],["1004719","Ecco il vostro pudding.","Aqui está o seu pudim."],["1010138","Possiamo spegnere la TV?","Podemos desligar a TV?"],["1001437","Non sono in buona salute.","Não estou bem de saúde."],["1003350","Posso passare a prenderti?","Posso passar para te buscar?"],["1004659","Sono sceso dal treno.","Desci do trem."],["1000199","Mi piacciono le lasagne.","Eu gosto de lasanha."],["1003261","Ho visto tuo padre.","Eu vi o seu pai."],["1006493","Ne prenda nota, per favore.","Anote isso, por favor."]];
+const itVozUrl = id => "https://tatoeba.org/pt-br/audio/download/" + id;
+function startItVozes(mode){ stopAudio(); vozStop(); const order = IT_VOZ.map((_, i) => i).sort(() => Math.random() - 0.5); open({type:"vozit", mode:mode === "ditado" ? "ditado" : "ouvir", order, i:0, page:0, speed:1, pt:true, res:[], r:null, plays:0, cur:-1}); }
+function itPlay(o, idx, rate){
+  vozStop(); const a = new Audio(itVozUrl(IT_VOZ[idx][0])); vozAud = a; a.__key = "it" + idx; a.preload = "auto";
+  try{ a.preservesPitch = true; }catch(e){} a.playbackRate = rate || 1;
+  a.onerror = () => { toast("Este áudio vem da internet. Confira a conexão e tente de novo."); };
+  a.onended = () => { if(overlay === o){ o.cur = -1; const r = document.querySelector('[data-itp="' + idx + '"]'); if(r) r.classList.remove("on"); } };
+  const p = a.play(); if(p && p.catch) p.catch(() => {});
+}
+function viewVozIt(){
+  const o = overlay, el = h(`<div class="screen"></div>`);
+  const quit = () => { vozStop(); close(); };
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1">Vozes reais · Italiano</div></div>`); $("button", head).addEventListener("click", quit); el.appendChild(head);
+  el.appendChild(h(`<div><h1 class="headline">Gente de verdade, <span class="script" style="font-size:32px">frases reais</span></h1><p class="sub" style="margin-top:4px">Uma voz humana lê frases em italiano. Ouça, entenda e confira. Precisa de internet.</p></div>`));
+  const tabs = h(`<div class="vz-chips"><button class="filter ${o.mode === "ouvir" ? "on" : ""}" data-m="ouvir">🎧 Ouvir com texto</button><button class="filter ${o.mode === "ditado" ? "on" : ""}" data-m="ditado">✍️ Ditado</button></div>`);
+  tabs.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { if(o.mode !== b.dataset.m){ vozStop(); o.mode = b.dataset.m; o.i = 0; o.res = []; o.r = null; o.plays = 0; render(); } }));
+  el.appendChild(tabs);
+  const credit = h(`<p class="sub" style="font-size:11.5px;text-align:center">Frases e áudio: Tatoeba (tatoeba.org), vozes de voluntários; frases sob CC BY 2.0 FR. Traduções feitas por colaboradores e podem variar.</p>`);
+  const spd = h(`<div class="vz-chips"><button class="filter ${o.speed === 1 ? "on" : ""}" data-s="1">Normal</button><button class="filter ${o.speed === 0.7 ? "on" : ""}" data-s="0.7">🐢 Devagar</button></div>`);
+  spd.querySelectorAll("[data-s]").forEach(b => b.addEventListener("click", () => { o.speed = +b.dataset.s; render(); }));
+  if(o.mode === "ouvir"){
+    el.appendChild(spd);
+    const tr = h(`<button class="filter ${o.pt ? "on" : ""}" style="align-self:flex-start">${o.pt ? "✓ Mostrar tradução" : "Mostrar tradução"}</button>`); tr.addEventListener("click", () => { o.pt = !o.pt; render(); }); el.appendChild(tr);
+    const per = 10, ids = o.order.slice(o.page * per, o.page * per + per);
+    const list = h(`<section class="card" style="display:flex;flex-direction:column"></section>`);
+    ids.forEach(idx => { const v = IT_VOZ[idx]; const r = h(`<button class="cp-line" data-itp="${idx}" style="all:unset;display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;width:100%"><span class="game-ic" style="background:var(--accent-soft);flex:none">🔊</span><span style="flex:1;min-width:0"><b style="font-size:16px">${esc(v[1])}</b>${o.pt ? `<span class="sub" style="display:block;font-size:13px">${esc(v[2])}</span>` : ""}</span></button>`); r.addEventListener("click", () => { itPlay(o, idx, o.speed); }); list.appendChild(r); });
+    el.appendChild(list);
+    const nx = h(`<button class="btn btn-line btn-block">Mais frases</button>`); nx.addEventListener("click", () => { vozStop(); o.page = (o.page + 1) % Math.ceil(o.order.length / per); render(); scrollTo(0, 0); }); el.appendChild(nx);
+    el.appendChild(credit); return el;
+  }
+  const N = 8;
+  if(o.i >= N){
+    const avg = Math.round(o.res.reduce((a, x) => a + x.pct, 0) / o.res.length);
+    if(!o.saved){ o.saved = true; ensureDay().game = true; addXp(Math.max(1, Math.round(avg / 10))); persist(); }
+    el.appendChild(h(`<section class="soft" style="text-align:center"><div class="eyebrow">Ditado concluído</div><div style="font-size:60px;font-weight:600;margin-top:4px">${avg}%</div><p class="sub">das palavras ouvidas e escritas certas</p></section>`));
+    const bad = o.res.filter(x => x.pct < 85);
+    if(bad.length){ const cc = h(`<section class="card"><div class="eyebrow">Para reforçar (salvas no Anki)</div></section>`); bad.forEach(x => { capiSaveLine(x.v[1], x.v[2]); cc.appendChild(h(`<div class="cp-line"><div><b>${esc(x.v[1])}</b><div class="sub" style="font-size:13px">${esc(x.v[2])}</div></div></div>`)); }); el.appendChild(cc); }
+    const a = h(`<button class="btn btn-dark btn-block">Outra rodada</button>`); a.addEventListener("click", () => { startItVozes("ditado"); }); el.appendChild(a);
+    const b = h(`<button class="btn btn-line btn-block">Fechar</button>`); b.addEventListener("click", quit); el.appendChild(b); return el;
+  }
+  const idx = o.order[o.i], v = IT_VOZ[idx];
+  el.appendChild(h(`<div class="stage-label">Ditado · ${o.i + 1} de ${N}</div>`));
+  const card = h(`<div class="word-card"><button class="btn btn-dark" id="vP" style="font-size:18px;padding:16px 26px">🔊 Ouvir</button><button class="link" id="vS" style="margin-top:6px">🐢 mais devagar</button></div>`);
+  $("#vP", card).addEventListener("click", () => { o.plays++; itPlay(o, idx, 1); }); $("#vS", card).addEventListener("click", () => { o.plays++; itPlay(o, idx, 0.7); });
+  el.appendChild(card);
+  if(!o.r){
+    const f = h(`<section class="card dict"><div class="eyebrow">Escreva o que você ouviu</div><textarea id="vIn" placeholder="Digite a frase em italiano…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea><button class="btn btn-dark btn-block" id="vGo">Verificar</button></section>`);
+    $("#vGo", f).addEventListener("click", () => { const t = $("#vIn", f).value.trim(); if(!t) return; const r = scoreSpeech(v[1], t); o.r = r; o.res.push({v, pct:r.pct}); r.pct >= 85 ? sfx.right() : sfx.wrong(); render(); });
+    el.appendChild(f);
+    setTimeout(() => { if(overlay === o && !o.r && !o.plays){ o.plays++; itPlay(o, idx, 1); } }, 250);
+  }else{
+    const r = o.r;
+    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.pct >= 85 ? "Você entendeu tudo" : r.pct >= 60 ? "Entendeu quase tudo" : "Ouça de novo e compare"}</span></div><div class="words">${r.words.map((w, k) => `<span class="${r.hit[k] ? "ok" : "miss"}">${esc(w)}</span>`).join(" ")}</div><div><b style="font-size:16px">${esc(v[1])}</b><div class="sub" style="font-size:13px">${esc(v[2])}</div></div></section>`));
+    const nx = h(`<button class="btn btn-dark btn-block">${o.i + 1 >= N ? "Ver resultado" : "Próxima"} <span class="arr">→</span></button>`); nx.addEventListener("click", () => { vozStop(); o.i++; o.r = null; o.plays = 0; render(); scrollTo(0, 0); }); el.appendChild(nx);
+  }
+  el.appendChild(credit); return el;
+}
 /* ---------- Audiolivros ---------- */
 const AESOP = [
   {n:3, t:"Hercules and the Wagoner · The Kid and the Wolf · The Town Mouse and the Country Mouse · The Fox and the Grapes", pt:"Hércules e o carroceiro (ajude a si mesmo); o cabrito e o lobo; o rato da cidade e o rato do campo; a raposa e as uvas."},
@@ -5620,6 +5696,17 @@ const AESOP = [
   {n:32, t:"The Hare and the Tortoise · The Bees and Wasps, and the Hornet · The Lark and Her Young Ones · The Cat and the Old Rat", pt:"A lebre e a tartaruga; as abelhas, as vespas e o vespão; a cotovia e os filhotes; o gato e o rato velho."},
   {n:33, t:"The Fox and the Crow · The Ass and His Shadow · The Miller, His Son, and the Ass · The Ant and the Dove", pt:"A raposa e o corvo; o burro e a sombra; o moleiro, o filho e o burro; a formiga e a pomba."},
   {n:35, t:"The Lion, the Ass, and the Fox · The Lion's Share · The Mole and his Mother · The North Wind and the Sun", pt:"O leão, o burro e a raposa; a parte do leão; a toupeira e a mãe; o vento norte e o sol."}
+];
+const librivoxUrl = (id, f) => "https://archive.org/download/" + id + "/" + f + "_64kb.mp3";
+const ITLIB = [
+  {id:"avventure_pinocchio_librivox", f:"avventurepinocchio_01_collodi", chip:"Pinocchio 1", t:"Le avventure di Pinocchio · capitolo 1 (5 min)", pt:"Pinóquio, capítulo 1. Leitura mais longa, de Simona."},
+  {id:"favole_di_la_fontaine_01_librivox", f:"favole_01_libro01_lafontaine", chip:"Cicala", t:"La Cicala e la Formica", pt:"A cigarra e a formiga."},
+  {id:"favole_di_la_fontaine_01_librivox", f:"favole_02_libro01_lafontaine", chip:"Corvo", t:"Il Corvo e la Volpe", pt:"O corvo e a raposa."},
+  {id:"favole_di_la_fontaine_01_librivox", f:"favole_03_libro01_lafontaine", chip:"Rana", t:"La Rana e il Bove", pt:"A rã e o boi."},
+  {id:"favole_di_la_fontaine_01_librivox", f:"favole_04_libro01_lafontaine", chip:"Muli", t:"I due Muli", pt:"As duas mulas."},
+  {id:"favole_di_la_fontaine_05_pf_librivox", f:"favole_03_libro05_lafontaine", chip:"Pesciolino", t:"Il Pesciolino e il Pescatore", pt:"O peixinho e o pescador."},
+  {id:"favole_di_la_fontaine_05_pf_librivox", f:"favole_04_libro05_lafontaine", chip:"Lepre", t:"Le Orecchie della lepre", pt:"As orelhas da lebre."},
+  {id:"favole_di_la_fontaine_05_pf_librivox", f:"favole_05_libro05_lafontaine", chip:"Volpe", t:"La Volpe dalla coda mozza", pt:"A raposa de rabo cortado."}
 ];
 const aesopUrl = n => "https://archive.org/download/aesopforchildren_1308_librivox/theaesopforchildren_"+String(n).padStart(2,"0")+"_aesop_64kb.mp3";
 function viewAbooks(){
@@ -5630,18 +5717,23 @@ function viewAbooks(){
   const list = books().map(b => { try{ return bookDoc(b); }catch(e){ return null; } }).filter(x => x && x.sentences).concat(stories()).slice(0, 40), g = h(`<div style="display:flex;flex-direction:column;gap:8px"></div>`);
   list.forEach(st => { const b = h(`<button class="shrow"><span class="sh-ic">${st.icon||"📖"}</span><span><b>${esc(st.title)}</b><small>${esc(st.titlePt||st.topic||"")} · ${docMinutes(st)} min${st.level?" · "+esc(st.level):""}</small></span><span class="tl-chev">▶</span></button>`); b.addEventListener("click", () => startStory(st, true)); g.appendChild(b); });
   el.appendChild(g);
-  if(state.lang==="en"){
-    el.appendChild(h(`<div class="sec-head" style="margin-top:8px"><h2>Voz humana · Fábulas de Esopo</h2></div>`));
-    el.appendChild(h(`<p class="sub">Leitura de voluntários do LibriVox (domínio público), 4 fábulas por faixa, sem texto sincronizado. Nível intermediário. Precisa de internet.</p>`));
-    const chips = h(`<div class="vz-chips">${AESOP.map((x,k) => `<button class="filter ${k===(o.ae||0)?"on":""}" data-k="${k}">Faixa ${x.n}</button>`).join("")}</div>`);
+  const HV = state.lang === "en"
+    ? {title:"Voz humana · Fábulas de Esopo", intro:"Leitura de voluntários do LibriVox (domínio público), 4 fábulas por faixa, sem texto sincronizado. Nível intermediário. Precisa de internet.", credit:"Áudio: LibriVox, “The Aesop for Children” (domínio público). Texto completo no Project Gutenberg, livro 19994.", tracks:AESOP.map(x => ({k:"ae"+x.n, chip:"Faixa "+x.n, t:x.t, pt:x.pt, url:aesopUrl(x.n)}))}
+    : state.lang === "it"
+    ? {title:"Voz humana · Fábulas e Pinóquio", intro:"Leitura de voluntários do LibriVox (domínio público), sem texto sincronizado: ouça a história e tente acompanhar. Fábulas de La Fontaine (cerca de 1 min e meio cada) e o primeiro capítulo de Pinóquio. Precisa de internet.", credit:"Áudio: LibriVox, “Favole di Jean de La Fontaine” (lidas por Paolo Fedi, tradução de Emilio de Marchi) e “Le avventure di Pinocchio” (lido por Simona). Domínio público.", tracks:ITLIB.map(x => ({k:x.f, chip:x.chip, t:x.t, pt:x.pt, url:librivoxUrl(x.id, x.f)}))}
+    : null;
+  if(HV){
+    el.appendChild(h(`<div class="sec-head" style="margin-top:8px"><h2>${esc(HV.title)}</h2></div>`));
+    el.appendChild(h(`<p class="sub">${esc(HV.intro)}</p>`));
+    const chips = h(`<div class="vz-chips">${HV.tracks.map((x,k) => `<button class="filter ${k===(o.ae||0)?"on":""}" data-k="${k}">${esc(x.chip)}</button>`).join("")}</div>`);
     chips.querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => { vozStop(); o.ae = +b.dataset.k; render(); }));
     el.appendChild(chips);
-    const x = AESOP[o.ae||0];
-    if(!vozAud || vozAud.__key !== "ae"+x.n){ vozStop(); const a = new Audio(aesopUrl(x.n)); a.preload = "metadata"; a.__key = "ae"+x.n; vozAud = a; try{ a.preservesPitch = true; }catch(e){} }
+    const x = HV.tracks[o.ae||0] || HV.tracks[0];
+    if(!vozAud || vozAud.__key !== x.k){ vozStop(); const a = new Audio(x.url); a.preload = "metadata"; a.__key = x.k; vozAud = a; try{ a.preservesPitch = true; }catch(e){} }
     o.speed = o.speed || 1; o.vol = o.vol || 1;
     el.appendChild(h(`<section class="card"><b>${esc(x.t)}</b><p class="sub" style="margin-top:6px">${esc(x.pt)}</p></section>`));
     el.appendChild(vozPlayer(o, vozAud, {plain:true}));
-    el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">Áudio: LibriVox, “The Aesop for Children” (domínio público). Texto completo no Project Gutenberg, livro 19994.</p>`));
+    el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">${esc(HV.credit)}</p>`));
   }
   return el;
 }
@@ -5792,7 +5884,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v92";
+const APP_VER = "v93";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
