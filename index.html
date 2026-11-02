@@ -362,6 +362,9 @@ body.focus main{padding-bottom:32px}
 #fstage iframe,#ytp{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
 .fv-sticky{position:sticky; top:env(safe-area-inset-top,0px); z-index:8; background:var(--bg); width:min(100vw,460px); margin-left:calc(50% - min(50vw,230px)); display:flex; flex-direction:column; box-shadow:0 8px 18px -12px rgba(0,0,0,.45)}
 .fv-vid{position:relative; width:100%; aspect-ratio:16/9; background:#000}
+.compose .vmic{flex:none;background:var(--surface);border:1.5px solid var(--gold-ui);color:var(--ink)}
+.compose .vmic .nbi svg{width:22px;height:22px}
+.compose .vmic.on{background:var(--bad);color:#fff;border-color:var(--bad)}
 .pp-list{display:flex;flex-direction:column;gap:6px}
 .pp-ep{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:var(--fs-sub);min-height:44px}
 .pp-ep.on{border-color:var(--gold-ui);background:var(--surface-2)}
@@ -4724,6 +4727,7 @@ function askAI(){
         if(lastMe && !lastMe.score && (sc.n>0 || sc.ok>0 || sc.err>0)) lastMe.score = sc;
       }
       o.msgs.push({role:"them", text:txt}); o.busy=false; render();
+      if(state.capiVoice !== false){ const fl = txt.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim())); if(fl){ try{ stopAudio(); seqToken++; speak(fl.replace(/^["“]|["”]$/g,"")); }catch(e){} } }
     });
   }).catch(err => {
     if(overlay!==o) return;
@@ -4731,6 +4735,21 @@ function askAI(){
   });
 }
 
+async function voiceToText(url, heard){
+  if(heard && heard.trim()) return heard.trim();
+  if(!gmKey()) throw new Error("nokey");
+  const wav = await azWav(url), b64 = await blobB64(wav), lg = LANGS[state.lang].name;
+  const raw = await gmCall([{text:`Transcreva literalmente o que a pessoa disse neste áudio. Ela é brasileira praticando ${lg}; pode falar em ${lg} ou em português. Escreva exatamente as palavras ouvidas, sem corrigir erros, sem aspas e sem comentários. Se não houver fala, responda apenas: (silêncio)`}, {inlineData:{mimeType:"audio/wav", data:b64}}], 400, false, true);
+  const t = String(raw||"").replace(/^["“\s]+|["”\s]+$/g,"").trim();
+  if(!t || /^\(?sil[eê]ncio\)?\.?$/i.test(t)) throw new Error("empty");
+  return t;
+}
+function sceneSend(o, v){
+  v = (v||"").trim(); if(!v || o.busy) return;
+  o.msgs.push({role:"me", text:v}); errScan(v); o.busy=true;
+  const d = ensureDay(); d.chat++; L().chatTotal = (L().chatTotal||0) + 1; addXp(2);
+  render(); askAI();
+}
 function chatStats(o){
   const sc = o.msgs.filter(m => m.role==="me" && m.score);
   const n = sc.length, ok = sc.reduce((a,m)=>a+m.score.ok,0), err = sc.reduce((a,m)=>a+m.score.err,0);
@@ -4840,14 +4859,24 @@ function viewScene(){
     eb.addEventListener("click", () => endScene(o));
     el.appendChild(eb);
   }
-  const form = h(`<form class="compose"><input id="msgIn" autocomplete="off" placeholder="Escreva em ${LANGS[state.lang].name.toLowerCase()}…" ${o.busy?"disabled":""}><button class="iconbtn" aria-label="Enviar" ${o.busy?"disabled":""}>➤</button></form>`);
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    const v = $("#msgIn").value.trim(); if(!v || o.busy) return;
-    o.msgs.push({role:"me", text:v}); errScan(v); o.busy=true;
-    const d = ensureDay(); d.chat++; L().chatTotal = (L().chatTotal||0) + 1; addXp(2);
-    render(); askAI();
+  const canMic = micOK();
+  if(o.vmsg) el.appendChild(h(`<p class="sub" style="font-size:var(--fs-sub)">${esc(o.vmsg)}</p>`));
+  const form = h(`<form class="compose">${canMic?`<button type="button" class="iconbtn vmic ${o.rec?"on":""}" id="vMic" aria-label="${o.rec?"Parar e enviar":"Falar com o Capi"}" ${o.busy||o.tx?"disabled":""}>${o.rec?"⏹":o.tx?"…":"🎙️"}</button>`:""}<input id="msgIn" autocomplete="off" placeholder="${o.rec?"Ouvindo… toque ⏹":o.tx?"Transcrevendo…":"Escreva ou fale em "+LANGS[state.lang].name.toLowerCase()+"…"}" ${o.busy||o.rec||o.tx?"disabled":""}><button class="iconbtn" aria-label="Enviar" ${o.busy?"disabled":""}>➤</button></form>`);
+  form.addEventListener("submit", e => { e.preventDefault(); sceneSend(o, $("#msgIn").value); });
+  const vm = $("#vMic", form);
+  if(vm) vm.addEventListener("click", async () => {
+    if(o.rec){ micStop(); return; }
+    o.vmsg = ""; try{ stopAudio(); seqToken++; }catch(e){}
+    try{
+      await micBegin(async (url, heard) => {
+        o.rec = false; o.tx = true; if(overlay===o) render();
+        try{ const t = await voiceToText(url, heard); o.tx = false; if(overlay===o) sceneSend(o, t); }
+        catch(err){ o.tx = false; o.vmsg = err.message==="nokey" ? "Para o Capi entender sua voz aqui, cole uma chave grátis do Gemini em Você › Ajustes. Sem chave, use o microfone 🎤 do teclado do iPhone, no campo de texto." : err.message==="empty" ? "Não ouvi nada. Chegue mais perto do microfone e tente de novo." : (err.code||err.message||"").toString().match(/key|quota|busy|http|model/) ? gmErrMsg(err) : "Não consegui transcrever agora. Tente de novo ou escreva."; if(overlay===o) render(); }
+      });
+      o.rec = true; render();
+    }catch(e){ o.rec = false; o.vmsg = micErrMsg(e); render(); }
   });
+  { const vb = h(`<button class="link" style="align-self:flex-start">${state.capiVoice===false?"🔇 Capi em silêncio":"🔊 Capi fala as respostas"} · tocar para ${state.capiVoice===false?"ligar":"desligar"}</button>`); vb.addEventListener("click", () => { state.capiVoice = state.capiVoice===false; if(state.capiVoice===false){ try{ stopAudio(); }catch(e){} } persist(); render(); }); el.appendChild(vb); }
   el.appendChild(form);
   setTimeout(()=>{ const i=$("#msgIn"); if(i && !o.busy) i.focus({preventScroll:true}); window.scrollTo(0, document.body.scrollHeight); }, 30);
   return el;
@@ -6027,7 +6056,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v105";
+const APP_VER = "v106";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
