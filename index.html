@@ -41,7 +41,7 @@ input,select,textarea{font-size:16px}
   --capi-body:color-mix(in srgb, var(--accent) 42%, var(--accent-soft)); --capi-shade:color-mix(in srgb, var(--accent) 66%, var(--accent-soft)); --capi-light:var(--accent-mist); --capi-snout:var(--accent-ink); --capi-ink:#1C2A22; --capi-gold-shade:color-mix(in srgb, var(--gold) 75%, #8a5a20); --capi-hat:var(--night);
   --font:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
   --serif:'Instrument Serif',ui-serif,Georgia,serif;
-  --display:var(--serif); --display-w:400; --display-s:1;
+  --display:var(--font); --display-w:600; --display-s:.86; --fs-cap:12.5px; --fs-sub:13.5px; --fs-body:16px; --gold-ui:var(--gold);
   --tint-1:#E1E4D6; --tint-2:#F5E5D5; --tint-3:#E4E0EE; --tint-4:#DCE7E4;
   color-scheme:light;
 }
@@ -73,12 +73,12 @@ input,select,textarea{font-size:16px}
   color-scheme:dark;
 }
 :root.pal-lav{ --capi-hat:var(--night); --display:var(--font); --display-w:600; --display-s:.86; --tint-1:#E4E2F6; --tint-2:#FBF0CC; --tint-3:#DCEFE7; --tint-4:#F8E1E6;
-  --bg:#F7F5F0; --surface:#FFFEFB; --surface-2:#EFEEF6; --line:#E6E4EC;
-  --ink:#1F2547; --ink-dim:#565D7C; --ink-faint:#646A86;
+  --bg:#F6F0E2; --surface:#FFFBF2; --surface-2:#EEE6D3; --line:#DDD3BE;
+  --ink:#1F2547; --ink-dim:#4A5070; --ink-faint:#5E6482;
   --accent:#5D67AC; --accent-ink:#2F3770; --accent-soft:#E2E3F5; --accent-mist:#F1F1FA;
-  --gold:#E6C05A; --gold-ink:#7A5A14; --gold-soft:#FAF0CF;
+  --gold:#E6C05A; --gold-ink:#7A5A12; --gold-ui:#A07522; --gold-soft:#FAF0CF;
   --night:#262D57; --night-2:#323A69; --on-night:#F1F2F8; --on-night-dim:#AEB4CC;
-  --ok:#3D8466; --ok-soft:#E2F0E8; --bad:#B0514C; --bad-soft:#F7E4E2;
+  --ok:#28704F; --ok-soft:#E2F0E8; --bad:#B03E2B; --bad-soft:#F7E4E2;
   --leaf:#87A28D; --leaf-dark:#4E6A58; --leaf-light:#B9CCB7; --pot:#F4F0E9; --pot-shade:#D9D2C5; --bark:#8C7864; --lemon:#E9C24C;
   --shadow:0 1px 2px rgba(27,35,64,.05), 0 10px 28px -14px rgba(27,35,64,.22);
   --r-s:12px; --r-m:20px; --r-l:28px;
@@ -87,24 +87,24 @@ input,select,textarea{font-size:16px}
   --serif:'Instrument Serif',ui-serif,Georgia,serif;
 }
 :root.pal-lav.ap-dark, :root.pal-lav.ap-auto[data-theme="dark"]{ --tint-1:#262B4F; --tint-2:#3A3322; --tint-3:#1E3A31; --tint-4:#3B2530;
-    --bg:#11152A; --surface:#191E36; --surface-2:#222844; --line:#2C3253;
-    --ink:#ECEEF6; --ink-dim:#A4AAC2; --ink-faint:#8A91AD;
+    --bg:#0F1226; --surface:#171B36; --surface-2:#1F2447; --line:#343A66;
+    --ink:#EDE6D6; --ink-dim:#B9B8C9; --ink-faint:#9A9BB3;
     --accent:#98A6E4; --accent-ink:#C9D1F5; --accent-soft:#283063; --accent-mist:#1D2346;
-    --gold:#E2BC68; --gold-ink:#F4DFAE; --gold-soft:#3A3120;
+    --gold:#E3B24F; --gold-ink:#F4DFAE; --gold-ui:#E3B24F; --gold-soft:#3A3120;
     --night:#0C1022; --night-2:#1A2040; --on-night:#F1F2F8; --on-night-dim:#9DA4C0;
-    --ok:#6CC49D; --ok-soft:#1D3A2E; --bad:#E58E88; --bad-soft:#3E2423;
+    --ok:#5BC19A; --ok-soft:#1D3A2E; --bad:#F08A73; --bad-soft:#3E2423;
     --leaf:#7F9C87; --leaf-dark:#3F5A49; --leaf-light:#A8C0A9; --pot:#D8D2C7; --pot-shade:#A79F92; --bark:#8A7663; --lemon:#E2BC4E;
     --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 30px -14px rgba(0,0,0,.6);
     --tint-1:#26362C; --tint-2:#3A2D22; --tint-3:#2B2A3A; --tint-4:#1F3532;
     --capi-body:color-mix(in srgb, var(--accent) 42%, var(--accent-soft)); --capi-shade:color-mix(in srgb, var(--accent) 66%, var(--accent-soft)); --capi-light:var(--accent-mist); --capi-snout:var(--accent-ink); --capi-ink:#0C1022; --capi-gold-shade:color-mix(in srgb, var(--gold) 75%, #8a5a20); --capi-hat:var(--night);
 }
 @media (prefers-color-scheme:dark){ :root.pal-lav.ap-auto:not([data-theme="light"]){ --tint-1:#262B4F; --tint-2:#3A3322; --tint-3:#1E3A31; --tint-4:#3B2530;
-    --bg:#11152A; --surface:#191E36; --surface-2:#222844; --line:#2C3253;
-    --ink:#ECEEF6; --ink-dim:#A4AAC2; --ink-faint:#8A91AD;
+    --bg:#0F1226; --surface:#171B36; --surface-2:#1F2447; --line:#343A66;
+    --ink:#EDE6D6; --ink-dim:#B9B8C9; --ink-faint:#9A9BB3;
     --accent:#98A6E4; --accent-ink:#C9D1F5; --accent-soft:#283063; --accent-mist:#1D2346;
-    --gold:#E2BC68; --gold-ink:#F4DFAE; --gold-soft:#3A3120;
+    --gold:#E3B24F; --gold-ink:#F4DFAE; --gold-ui:#E3B24F; --gold-soft:#3A3120;
     --night:#0C1022; --night-2:#1A2040; --on-night:#F1F2F8; --on-night-dim:#9DA4C0;
-    --ok:#6CC49D; --ok-soft:#1D3A2E; --bad:#E58E88; --bad-soft:#3E2423;
+    --ok:#5BC19A; --ok-soft:#1D3A2E; --bad:#F08A73; --bad-soft:#3E2423;
     --leaf:#7F9C87; --leaf-dark:#3F5A49; --leaf-light:#A8C0A9; --pot:#D8D2C7; --pot-shade:#A79F92; --bark:#8A7663; --lemon:#E2BC4E;
     --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 30px -14px rgba(0,0,0,.6);
     --tint-1:#26362C; --tint-2:#3A2D22; --tint-3:#2B2A3A; --tint-4:#1F3532;
@@ -122,7 +122,8 @@ body{
   padding-right:max(16px, env(safe-area-inset-right,0px));
 }
 body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:30; background:var(--bg)}
-h1,h2,h3{margin:0; font-weight:600; letter-spacing:-.015em; text-wrap:balance}
+h1,h2,h3{margin:0; font-family:var(--display); font-weight:var(--display-w); letter-spacing:-.015em; text-wrap:balance}
+:focus-visible{outline:2px solid var(--gold-ui); outline-offset:2px}
 p{margin:0}
 button{font-family:inherit; color:inherit; cursor:pointer}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:8px}
@@ -158,7 +159,7 @@ body.focus main{padding-bottom:32px}
 .menu small{display:block; font-weight:500; color:var(--ink-dim); font-size:11.5px}
 
 /* ---------- type ---------- */
-.eyebrow{font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-dim)}
+.eyebrow{font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-dim)}
 .hello{font-size:14px; color:var(--ink-dim); font-weight:500}
 .headline{font-family:var(--display); font-size:calc(36px * var(--display-s)); line-height:1.08; font-weight:var(--display-w); letter-spacing:-.015em}
 .sub{font-size:13.5px; color:var(--ink-dim); line-height:1.5}
@@ -266,12 +267,12 @@ body.focus main{padding-bottom:32px}
 .rd-chip{display:inline-flex; gap:6px; align-items:center; padding:7px 13px; border-radius:999px; background:var(--accent-soft); color:var(--accent-ink); font-weight:700; font-size:13.5px}
 .rd-fs{display:flex; gap:8px; align-items:center; font-size:13px; color:var(--ink-dim)}
 .rd-fs button{width:44px; height:38px; border-radius:12px; border:1px solid var(--line); background:var(--surface); font-weight:800; color:var(--ink)}
-.rd-s.now{background:var(--accent-mist)}
+.rd-s.now{background:color-mix(in srgb, var(--gold) 12%, transparent); box-shadow:inset 3px 0 0 var(--gold-ui)}
 .rd-play{width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--surface); font-size:13px; margin-top:2px}
 .rd-t{font-family:Georgia,"Iowan Old Style","Source Serif 4","Times New Roman",serif; font-size:var(--rd-fs,20px); line-height:1.6}
 .rd-t .w{border-radius:6px; padding:2px 1px; cursor:pointer}
 .rd-t .w.sel{background:var(--accent-soft); box-shadow:0 0 0 2px var(--accent); color:var(--ink)}
-.rd-t .w.saved{border-bottom:2px solid var(--gold)}
+.rd-t .w.saved{border-bottom:2px dotted var(--gold-ui); text-underline-offset:.2em}
 .rd-pt{font-size:calc(var(--rd-fs,20px) - 5px); font-weight:650; color:var(--accent-ink); line-height:1.45}
 .rd-sheet{position:fixed; left:12px; right:12px; bottom:max(12px, env(safe-area-inset-bottom,0px)); max-width:436px; margin:0 auto; background:var(--surface); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); padding:14px 16px; z-index:60; display:flex; flex-direction:column; gap:10px}
 .rd-sh-top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
@@ -1370,7 +1371,7 @@ function evolutionCard(full){
     <div class="eyebrow">Seu nível em ${lg.name}</div>
     <div class="lvl-head" style="margin-top:8px">
       <div><div class="big-level">${li.label}</div><div class="sub" style="margin-top:4px">${LV_DESC[li.label]}</div></div>
-      <div style="text-align:right"><div style="font-size:20px;font-weight:700">${li.cur<3?Math.round(li.pct*100)+"%":"✓"}</div><div class="sub" style="font-size:12px">${li.cur<3?`do ${li.label} · falta${li.left===1?"":"m"} ${li.left} aula${li.left===1?"":"s"} para o ${li.next}`:"trilha até o B1 completa"}</div></div>
+      <div style="text-align:right"><div style="font-size:20px;font-weight:700">${li.cur<3?Math.round(li.pct*100)+"%":"✓"}</div><div class="sub" style="font-size:var(--fs-cap)">${li.cur<3?`do ${li.label} · falta${li.left===1?"":"m"} ${li.left} aula${li.left===1?"":"s"} para o ${li.next}`:"trilha até o B1 completa"}</div></div>
     </div>
     <div class="lvl-track">${segs.map(v=>`<div class="lvl-seg"><i style="width:${Math.round(v*100)}%"></i></div>`).join("")}</div>
     <div class="lvl-lab">${LV.map((l,i)=>`<span class="${i<=li.cur?"on":""}">${l}</span>`).join("")}</div>
@@ -1559,7 +1560,7 @@ function capiTip(){
 function viewWelcome(){
   const o = overlay, lg = LANGS[state.lang], el = h(`<div class="screen" style="gap:18px"></div>`);
   const total = 4;
-  const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1"><div class="timer"><i style="width:${(o.step-1)/total*100}%"></i></div></div><b style="font-size:13px">${o.step-1} de ${total-1}</b></div>`);
+  const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1"><div class="timer"><i style="width:${(o.step-1)/total*100}%"></i></div></div><b style="font-size:var(--fs-sub)">${o.step-1} de ${total-1}</b></div>`);
   $("button",top).addEventListener("click", () => { if(o.step>2){ o.step--; render(); } else { state.lang = null; persist(); close(); } });
   el.appendChild(top);
   const choice = (title, sub, opts, pick) => {
@@ -1605,7 +1606,7 @@ function viewOnboard(){
   ];
   const el = h(`<div class="screen" style="padding-top:12px">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <span class="lang-btn" style="cursor:default"><span class="flag" style="background:var(--night);color:var(--on-night);font-weight:800;font-size:12px">N</span>Nômade <span class="script" style="font-size:17px;font-weight:400">bilíngue</span></span>
+      <span class="lang-btn" style="cursor:default"><span class="flag" style="background:var(--night);color:var(--on-night);font-weight:800;font-size:var(--fs-cap)">N</span>Nômade <span class="script" style="font-size:17px;font-weight:400">bilíngue</span></span>
     </div>
     <section>
       <p class="hello">${greeting()} · <span class="script" style="font-size:16px">Hi! · Ciao!</span></p>
@@ -1613,7 +1614,7 @@ function viewOnboard(){
       <p class="sub" style="margin-top:4px">Escolha um idioma para começar. Dá para trocar quando quiser, e cada um guarda o próprio progresso.</p>
       <div class="hero-grid">
         <div style="display:flex;flex-direction:column;gap:16px;padding-left:4px">
-          ${[["2","idiomas: inglês e italiano"],["5–10 min","por lição, no seu ritmo"],["Situações","reais do dia a dia"]].map(([n,t])=>`<div><div style="font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1">${n}</div><div class="sub" style="font-size:12.5px;margin-top:2px">${t}</div></div>`).join("")}
+          ${[["2","idiomas: inglês e italiano"],["5–10 min","por lição, no seu ritmo"],["Situações","reais do dia a dia"]].map(([n,t])=>`<div><div style="font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1">${n}</div><div class="sub" style="font-size:var(--fs-cap);margin-top:2px">${t}</div></div>`).join("")}
         </div>
         <div class="scene" style="display:grid;place-items:center">${capi("hi",150)}<div class="quote script">oi, eu sou o Capi!</div></div>
       </div>
@@ -1904,7 +1905,7 @@ function profileCard(){
   const cps = L().cp || [], lastC = cps[cps.length-1];
   let cal = "";
   if(lastC && lastC.pred){ const ds = Object.keys(lastC.res).filter(k => lastC.pred[k]!=null).map(k => lastC.pred[k] - lastC.res[k].s); if(ds.length){ const m = Math.round(ds.reduce((a,x)=>a+x,0)/ds.length); cal = m > 10 ? `No último checkpoint (${lastC.date.slice(8)}/${lastC.date.slice(5,7)}) você ficou em média ${m} pontos abaixo do desempenho recente. Por isso o professor passou a usar a nota do checkpoint.` : m < -10 ? `No último checkpoint você foi ${-m} pontos acima do esperado. Seu domínio é maior do que os exercícios mostravam.` : "O último checkpoint confirmou o desempenho recente."; } }
-  const cb = h(`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">${cal ? `<p class="sub" style="font-size:12.5px">${esc(cal)}</p>` : ""}<button class="btn btn-line btn-block">🧪 Fazer um checkpoint (8 min)</button></div>`);
+  const cb = h(`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">${cal ? `<p class="sub" style="font-size:var(--fs-cap)">${esc(cal)}</p>` : ""}<button class="btn btn-line btn-block">🧪 Fazer um checkpoint (8 min)</button></div>`);
   $("button", cb).addEventListener("click", startCheckpoint); c.appendChild(cb);
   return c;
 }
@@ -1945,10 +1946,10 @@ function viewCheckpoint(){
     const card = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"></section>`);
     Object.keys(res).forEach(k => {
       const pr = o.pred[k], d = pr!=null ? pr - res[k].s : null;
-      card.appendChild(h(`<div><div style="display:flex;justify-content:space-between;font-weight:600"><span>${SKILLS[k].ic} ${SKILLS[k].n}</span><span>${res[k].s}</span></div><div class="sub" style="font-size:12.5px">${pr!=null ? `Desempenho recente: ${pr}. ${d>10 ? "Os exercícios mostravam mais do que ficou." : d<-10 ? "Você sabe mais do que os exercícios mostravam." : "Confirmado."}` : "Primeira medição."} (${res[k].n} itens)</div></div>`));
+      card.appendChild(h(`<div><div style="display:flex;justify-content:space-between;font-weight:600"><span>${SKILLS[k].ic} ${SKILLS[k].n}</span><span>${res[k].s}</span></div><div class="sub" style="font-size:var(--fs-cap)">${pr!=null ? `Desempenho recente: ${pr}. ${d>10 ? "Os exercícios mostravam mais do que ficou." : d<-10 ? "Você sabe mais do que os exercícios mostravam." : "Confirmado."}` : "Primeira medição."} (${res[k].n} itens)</div></div>`));
     });
     el.appendChild(card);
-    el.appendChild(h(`<p class="sub" style="font-size:12.5px">A leitura é medida pelos quizzes das histórias e não entra no checkpoint. A partir de agora o professor usa a nota mais baixa entre o recente e o checkpoint.</p>`));
+    el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">A leitura é medida pelos quizzes das histórias e não entra no checkpoint. A partir de agora o professor usa a nota mais baixa entre o recente e o checkpoint.</p>`));
     const b = h(`<button class="btn btn-dark btn-block">Fechar</button>`); b.addEventListener("click", quit); el.appendChild(b);
     return el;
   }
@@ -2066,7 +2067,7 @@ function viewTyped(){
   el.appendChild(h(`<div class="word-card"><div class="word-pt" style="font-size:22px">${esc(q.pt)}</div><div class="sub" style="margin-top:6px">${q.sent ? "Escreva a frase em "+LANGS[state.lang].name : "Como se diz em "+LANGS[state.lang].name+"?"}</div></div>`));
   if(!o.r){
     const f = h(`<section class="card dict"><textarea id="tIn" placeholder="Escreva em ${LANGS[state.lang].name}…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
-      <p class="sub" style="font-size:12.5px">Dica: troque o teclado para <b>${LANGS[state.lang].native}</b> e use o 🎤 do teclado para <b>falar</b> em vez de digitar. O que ele entender aparece aqui.</p>
+      <p class="sub" style="font-size:var(--fs-cap)">Dica: troque o teclado para <b>${LANGS[state.lang].native}</b> e use o 🎤 do teclado para <b>falar</b> em vez de digitar. O que ele entender aparece aqui.</p>
       <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px"><button class="btn btn-line" id="tH">💡 Dica</button><button class="btn btn-dark" id="tGo">Verificar</button></div></section>`);
     $("#tH", f).addEventListener("click", () => { o.hint = true; const w = q.t.split(/\s+/); $("#tH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
     $("#tGo", f).addEventListener("click", () => {
@@ -2231,7 +2232,7 @@ function ladderBlock(){
   const rows = h(`<div class="lad-rows"></div>`);
   LAD.forEach((x,i) => { const n = reach(i+1); rows.appendChild(h(`<div class="lad-row"><span class="lad-n">${i+1}. ${x.n}</span><span class="sk-bar"><i style="width:${Math.round(n/st.n*100)}%;background:${i>=4?"var(--ok)":"var(--accent)"}"></i></span><span class="lad-c">${n}</span></div>`)); });
   c.appendChild(rows);
-  c.appendChild(h(`<p class="sub" style="font-size:12.5px;margin-top:6px">${st.mastered} de ${st.n} com domínio comprovado. ${st.tn >= 8 ? "Em situações novas você acerta <b>"+st.tp+"%</b> (últimas "+st.tn+" tentativas)." : "Transferência: medindo "+st.tn+"/8 tentativas em contextos novos."}</p>`));
+  c.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap);margin-top:6px">${st.mastered} de ${st.n} com domínio comprovado. ${st.tn >= 8 ? "Em situações novas você acerta <b>"+st.tp+"%</b> (últimas "+st.tn+" tentativas)." : "Transferência: medindo "+st.tn+"/8 tentativas em contextos novos."}</p>`));
   const b = h(`<button class="btn btn-line btn-block" style="margin-top:8px">🪜 Prova de domínio${st.due ? " ("+Math.min(6, st.due)+" vencidas)" : ""}</button>`);
   b.addEventListener("click", startLadder); c.appendChild(b);
   return c;
@@ -2394,9 +2395,9 @@ function readinessBlock(){
   const r = readiness(), c = h(`<div class="lad-card"></div>`), nx = r.crit.find(x => !x.ok);
   c.appendChild(h(`<div class="eyebrow" style="margin-top:14px">Pronto para o próximo nível? ${r.met} de ${r.crit.length}</div>`));
   const rows = h(`<div class="lad-rows"></div>`);
-  r.crit.forEach(x => rows.appendChild(h(`<div style="display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;font-size:13px;align-items:start"><span>${x.ok ? "✅" : "⬜"}</span><span>${esc(x.t)}</span><small class="sub">${esc(x.d)}</small></div>`)));
+  r.crit.forEach(x => rows.appendChild(h(`<div style="display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;font-size:var(--fs-sub);align-items:start"><span>${x.ok ? "✅" : "⬜"}</span><span>${esc(x.t)}</span><small class="sub">${esc(x.d)}</small></div>`)));
   c.appendChild(rows);
-  c.appendChild(h(`<p class="sub" style="font-size:12.5px;margin-top:6px">${nx ? "Falta: "+esc(nx.t.toLowerCase())+"." : "Tudo comprovado. Pode avançar de nível com segurança."}</p>`));
+  c.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap);margin-top:6px">${nx ? "Falta: "+esc(nx.t.toLowerCase())+"." : "Tudo comprovado. Pode avançar de nível com segurança."}</p>`));
   return c;
 }
 /* ---- v47: retorno sem culpa, congelamento de sequência, resumo semanal, dicas de primeira vez ---- */
@@ -2689,7 +2690,7 @@ function viewCinema(){
     el.appendChild(head("Shadowing concluído", toMenu));
     if(o.recs && o.recs.length){
       const avg = Math.round(o.recs.reduce((a,x)=>a+x.pct,0)/o.recs.length);
-      el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:6px"><div class="eyebrow">Palavras reconhecidas na sua fala</div><div class="score-big"><b>${avg}%</b><span class="sub">média de ${o.recs.length} trechos</span></div><ul class="plan">${o.recs.filter(x=>x.pct<85).slice(0,6).map(x=>`<li>“${esc(x.t)}” · ${x.pct}% · não reconhecidas: ${esc(x.missed.join(", ")||"–")}</li>`).join("") || "<li>Tudo foi reconhecido. Muito bem!</li>"}</ul><p class="sub" style="font-size:12px">É o que o navegador entendeu, não uma nota de sotaque. As tentativas entram no seu relatório de pronúncia.</p></section>`));
+      el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:6px"><div class="eyebrow">Palavras reconhecidas na sua fala</div><div class="score-big"><b>${avg}%</b><span class="sub">média de ${o.recs.length} trechos</span></div><ul class="plan">${o.recs.filter(x=>x.pct<85).slice(0,6).map(x=>`<li>“${esc(x.t)}” · ${x.pct}% · não reconhecidas: ${esc(x.missed.join(", ")||"–")}</li>`).join("") || "<li>Tudo foi reconhecido. Muito bem!</li>"}</ul><p class="sub" style="font-size:var(--fs-cap)">É o que o navegador entendeu, não uma nota de sotaque. As tentativas entram no seu relatório de pronúncia.</p></section>`));
     }
     el.appendChild(h(`<section class="soft" style="text-align:center"><div class="eyebrow">${esc(sc.title)}</div><h1 class="headline" style="margin-top:8px">Como foi acompanhar o ritmo?</h1><p class="sub" style="margin-top:6px">O app não grava a sua voz, então esta resposta é só para você se acompanhar. A prova de verdade vem pelo ditado.</p></section>`));
     const row = h(`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"></div>`);
@@ -2792,7 +2793,7 @@ function filmCapi(box, id, name, getAB){
   const S = {pi:0, ptyped:"", pchk:null, pdone:[], tr:"", ph:"idle", data:null, qi:0, pick:null, score:0, essay:"", fb:null, busy:false, err:""};
   const key = () => { const [A, B] = getAB(); return id + "|" + A + "|" + B + "|" + S.tr.length; };
   const src = () => S.tr ? "a transcrição que vem abaixo (você não vê o vídeo)" : "o vídeo";
-  const note = m => `<p class="sub" style="font-size:12.5px">${m}</p>`;
+  const note = m => `<p class="sub" style="font-size:var(--fs-cap)">${m}</p>`;
   const head = txt => `<div style="display:flex;gap:12px;align-items:center"><div style="flex:none" aria-hidden="true">${capi("hi", 64)}</div><div><div class="eyebrow">Aula com o Capi</div><div style="font-weight:700;margin-top:2px">${txt}</div></div></div>`;
   async function start(){
     const [A, B] = getAB(), k = key();
@@ -2830,7 +2831,7 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     const l = L[S.pi], b = blankOf(l.t), pct = Math.round(S.pi / total * 100);
     return `<div class="tp"><div class="tp-h"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><b>Traduza isso…</b></div><div class="tp-bar"><i style="width:${pct}%"></i></div>
       <div class="tp-b"><div class="tp-pt">${esc(l.pt)}</div><div class="tp-en">${esc(b.shown)} <span class="tp-bl">${S.pchk ? esc(b.ans) : "___ ".repeat(b.n).trim()}</span></div>
-      ${S.pchk ? `<div class="tp-ans ${S.pchk.ok ? "ok" : "bad"}">${S.pchk.ok ? "Certo!" : "Quase. O certo é:"} <u>${esc(l.t)}</u></div>${l.note ? `<div class="sub" style="font-size:12.5px">💡 ${esc(l.note)}</div>` : ""}<button class="btn btn-dark btn-block" id="tpNext">${S.pi + 1 >= total ? "Ver resultado" : "Próxima"}</button>` :
+      ${S.pchk ? `<div class="tp-ans ${S.pchk.ok ? "ok" : "bad"}">${S.pchk.ok ? "Certo!" : "Quase. O certo é:"} <u>${esc(l.t)}</u></div>${l.note ? `<div class="sub" style="font-size:var(--fs-cap)">💡 ${esc(l.note)}</div>` : ""}<button class="btn btn-dark btn-block" id="tpNext">${S.pi + 1 >= total ? "Ver resultado" : "Próxima"}</button>` :
       `<input id="tpIn" class="in" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Complete a frase" value="${esc(S.ptyped)}" style="width:100%"><div style="display:flex;gap:8px"><button class="btn btn-line" id="tpPl" aria-label="Ouvir a frase">🔊 Ouvir</button><button class="btn btn-dark" id="tpGo" style="flex:1">Verificar</button></div><button class="link" id="tpSh">Mostrar a resposta</button>`}</div></div>`;
   }
   function draw(){
@@ -2857,9 +2858,9 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
       }else{
         h2 += `<div class="feedback good"><b>Você acertou ${S.score} de ${d.questions.length}</b><div class="tips">${S.score === d.questions.length ? "Perfeito: você pegou tudo." : S.score >= d.questions.length / 2 ? "Bom. Reveja as falas abaixo e assista de novo sem legenda." : "Sem problema: leia as falas abaixo, assista de novo e tente outra vez."}</div></div>
           ${practiceHtml()}
-          <div><div class="eyebrow">Falas-chave</div>${d.lines.map((l, i) => `<div class="cp-line"><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(l.t)}</b><div class="sub" style="font-size:13px">${esc(l.pt || "")}</div>${l.note ? `<div class="sub" style="font-size:12.5px;margin-top:2px">💡 ${esc(l.note)}</div>` : ""}</div><button class="btn btn-line" data-sl="${i}" style="padding:8px 12px;font-size:12.5px" aria-label="Salvar frase">Salvar</button></div>`).join("")}</div>` +
-          (d.expressions.length ? `<div><div class="eyebrow">Expressões</div>${d.expressions.map((x, i) => `<div class="cp-line"><div style="flex:1"><b>${esc(x.t)}</b><div class="sub" style="font-size:13px">${esc(x.pt || "")}</div></div><button class="btn btn-line" data-se="${i}" style="padding:8px 12px;font-size:12.5px">Salvar</button></div>`).join("")}</div>` : "") +
-          `<div class="eyebrow">Agora é você</div><p class="sub" style="font-size:13.5px">Sem olhar as falas: conte com suas palavras o que aconteceu e o que foi dito (em ${esc(lang)} se conseguir, ou em português). O Capi compara com o vídeo e corrige.</p>
+          <div><div class="eyebrow">Falas-chave</div>${d.lines.map((l, i) => `<div class="cp-line"><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(l.t)}</b><div class="sub" style="font-size:var(--fs-sub)">${esc(l.pt || "")}</div>${l.note ? `<div class="sub" style="font-size:var(--fs-cap);margin-top:2px">💡 ${esc(l.note)}</div>` : ""}</div><button class="btn btn-line" data-sl="${i}" style="padding:8px 12px;font-size:var(--fs-cap)" aria-label="Salvar frase">Salvar</button></div>`).join("")}</div>` +
+          (d.expressions.length ? `<div><div class="eyebrow">Expressões</div>${d.expressions.map((x, i) => `<div class="cp-line"><div style="flex:1"><b>${esc(x.t)}</b><div class="sub" style="font-size:var(--fs-sub)">${esc(x.pt || "")}</div></div><button class="btn btn-line" data-se="${i}" style="padding:8px 12px;font-size:var(--fs-cap)">Salvar</button></div>`).join("")}</div>` : "") +
+          `<div class="eyebrow">Agora é você</div><p class="sub" style="font-size:var(--fs-sub)">Sem olhar as falas: conte com suas palavras o que aconteceu e o que foi dito (em ${esc(lang)} se conseguir, ou em português). O Capi compara com o vídeo e corrige.</p>
           <textarea id="cpEs" class="in" rows="4" style="width:100%" placeholder="Ex.: Ele disse que...">${esc(S.essay)}</textarea>
           <button class="btn btn-dark btn-block" id="cpFb" ${S.busy ? "disabled" : ""}>${S.busy ? "O Capi está corrigindo…" : "Pedir a correção do Capi"}</button>` + (S.err ? note(esc(S.err)) : "") +
           (S.fb ? `<div class="feedback good"><b>Nota do Capi: ${S.fb.score}/100</b>${S.fb.right.length ? `<div class="tips"><b>✓ O que você acertou</b><br>${S.fb.right.map(esc).join("<br>")}</div>` : ""}${S.fb.missed.length ? `<div class="tips" style="margin-top:8px"><b>✗ O que faltou ou errou</b><br>${S.fb.missed.map(esc).join("<br>")}</div>` : ""}${S.fb.fixes.length ? `<div class="tips" style="margin-top:8px"><b>✎ Como dizer melhor</b><br>${S.fb.fixes.map(f => `“${esc(f.you || "")}” → <b>${esc(f.better)}</b>${f.why ? " · " + esc(f.why) : ""}`).join("<br>")}</div>` : ""}${S.fb.next ? `<div class="tips" style="margin-top:8px">🎯 ${esc(S.fb.next)}</div>` : ""}</div>` : "");
@@ -2899,9 +2900,9 @@ function viewFilm(){
     const b = h(`<button class="btn btn-dark btn-block">Ir para as cenas de cinema <span class="arr">→</span></button>`); b.addEventListener("click", () => startCinema()); el.appendChild(b); return el;
   }
   const pk = FILM_PICKS.filter(x => x.l === state.lang);
-  const pks = h(`<section class="card"><div class="eyebrow">Cenas prontas · toque para abrir</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${pk.map((x, i) => `<button class="pl-row" data-k="${i}"><span class="pl-ic">${({Friends:"☕",Shrek:"🧅","A Era":"🧊",Matrix:"💊",Shameless:"🏚️",Sherlock:"🔍","The Office":"🗂️",Peaky:"🎩",Fawlty:"🏨","Il Postino":"✉️","La vita":"🌹","L'amica":"📕","Smetto":"🧪"}[Object.keys({Friends:1,Shrek:1,"A Era":1,Matrix:1,Shameless:1,Sherlock:1,"The Office":1,Peaky:1,Fawlty:1,"Il Postino":1,"La vita":1,"L'amica":1,"Smetto":1}).find(k => x.f.startsWith(k))] || "🐠")}</span><span class="pl-tx"><b>${esc(x.f)}</b><small>${esc(x.t)} · nível estimado ${x.lv}</small></span></button>`).join("")}</div><p class="sub" style="font-size:12.5px;margin-top:8px">São vídeos públicos do YouTube, abertos no player oficial. Eu não consegui conferir um a um se o dono permite abrir aqui; se algum não abrir, use a busca abaixo. O nível é uma estimativa minha: desenho animado costuma ser mais fácil que sitcom.</p></section>`);
+  const pks = h(`<section class="card"><div class="eyebrow">Cenas prontas · toque para abrir</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${pk.map((x, i) => `<button class="pl-row" data-k="${i}"><span class="pl-ic">${({Friends:"☕",Shrek:"🧅","A Era":"🧊",Matrix:"💊",Shameless:"🏚️",Sherlock:"🔍","The Office":"🗂️",Peaky:"🎩",Fawlty:"🏨","Il Postino":"✉️","La vita":"🌹","L'amica":"📕","Smetto":"🧪"}[Object.keys({Friends:1,Shrek:1,"A Era":1,Matrix:1,Shameless:1,Sherlock:1,"The Office":1,Peaky:1,Fawlty:1,"Il Postino":1,"La vita":1,"L'amica":1,"Smetto":1}).find(k => x.f.startsWith(k))] || "🐠")}</span><span class="pl-tx"><b>${esc(x.f)}</b><small>${esc(x.t)} · nível estimado ${x.lv}</small></span></button>`).join("")}</div><p class="sub" style="font-size:var(--fs-cap);margin-top:8px">São vídeos públicos do YouTube, abertos no player oficial. Eu não consegui conferir um a um se o dono permite abrir aqui; se algum não abrir, use a busca abaixo. O nível é uma estimativa minha: desenho animado costuma ser mais fácil que sitcom.</p></section>`);
   el.appendChild(pks);
-  const q = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">1. Ache a cena</div><input id="fq" type="text" placeholder="Nome do filme ou cena, ou uma expressão" autocomplete="off" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-line" id="fy">Buscar no YouTube</button><button class="btn btn-line" id="fg">Ouvir no YouGlish</button></div><p class="sub" style="font-size:12.5px">Os dois abrem em outra aba. Copie o link do vídeo que gostou e cole abaixo. Prefira os clipes oficiais dos estúdios. O YouGlish mostra a expressão dita por muitas pessoas; o crédito é dele.</p></section>`);
+  const q = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">1. Ache a cena</div><input id="fq" type="text" placeholder="Nome do filme ou cena, ou uma expressão" autocomplete="off" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-line" id="fy">Buscar no YouTube</button><button class="btn btn-line" id="fg">Ouvir no YouGlish</button></div><p class="sub" style="font-size:var(--fs-cap)">Os dois abrem em outra aba. Copie o link do vídeo que gostou e cole abaixo. Prefira os clipes oficiais dos estúdios. O YouGlish mostra a expressão dita por muitas pessoas; o crédito é dele.</p></section>`);
   $("#fy", q).addEventListener("click", () => { const v = $("#fq", q).value.trim(); if(v) window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(v + (state.lang === "en" ? " movie scene english subtitles" : " scena film italiano sottotitoli")), "_blank", "noopener"); });
   $("#fg", q).addEventListener("click", () => { const v = $("#fq", q).value.trim(); if(v) window.open("https://youglish.com/pronounce/" + encodeURIComponent(v) + "/" + (state.lang === "en" ? "english/us" : "italian"), "_blank", "noopener"); });
   el.appendChild(q);
@@ -2932,7 +2933,7 @@ function viewFilm(){
         <div class="fv-row"><button class="fv-b" id="fb3" aria-label="Voltar 3 segundos">${IC.back}<small>3 s</small></button><button class="fv-b fv-play" id="fpp" aria-label="Tocar ou pausar">${IC.play}</button><button class="fv-b" id="ff3" aria-label="Avançar 3 segundos">${IC.fwd}<small>3 s</small></button><button class="fv-b" id="fsp" aria-label="Velocidade"><b id="fspv">1x</b><small>veloc.</small></button></div></div></div>
       <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="eyebrow">Treine um trecho em loop</div>
         <div class="fv-row3"><button class="fv-c" id="fsa">${IC.flagA}<span>Início aqui</span></button><button class="fv-c" id="fsb">${IC.flagB}<span>Fim aqui</span></button><button class="fv-c" id="fsv">${IC.save}<span>Salvar</span></button></div>
-        <p class="sub" style="font-size:12.5px">Marque onde a fala começa e termina: o trecho repete sozinho. Assista com legenda, depois a 0,5x, repita em voz alta e por fim sem legenda.</p></div>
+        <p class="sub" style="font-size:var(--fs-cap)">Marque onde a fala começa e termina: o trecho repete sozinho. Assista com legenda, depois a 0,5x, repita em voz alta e por fim sem legenda.</p></div>
       <section id="fcapi"></section>`;
     $("#fa", stage); const rates = [1, 0.75, 0.5]; let ri = 0;
     try{ await ytLoad(); }catch(e){ $("#fmsg", ld).textContent = "Não consegui carregar o player do YouTube. Confira a internet e tente de novo."; return; }
@@ -2984,7 +2985,7 @@ function viewHome(){
       ${j.m ? `<div class="hero2-bar"><i style="width:${Math.round(j.inf.done/Math.max(1,j.inf.us.length)*100)}%"></i></div><p class="hero2-meta">${j.inf.done} de ${j.inf.us.length} ${j.inf.us.length===1?"lição":"lições"} deste capítulo</p>` : ""}
     </div>
     <div class="next-card">
-      <div style="min-width:0"><div class="eyebrow">${step.k} · ${step.min}</div><div class="nc-t">${esc(step.t)}</div><div class="sub" style="font-size:13px">${esc(step.s)}</div></div>
+      <div style="min-width:0"><div class="eyebrow">${step.k} · ${step.min}</div><div class="nc-t">${esc(step.t)}</div><div class="sub" style="font-size:var(--fs-sub)">${esc(step.s)}</div></div>
       <button class="btn btn-dark nc-go" id="goNext">${first ? "Começar lição de 5 min" : "Continuar"} <span class="arr">→</span></button>
     </div>
   </section>`);
@@ -3136,7 +3137,7 @@ function viewMissionTrail(){
   ms.forEach((m,i) => {
     const inf = infos[i], lvs = [...new Set(inf.us.map(u=>u.level))];
     if(m.id !== curId){
-      const row = h(`<button class="card chap-row ${inf.stamped?"ok":""}"><span class="m-ic">${m.icon}</span><span style="min-width:0;text-align:left"><div class="eyebrow">Capítulo ${i+1}${inf.stamped?" · 🏅 carimbo":nextM===m?" · agora":""}</div><div class="m-title" style="font-size:15.5px">${esc(m.title)}</div><div class="sub" style="font-size:12px">${inf.done}/${inf.us.length} ${inf.us.length===1?"lição":"lições"} · ${lvs.join("–")}</div></span><span class="tl-chev">›</span></button>`);
+      const row = h(`<button class="card chap-row ${inf.stamped?"ok":""}"><span class="m-ic">${m.icon}</span><span style="min-width:0;text-align:left"><div class="eyebrow">Capítulo ${i+1}${inf.stamped?" · 🏅 carimbo":nextM===m?" · agora":""}</div><div class="m-title" style="font-size:15.5px">${esc(m.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${inf.done}/${inf.us.length} ${inf.us.length===1?"lição":"lições"} · ${lvs.join("–")}</div></span><span class="tl-chev">›</span></button>`);
       row.addEventListener("click", () => { openChap = m.id; render(); row.scrollIntoView && setTimeout(() => { const x = document.querySelector(".mission.open"); if(x) x.scrollIntoView({block:"start"}); }, 30); });
       el.appendChild(row); return;
     }
@@ -3144,7 +3145,7 @@ function viewMissionTrail(){
       <div class="m-head"><span class="m-ic">${m.icon}</span><div style="min-width:0"><div class="eyebrow">Capítulo ${i+1}${inf.stamped?" · 🏅 carimbo conquistado":nextM===m?" · AGORA":""}</div><div class="m-title">${esc(m.title)}</div></div><span class="pill lv">${lvs.length>1?lvs[0]+"–"+lvs[lvs.length-1]:lvs[0]||""}</span></div>
       <div class="m-goal">🎯 <b>Ao final você consegue:</b> ${esc(m.goal)}</div>
       <div class="m-bar"><i style="width:${inf.us.length?Math.round(inf.done/inf.us.length*100):0}%"></i></div>
-      <div class="sub" style="font-size:12px;margin-top:-4px">${inf.done} de ${inf.us.length} lições</div>
+      <div class="sub" style="font-size:var(--fs-cap);margin-top:-4px">${inf.done} de ${inf.us.length} lições</div>
       <div class="list"></div>
     </section>`);
     inf.us.forEach(u => {
@@ -3166,7 +3167,7 @@ function viewMissionTrail(){
     const pb = h(`<button class="btn ${ready&&!inf.stamped?"btn-dark":"btn-line"} btn-block">${inf.stamped?"↺ Refazer a prova":"🎯 Prova do capítulo"}: ${esc(m.final)}</button>`);
     pb.addEventListener("click", () => startMission(m));
     sec.appendChild(pb);
-    sec.appendChild(h(`<p class="sub" style="font-size:12px">${inf.st && inf.st.best ? `Sua melhor nota: ${String(inf.st.best).replace(".",",")}/10. ` : ""}Para o carimbo: nota média ${MISSION_MIN.avg}+ em pelo menos ${MISSION_MIN.msgs} mensagens.${ready?"":" Dá para tentar antes de terminar as lições."}</p>`));
+    sec.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">${inf.st && inf.st.best ? `Sua melhor nota: ${String(inf.st.best).replace(".",",")}/10. ` : ""}Para o carimbo: nota média ${MISSION_MIN.avg}+ em pelo menos ${MISSION_MIN.msgs} mensagens.${ready?"":" Dá para tentar antes de terminar as lições."}</p>`));
     el.appendChild(sec);
   });
   return el;
@@ -3250,7 +3251,7 @@ function viewGram(){
     t.sections.forEach(x => secs.appendChild(h(`<div class="g-sec"><h3>${esc(x.h)}</h3><p>${x.p}</p></div>`)));
     el.appendChild(secs);
     (t.tables||[]).forEach(tb => {
-      const c = h(`<section class="card"><div class="sec-head"><h2 style="font-size:16px">${esc(tb.title||"Tabela")}</h2><span class="sub" style="font-size:12px">toque para ouvir</span></div>
+      const c = h(`<section class="card"><div class="sec-head"><h2 style="font-size:16px">${esc(tb.title||"Tabela")}</h2><span class="sub" style="font-size:var(--fs-cap)">toque para ouvir</span></div>
         <div class="tbl-wrap"><table class="gt"><thead><tr>${tb.head.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead>
         <tbody>${tb.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>0||tb.head.length===2?"say":""}" data-t="${esc(c)}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>`);
       $$("td.say",c).forEach(td => td.addEventListener("click", () => speak(td.dataset.t)));
@@ -3449,7 +3450,7 @@ function viewIntv(){
   if(!o.mode){
     const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px">
       <div class="eyebrow">Com IA (gratuito)</div>
-      <p class="sub" style="font-size:13px">Uma IA do Google (Gemini) faz perguntas curtas e adapta o seu estudo. Cole a chave gratuita de aistudio.google.com/apikey. Ela fica só neste aparelho.</p>
+      <p class="sub" style="font-size:var(--fs-sub)">Uma IA do Google (Gemini) faz perguntas curtas e adapta o seu estudo. Cole a chave gratuita de aistudio.google.com/apikey. Ela fica só neste aparelho.</p>
       ${gmKey() ? "" : `<input id="ivKey" class="in" type="password" placeholder="Chave da API do Gemini" autocomplete="off">`}
       <button class="btn btn-dark" id="ivAi">${gmKey() ? "Começar com a IA" : "Salvar chave e começar"}</button>
       <button class="btn btn-line" id="ivFb">Prefiro perguntas simples (sem IA)</button>
@@ -3493,12 +3494,12 @@ function viewIntv(){
 function profCard(){
   const p = state.prof;
   if(!p){
-    const b = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Personalize o estudo</div><p class="sub" style="font-size:13.5px">Converse 2 minutos com a IA: ela adapta perguntas, exemplos e a ordem das aulas ao seu objetivo.</p><button class="btn btn-dark">Começar a conversa</button></section>`);
+    const b = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Personalize o estudo</div><p class="sub" style="font-size:var(--fs-sub)">Converse 2 minutos com a IA: ela adapta perguntas, exemplos e a ordem das aulas ao seu objetivo.</p><button class="btn btn-dark">Começar a conversa</button></section>`);
     $("button",b).addEventListener("click", () => open({type:"intv"})); return b;
   }
   const ids = (p.units && p.units[state.lang]) || [], done = L().done || {};
   const rec = ids.map(id => units().find(u => u.id===id)).filter(u => u && !done[u.id]).slice(0,3);
-  const b = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Para você</div>${p.summary ? `<p class="sub" style="font-size:13.5px">${esc(p.summary)}</p>` : ""}${rec.map((u,k) => `<button class="btn btn-line" data-u="${k}" style="text-align:left">${u.icon} ${esc(u.title)}</button>`).join("")}<button class="link" id="pfRe" style="align-self:flex-start">Refazer a conversa</button></section>`);
+  const b = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Para você</div>${p.summary ? `<p class="sub" style="font-size:var(--fs-sub)">${esc(p.summary)}</p>` : ""}${rec.map((u,k) => `<button class="btn btn-line" data-u="${k}" style="text-align:left">${u.icon} ${esc(u.title)}</button>`).join("")}<button class="link" id="pfRe" style="align-self:flex-start">Refazer a conversa</button></section>`);
   rec.forEach((u,k) => $(`[data-u="${k}"]`,b).addEventListener("click", () => startLesson(u)));
   $("#pfRe",b).addEventListener("click", () => open({type:"intv"}));
   return b;
@@ -3635,7 +3636,7 @@ function exerciseCard(ex, onAnswer, onNext, nextLabel){
       const sp = h(`<button class="speak" style="margin:0 auto 14px" aria-label="Ouvir">${ICON.speak}</button>`);
       sp.addEventListener("click", () => speak(ex.speak));
       card.appendChild(sp);
-      const sw = h(`<button class="link" style="align-self:center;margin:-8px auto 10px;font-size:13px">Não consegue ouvir? Ver a frase</button>`);
+      const sw = h(`<button class="link" style="align-self:center;margin:-8px auto 10px;font-size:var(--fs-sub)">Não consegue ouvir? Ver a frase</button>`);
       sw.addEventListener("click", () => { sw.replaceWith(h(`<p class="sub" style="text-align:center;margin:-6px 0 10px">“${esc(ex.speak)}”</p>`)); });
       card.appendChild(sw);
       setTimeout(()=>speak(ex.speak), 200);
@@ -3953,7 +3954,7 @@ function viewPath(){
   // semana
   const dow = new Date().getDay();
   const wk = h(`<section class="card"><div class="sec-head"><h2>Foco da semana</h2></div><p class="sub" style="margin-top:2px">Variar o foco mantém o estudo leve e cobre tudo.</p><div style="margin-top:6px"></div></section>`);
-  WEEKPLAN.forEach(([d,t],i) => $("div:last-child",wk).appendChild(h(`<div class="path-row ${i===dow?"tgt":""}"><b style="font-size:12px">${d.slice(0,3)}</b><div>${esc(t)}${i===dow?"<small>hoje</small>":""}</div></div>`)));
+  WEEKPLAN.forEach(([d,t],i) => $("div:last-child",wk).appendChild(h(`<div class="path-row ${i===dow?"tgt":""}"><b style="font-size:var(--fs-cap)">${d.slice(0,3)}</b><div>${esc(t)}${i===dow?"<small>hoje</small>":""}</div></div>`)));
   el.appendChild(wk);
 
   el.appendChild(methodCard());
@@ -4506,7 +4507,7 @@ function viewBlitz(){
     const b = h(`<button class="btn btn-line btn-block">Fechar</button>`); b.addEventListener("click", close); el.appendChild(b);
     return el;
   }
-  const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Sair">✕</button><div style="flex:1"><div class="timer"><i id="blzT" style="width:${o.left/60*100}%"></i></div></div><b id="blzN" style="font-size:13px;width:34px;text-align:right">${o.left}s</b></div>`);
+  const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Sair">✕</button><div style="flex:1"><div class="timer"><i id="blzT" style="width:${o.left/60*100}%"></i></div></div><b id="blzN" style="font-size:var(--fs-sub);width:34px;text-align:right">${o.left}s</b></div>`);
   $("button",top).addEventListener("click", close);
   el.appendChild(top);
   el.appendChild(h(`<div class="sec-head"><span class="eyebrow">Desafio relâmpago</span><span class="chip xp">${o.score} acertos</span></div>`));
@@ -4564,7 +4565,7 @@ function accentPicker(compact){
     <div style="display:flex;flex-wrap:wrap;gap:8px">${opts.map(o => `<button class="filter ${cur===o.k?"on":""}" data-a="${o.k}">${esc(o.n)}</button>`).join("")}</div>
     <button class="btn btn-line" id="accTry">🔊 Ouvir exemplo (voz do aparelho)</button>
     <button class="btn btn-dark" id="accReal">🌍 Ouvir pessoas reais de cada sotaque</button>
-    ${compact ? "" : `<p class="sub" style="font-size:12px">Americano é a voz gravada (a melhor qualidade). Os outros usam as vozes do aparelho e só aparecem se estiverem instaladas. No iPhone: Ajustes › Acessibilidade › Conteúdo Falado › Vozes › Inglês, e baixe as vozes do Reino Unido, Austrália, Irlanda e Índia.</p>`}</section>`);
+    ${compact ? "" : `<p class="sub" style="font-size:var(--fs-cap)">Americano é a voz gravada (a melhor qualidade). Os outros usam as vozes do aparelho e só aparecem se estiverem instaladas. No iPhone: Ajustes › Acessibilidade › Conteúdo Falado › Vozes › Inglês, e baixe as vozes do Reino Unido, Austrália, Irlanda e Índia.</p>`}</section>`);
   box.querySelectorAll("[data-a]").forEach(b => b.addEventListener("click", () => { state.accent = b.dataset.a; persist(); render(); }));
   $("#accReal",box).addEventListener("click", () => startVozes(["us","gb","au","ie","in","ca","za","sc"].includes(cur) ? cur : "us"));
   $("#accTry",box).addEventListener("click", () => { seqToken++; speak("Could you tell me where the nearest station is?").then(() => { try{ toast("Sotaque: "+accDef(lastAccent).n); }catch(e){} }); });
@@ -4589,7 +4590,7 @@ function viewEar(){
     return el;
   }
   const q = o.qs[o.i];
-  const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Sair">✕</button><div style="flex:1"><div class="timer"><i style="width:${o.i/o.qs.length*100}%"></i></div></div><b style="font-size:13px;min-width:44px;text-align:right">${o.i+1}/${o.qs.length}</b></div>`);
+  const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Sair">✕</button><div style="flex:1"><div class="timer"><i style="width:${o.i/o.qs.length*100}%"></i></div></div><b style="font-size:var(--fs-sub);min-width:44px;text-align:right">${o.i+1}/${o.qs.length}</b></div>`);
   $("button",top).addEventListener("click", quit); el.appendChild(top);
   { const ap = o.i===0 && o.ans===null ? accentPicker(true) : null; if(ap) el.appendChild(ap); }
   el.appendChild(h(`<div class="sec-head"><span class="eyebrow">Ouça e escolha</span><span class="chip xp">${o.pts} pts${o.combo>=2?" · 🔥"+o.combo:""}</span></div>`));
@@ -4606,7 +4607,7 @@ function viewEar(){
       noteVocab(q.v, ok, "listen");
       if(ok){ o.ok++; o.combo++; o.best = Math.max(o.best, o.combo); o.pts += 10 + Math.max(0, Math.round(10 - secs)) + Math.min(o.combo-1, 5); sfx.right(); b.classList.add("right"); }
       else { o.combo = 0; o.bad.push(q.v); sfx.wrong(); b.classList.add("wrong"); $$(".opt",opts).forEach(x => { if(x.textContent===q.v.pt) x.classList.add("right"); }); }
-      const fb = h(`<div class="card" style="margin-top:10px"><div style="font-size:18px;font-weight:700">${esc(q.v.t)}</div><div class="sub" style="margin-top:2px">${esc(q.v.pt)}</div>${state.lang==="en" ? `<div class="sub" style="margin-top:4px;font-size:12px">Sotaque: ${accDef(lastAccent).n}</div>` : ""}</div>`);
+      const fb = h(`<div class="card" style="margin-top:10px"><div style="font-size:18px;font-weight:700">${esc(q.v.t)}</div><div class="sub" style="margin-top:2px">${esc(q.v.pt)}</div>${state.lang==="en" ? `<div class="sub" style="margin-top:4px;font-size:var(--fs-cap)">Sotaque: ${accDef(lastAccent).n}</div>` : ""}</div>`);
       el.appendChild(fb);
       const nx = h(`<button class="btn btn-dark btn-block" style="margin-top:10px">${o.i+1>=o.qs.length?"Ver resultado":"Próxima"} <span class="arr">→</span></button>`);
       nx.addEventListener("click", () => { stopAudio(); seqToken++; o.i++; o.ans = null; o.t0 = 0; render(); scrollTo(0,0); });
@@ -4640,7 +4641,7 @@ function viewChat(){
     if(!list.length) return;
     const sec = h(`<section class="card"><div class="eyebrow">${c.name}</div><div style="margin-top:4px"></div></section>`);
     list.forEach(s => {
-      const b = h(`<button class="scn"><span class="ic">${s.icon}</span><span><div style="font-weight:700;font-size:14.5px">${esc(s.title)}</div><div class="sub" style="font-size:12.5px">${esc(s.desc)}</div></span></button>`);
+      const b = h(`<button class="scn"><span class="ic">${s.icon}</span><span><div style="font-weight:700;font-size:14.5px">${esc(s.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${esc(s.desc)}</div></span></button>`);
       b.addEventListener("click", () => startScene(s));
       $("div:last-child",sec).appendChild(b);
     });
@@ -4737,7 +4738,7 @@ Regras: treinar com 3 a 5 frases curtas baseadas nos erros reais da conversa; us
 }
 function viewSceneSummary(o){
   const el = h(`<div class="screen" style="gap:14px"></div>`), sm = o.sum, st = sm.st, d = sm.data;
-  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar à conversa">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">Resumo da aula</div><div class="sub" style="font-size:12px">${o.s.icon} ${esc(o.s.title)}</div></div></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar à conversa">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">Resumo da aula</div><div class="sub" style="font-size:var(--fs-cap)">${o.s.icon} ${esc(o.s.title)}</div></div></div>`);
   $("button",head).addEventListener("click", () => { o.sum = null; render(); });
   el.appendChild(head);
   const band = st.avg===null ? "Sem notas" : st.avg>=8.5 ? "Excelente" : st.avg>=7 ? "Muito bom" : st.avg>=5 ? "Bom, dá para melhorar" : "Vamos reforçar";
@@ -4750,7 +4751,7 @@ function viewSceneSummary(o){
   }
   el.appendChild(h(`<div class="metrics card" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="metric"><b>${st.sent}</b><span>${st.sent===1?"mensagem":"mensagens"}</span></div><div class="metric"><b style="color:var(--ok)">${st.ok}</b><span>acertos</span></div><div class="metric"><b style="color:var(--bad,#b3261e)">${st.err}</b><span>erros</span></div></div>`));
   if(sm.busy) el.appendChild(h(`<section class="card"><div class="msg them dots" style="max-width:none"><i></i><i></i><i></i></div><p class="sub" style="margin-top:8px">Montando seu resumo…</p></section>`));
-  if(sm.err) el.appendChild(h(`<p class="sub" style="font-size:13px">${esc(sm.err)}</p>`));
+  if(sm.err) el.appendChild(h(`<p class="sub" style="font-size:var(--fs-sub)">${esc(sm.err)}</p>`));
   const list = (title, arr) => { if(arr && arr.length){ el.appendChild(h(`<section class="card"><div class="eyebrow">${title}</div><ul class="plan">${arr.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>`)); } };
   if(d){
     if(d.resumo) el.appendChild(h(`<section class="card"><div class="eyebrow">Como foi a aula</div><p style="margin-top:6px;line-height:1.55">${esc(d.resumo)}</p></section>`));
@@ -4781,7 +4782,7 @@ function viewScene(){
   const o = overlay;
   if(o.sum) return viewSceneSummary(o);
   const el = h(`<div class="screen" style="gap:14px"></div>`);
-  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">${o.s.icon} ${esc(o.s.title)}</div><div class="sub" style="font-size:12px">Nível ${userLevel()} · ${LANGS[state.lang].name}</div></div></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">${o.s.icon} ${esc(o.s.title)}</div><div class="sub" style="font-size:var(--fs-cap)">Nível ${userLevel()} · ${LANGS[state.lang].name}</div></div></div>`);
   $("button",head).addEventListener("click", close);
   el.appendChild(head);
   const log = h(`<div class="log"></div>`);
@@ -4888,7 +4889,7 @@ function viewStory(){
   const o = overlay, el = h(`<div class="screen" style="gap:14px"></div>`);
   const back = () => { stopAudio(); seqToken++; close(); };
   if(o.paste){
-    const hd = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">Ler meu texto</div><div class="sub" style="font-size:12px">${LANGS[state.lang].name}</div></div></div>`);
+    const hd = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">Ler meu texto</div><div class="sub" style="font-size:var(--fs-cap)">${LANGS[state.lang].name}</div></div></div>`);
     $("button",hd).addEventListener("click", back); el.appendChild(hd);
     el.appendChild(h(`<div><h1 class="headline">Cole um <span class="script" style="font-size:32px">trecho</span></h1><p class="sub" style="margin-top:6px">Um capítulo de um livro que você já tem, um artigo, uma letra. Toque nas palavras para ver o significado no contexto (a IA traduz quando a chave do Gemini está ativa) e salve as novas no Anki.</p></div>`));
     const f = h(`<form class="card dict"><div class="eyebrow">Título (opcional)</div><input id="ownT" class="in" placeholder="Ex.: Capítulo 1" autocomplete="off"><div class="eyebrow">Texto em ${LANGS[state.lang].name.toLowerCase()}</div><textarea id="ownX" placeholder="Cole aqui (até 4.000 caracteres)…" style="min-height:180px"></textarea><button class="btn btn-dark" type="submit">Começar a ler</button></form>`);
@@ -4901,7 +4902,7 @@ function viewStory(){
     el.appendChild(f); return el;
   }
   const st = o.st;
-  const hd = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${st.icon||"📖"} ${esc(st.title)}</div><div class="sub" style="font-size:12px">${st.titlePt?esc(st.titlePt)+" · ":""}${st.level?"nível "+st.level+" · ":""}${docMinutes(st)} min</div></div></div>`);
+  const hd = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${st.icon||"📖"} ${esc(st.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${st.titlePt?esc(st.titlePt)+" · ":""}${st.level?"nível "+st.level+" · ":""}${docMinutes(st)} min</div></div></div>`);
   $("button",hd).addEventListener("click", back); el.appendChild(hd);
   const bar = h(`<div class="rd-bar"><button class="btn btn-line" id="rdTr">${o.tr?"Ocultar português":"Mostrar português"}</button><button class="btn btn-line" id="rdAll">▶ Ouvir tudo</button></div>`);
   if(st.book && bookArt(st.id)) el.appendChild(h(`<div class="book-art tall" style="background-image:${bookArt(st.id)}"></div>`));
@@ -4915,7 +4916,7 @@ function viewStory(){
   const auto = h(`<label class="rd-auto"><input type="checkbox" ${state.rdAuto?"checked":""}> <span>Palavras que eu tocar vão direto para o Anki</span></label>`);
   $("input",auto).addEventListener("change", e => { state.rdAuto = e.target.checked; persist(); });
   el.appendChild(auto);
-  el.appendChild(h(`<p class="sub" style="font-size:12.5px;margin-top:-6px">Toque numa palavra para ver o significado. 🔊 toca a frase. 🗂 salva a frase no Anki.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap);margin-top:-6px">Toque numa palavra para ver o significado. 🔊 toca a frase. 🗂 salva a frase no Anki.</p>`));
   const body = h(`<section class="card rd-body${st.book?" has-art":""}"></section>`);
   if(st.book && bookArt(st.id)) body.style.setProperty("--art", bookArt(st.id));
   st.sentences.forEach((sent, si) => {
@@ -4925,7 +4926,7 @@ function viewStory(){
     const fillPt = () => {
       ptEl.textContent = sent.pt || "";
       if(!sent.pt){
-        const tb = h(`<button class="link" style="font-size:13px">Traduzir esta frase com IA</button>`);
+        const tb = h(`<button class="link" style="font-size:var(--fs-sub)">Traduzir esta frase com IA</button>`);
         tb.addEventListener("click", () => { tb.textContent = "Traduzindo…"; aiJson(`Traduza para português do Brasil, de forma natural, esta frase em ${LANGS[state.lang].name}: "${sent.t}". Responda somente JSON: {"pt":"tradução"}`).then(j => { sent.pt = String((j&&j.pt)||""); fillPt(); }).catch(() => { tb.textContent = "A tradução por IA funciona com o app aberto no Claude."; }); });
         ptEl.appendChild(tb);
       }
@@ -5043,7 +5044,7 @@ function viewSearch(){
     sect("Livros", books().filter(b => m(b.title, b.author, b.genre, b.pt)).map(b => row(b.icon||"📚", b.title, b.author+" · "+b.year, () => startStory(bookDoc(b)))));
     sect("Palavras e frases", allVocab().filter(v => m(v.t, v.pt)).slice(0, 8).map(v => {
       const r = row("🔊", v.t, v.pt, () => { seqToken++; speak(v.t); });
-      const ad = h(`<span class="link" style="font-size:12.5px;margin-left:auto;white-space:nowrap">＋ Anki</span>`);
+      const ad = h(`<span class="link" style="font-size:var(--fs-cap);margin-left:auto;white-space:nowrap">＋ Anki</span>`);
       ad.addEventListener("click", e => { e.stopPropagation(); toast(ankiAdd(v.t, v.pt, v.note, null) ? "Salvo no Anki" : "Já está no Anki"); });
       r.appendChild(ad); return r;
     }));
@@ -5110,16 +5111,16 @@ function viewBooksTab(el){
     const read = ss[b.id];
     const c = h(`<section class="card book">
       <div class="book-art" style="background-image:${bookArt(b.id)}"></div>
-      <div class="m-head">${bookCover(b)}<div style="min-width:0"><div class="m-title">${esc(b.title)}</div><div class="sub" style="font-size:12.5px">${esc(b.author)} · ${b.year} · ${esc(b.genre)}</div></div><span class="pill lv">${b.level}</span></div>
+      <div class="m-head">${bookCover(b)}<div style="min-width:0"><div class="m-title">${esc(b.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${esc(b.author)} · ${b.year} · ${esc(b.genre)}</div></div><span class="pill lv">${b.level}</span></div>
       <p style="line-height:1.5;font-size:14px">${esc(b.pt)}</p>
       <div class="m-goal">💡 ${esc(b.why)}</div>
       <button class="btn btn-dark btn-block rd-open">📖 Ler o começo aqui${read?" · ✓ lido":""}</button>
-      <p class="sub" style="font-size:11.5px">Trecho curto da abertura; pode haver pequenas diferenças da edição completa.</p><div class="links"><a href="${esc(b.free.gutenberg)}" target="_blank" rel="noopener">Livro completo grátis ↗</a>${b.free.standardebooks?`<a href="${esc(b.free.standardebooks)}" target="_blank" rel="noopener">Edição bonita ↗</a>`:""}${b.free.librivox?`<a href="${esc(b.free.librivox)}" target="_blank" rel="noopener">Audiolivro ↗</a>`:""}</div>
+      <p class="sub" style="font-size:var(--fs-cap)">Trecho curto da abertura; pode haver pequenas diferenças da edição completa.</p><div class="links"><a href="${esc(b.free.gutenberg)}" target="_blank" rel="noopener">Livro completo grátis ↗</a>${b.free.standardebooks?`<a href="${esc(b.free.standardebooks)}" target="_blank" rel="noopener">Edição bonita ↗</a>`:""}${b.free.librivox?`<a href="${esc(b.free.librivox)}" target="_blank" rel="noopener">Audiolivro ↗</a>`:""}</div>
     </section>`);
     $(".rd-open",c).addEventListener("click", () => startStory(bookDoc(b)));
     el.appendChild(c);
   });
-  el.appendChild(h(`<p class="sub" style="font-size:12px;text-align:center">Os links levam ao Project Gutenberg, Standard Ebooks e LibriVox, que publicam obras de domínio público.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap);text-align:center">Os links levam ao Project Gutenberg, Standard Ebooks e LibriVox, que publicam obras de domínio público.</p>`));
 }
 /* ---- Biblioteca: o que ler / ver / ouvir agora (um lugar só) ---- */
 function libNow(){
@@ -5194,7 +5195,7 @@ function viewNews(){
       const sec = h(`<section class="card"><div class="sec-head"><h2>Desta semana</h2><span class="sub">${nw.items.length} notícias</span></div><div style="margin-top:2px"></div></section>`);
       nw.items.forEach(n => $("div:last-child",sec).appendChild(newsRow(n)));
       el.appendChild(sec);
-      el.appendChild(h(`<p class="sub" style="text-align:center;font-size:12px">Atualizado em ${fmtDate(nw.updated)}</p>`));
+      el.appendChild(h(`<p class="sub" style="text-align:center;font-size:var(--fs-cap)">Atualizado em ${fmtDate(nw.updated)}</p>`));
     }
   }
   else if(newsSub==="cur"){
@@ -5246,7 +5247,7 @@ function viewNews(){
     m.recs.forEach(r => {
       const q = encodeURIComponent(r.query || (r.title+" "+r.artist));
       const c = h(`<section class="card">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:15.5px">${esc(r.title)}</b><div class="sub" style="font-size:12.5px">${esc(r.artist)}${r.year?` · ${esc(r.year)}`:""}</div></div><span class="pill lv">${esc(r.level)}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:15.5px">${esc(r.title)}</b><div class="sub" style="font-size:var(--fs-cap)">${esc(r.artist)}${r.year?` · ${esc(r.year)}`:""}</div></div><span class="pill lv">${esc(r.level)}</span></div>
         <p class="sub" style="margin-top:8px">${esc(r.why)}</p>
         <div class="eyebrow" style="margin-top:12px">Expressões do tema</div>
         <div class="chips-row" style="margin-top:8px">${(r.expressions||[]).map(x=>`<button class="gl" data-t="${esc(x.t)}">${esc(x.t)}<span>${esc(x.pt)}</span></button>`).join("")}</div>
@@ -5255,7 +5256,7 @@ function viewNews(){
       $$(".gl",c).forEach(g => g.addEventListener("click", () => speak(g.dataset.t)));
       el.appendChild(c);
     });
-    el.appendChild(h(`<p class="sub" style="font-size:12px">A letra das músicas reais não aparece aqui por direitos autorais. Ela costuma estar no próprio YouTube ou no Spotify, que mostram a letra sincronizada.</p>`));
+    el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">A letra das músicas reais não aparece aqui por direitos autorais. Ela costuma estar no próprio YouTube ou no Spotify, que mostram a letra sincronizada.</p>`));
   }
   return el;
 }
@@ -5382,8 +5383,8 @@ function viewKara(){
   const go = h(`<button class="btn btn-dark btn-block">${o.busy ? "Preparando a base…" : o.playing ? "⏹ Parar" : o.finished ? "🔁 Cantar de novo" : "▶ Começar"}</button>`);
   go.addEventListener("click", () => { if(o.busy) return; if(o.playing) karaStop(o, false); else karaStart(o); });
   el.appendChild(go);
-  if(o.msg) el.appendChild(h(`<p class="sub" style="font-size:12.5px">${esc(o.msg)}</p>`));
-  if(o.recUrl) el.appendChild(h(`<section class="card"><div class="eyebrow">Sua gravação</div><audio controls src="${o.recUrl}" style="width:100%;margin-top:8px"></audio><p class="sub" style="font-size:12px;margin-top:6px">Com fones, a gravação pega só a sua voz.</p></section>`));
+  if(o.msg) el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">${esc(o.msg)}</p>`));
+  if(o.recUrl) el.appendChild(h(`<section class="card"><div class="eyebrow">Sua gravação</div><audio controls src="${o.recUrl}" style="width:100%;margin-top:8px"></audio><p class="sub" style="font-size:var(--fs-cap);margin-top:6px">Com fones, a gravação pega só a sua voz.</p></section>`));
   const ls = h(`<button class="btn btn-line btn-block">📖 Ver a letra e ouvir verso a verso</button>`); ls.addEventListener("click", () => { karaStop(o, false); open({type:"song", sg, showTr:false}); });
   el.appendChild(ls);
   return el;
@@ -5422,17 +5423,17 @@ function viewPodp(){
   el.appendChild(head);
   el.appendChild(h(`<div><h1 class="headline">🎧 ${esc(p.n)}</h1><p class="sub" style="margin-top:4px">${esc(p.by)} · sotaque ${esc(p.acc.toLowerCase())} · nível ${esc(p.lv)} · ${esc(p.len)}</p></div>`));
   el.appendChild(h(`<section class="card"><p style="line-height:1.5">${esc(p.d)}</p><div class="m-goal" style="margin-top:10px">💡 Como estudar: ${esc(p.how)}</div>${podLinks(p)}</section>`));
-  const done = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Depois de ouvir</div><p class="sub" style="font-size:13px">Quanto você ouviu? Conta para a missão e para o seu XP.</p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[5,10,20,30].map(m => `<button class="btn btn-line" data-m="${m}">${m} min</button>`).join("")}</div></section>`);
+  const done = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Depois de ouvir</div><p class="sub" style="font-size:var(--fs-sub)">Quanto você ouviu? Conta para a missão e para o seu XP.</p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[5,10,20,30].map(m => `<button class="btn btn-line" data-m="${m}">${m} min</button>`).join("")}</div></section>`);
   done.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { const m = +b.dataset.m; const lg = L(); (lg.aud = lg.aud || []).push({id:p.id, d:today(), m}); if(lg.aud.length>200) lg.aud.splice(0,lg.aud.length-200); addXp(Math.max(3, Math.round(m/2))); persist(); toast("Registrado: "+m+" min de escuta. +"+Math.max(3, Math.round(m/2))+" XP"); close(); }));
   el.appendChild(done);
-  el.appendChild(h(`<p class="sub" style="font-size:12px">Os episódios tocam no app de podcasts ou no site oficial; o Nômade registra o seu tempo de escuta.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">Os episódios tocam no app de podcasts ou no site oficial; o Nômade registra o seu tempo de escuta.</p>`));
   return el;
 }
 function viewPodsTab(el){
   el.appendChild(h(`<p class="sub">Escuta longa e natural, no seu ritmo. Escolha pelo nível e pelo sotaque que quer treinar.</p>`));
   const dp = dailyPod();
   pods().forEach(p => {
-    const c = h(`<section class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:15.5px">${esc(p.n)}${dp && dp.id===p.id ? ` <span class="pill lv">hoje</span>` : ""}</b><div class="sub" style="font-size:12.5px">${esc(p.by)} · ${esc(p.acc)} · ${esc(p.len)}</div></div><span class="pill lv">${esc(p.lv)}</span></div><p class="sub" style="margin-top:8px">${esc(p.d)}</p><button class="btn btn-dark btn-block" style="margin-top:10px">🎧 Ouvir e registrar</button></section>`);
+    const c = h(`<section class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:15.5px">${esc(p.n)}${dp && dp.id===p.id ? ` <span class="pill lv">hoje</span>` : ""}</b><div class="sub" style="font-size:var(--fs-cap)">${esc(p.by)} · ${esc(p.acc)} · ${esc(p.len)}</div></div><span class="pill lv">${esc(p.lv)}</span></div><p class="sub" style="margin-top:8px">${esc(p.d)}</p><button class="btn btn-dark btn-block" style="margin-top:10px">🎧 Ouvir e registrar</button></section>`);
     $("button",c).addEventListener("click", () => startPod(p));
     el.appendChild(c);
   });
@@ -5508,7 +5509,7 @@ function vozPlayer(o, a, opts){
     <div class="vz-ctl"><button data-a="back" aria-label="Voltar 5 segundos">−5</button><button class="big" data-a="play" aria-label="Tocar">▶</button><button data-a="fwd" aria-label="Avançar 5 segundos">+5</button></div>
     ${opts.seg ? "" : `<div class="vz-row"><span class="vz-t" data-r="cur">0:00</span><input class="vz-seek" type="range" min="0" max="1000" value="0" data-r="seek" aria-label="Posição"><span class="vz-t" data-r="dur">--:--</span></div>`}
     <div><div class="eyebrow" style="margin-bottom:6px">Velocidade</div><div class="seg" style="width:100%">${[0.6,0.75,0.9,1,1.25].map(x => `<button data-sp="${x}" class="${o.speed===x?"on":""}">${String(x).replace(".",",")}x</button>`).join("")}</div></div>
-    ${IS_IOS ? `<p class="sub" style="font-size:12px">Volume: use os botões do iPhone.</p>` : `<div class="vz-row"><span style="font-size:16px">🔈</span><input type="range" min="0" max="100" value="${Math.round(o.vol*100)}" data-r="vol" aria-label="Volume"><span style="font-size:16px">🔊</span></div>`}
+    ${IS_IOS ? `<p class="sub" style="font-size:var(--fs-cap)">Volume: use os botões do iPhone.</p>` : `<div class="vz-row"><span style="font-size:16px">🔈</span><input type="range" min="0" max="100" value="${Math.round(o.vol*100)}" data-r="vol" aria-label="Volume"><span style="font-size:16px">🔊</span></div>`}
     ${opts.seg || opts.plain ? "" : `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="filter" data-a="rep">↺ Repetir frase</button><button class="filter" data-a="slow">🐢 Frase devagar</button><button class="filter ${o.loop?"on":""}" data-a="loop">🔁 Repetir tudo</button></div>`}
   </section>`);
   const q = s => box.querySelector(s), playB = q('[data-a="play"]'), seek = q('[data-r="seek"]');
@@ -5571,7 +5572,7 @@ function viewVozes(){
     el.appendChild(sp);
     const txt = h(`<section class="card vz-txt"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="eyebrow">O que a pessoa está dizendo</div><button class="link" data-a="pt">${o.pt?"Ocultar":"Mostrar"} tradução</button></div>
       <div class="vz-lines">${VOZ_CHUNKS.map((c,k) => `<button class="vz-line" data-k="${k}"><span class="vz-en">${vozGlossHtml(c[0])}</span>${o.pt ? `<span class="vz-pt">${esc(c[1])}</span>` : ""}</button>`).join("")}</div>
-      <p class="sub" style="font-size:11.5px;margin-top:8px">Toque numa frase para ouvir só ela. Toque numa palavra sublinhada para ver o significado. O destaque é aproximado: as gravações não trazem a marcação exata de cada frase.</p><div class="vz-gl" aria-live="polite"></div></section>`);
+      <p class="sub" style="font-size:var(--fs-cap);margin-top:8px">Toque numa frase para ouvir só ela. Toque numa palavra sublinhada para ver o significado. O destaque é aproximado: as gravações não trazem a marcação exata de cada frase.</p><div class="vz-gl" aria-live="polite"></div></section>`);
     const lines = [...txt.querySelectorAll(".vz-line")], gl = $(".vz-gl", txt);
     $('[data-a="pt"]', txt).addEventListener("click", () => { o.pt = !o.pt; render(); });
     lines.forEach(b => b.addEventListener("click", ev => {
@@ -5613,7 +5614,7 @@ function viewVozes(){
       el.appendChild(nx);
     } else el.appendChild(h(`<p class="sub" style="text-align:center">Toque em ▶ para ouvir só esta frase. Pode repetir e diminuir a velocidade.</p>`));
   }
-  el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">Gravações: Speech Accent Archive, George Mason University, licença CC BY-NC-SA 4.0. Precisam de internet.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap);text-align:center">Gravações: Speech Accent Archive, George Mason University, licença CC BY-NC-SA 4.0. Precisam de internet.</p>`));
   return el;
 }
 function viewVoicesTab(el){
@@ -5637,7 +5638,7 @@ function sixWays(){
   ];
 }
 function sixCard(){
-  const sec = h(`<section><div class="sec-head"><h2>Ou escolha como praticar</h2></div><p class="sub" style="margin:-4px 0 8px;font-size:13px">Tudo usa o mesmo vocabulário das suas lições. Salve palavras num lugar e elas voltam na revisão e nos jogos.</p><div class="six"></div></section>`);
+  const sec = h(`<section><div class="sec-head"><h2>Ou escolha como praticar</h2></div><p class="sub" style="margin:-4px 0 8px;font-size:var(--fs-sub)">Tudo usa o mesmo vocabulário das suas lições. Salve palavras num lugar e elas voltam na revisão e nos jogos.</p><div class="six"></div></section>`);
   sixWays().forEach(x => { const b = h(`<button class="six-t" aria-label="${esc(x.t+". "+x.s)}" style="--six-bg:${x.bg}"><span class="six-ic">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></button>`); b.addEventListener("click", x.act); $(".six",sec).appendChild(b); });
   return sec;
 }
@@ -5694,7 +5695,7 @@ function viewVozIt(){
   const tabs = h(`<div class="vz-chips"><button class="filter ${o.mode === "ouvir" ? "on" : ""}" data-m="ouvir">🎧 Ouvir com texto</button><button class="filter ${o.mode === "ditado" ? "on" : ""}" data-m="ditado">✍️ Ditado</button></div>`);
   tabs.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { if(o.mode !== b.dataset.m){ vozStop(); o.mode = b.dataset.m; o.i = 0; o.res = []; o.r = null; o.plays = 0; render(); } }));
   el.appendChild(tabs);
-  const credit = h(`<p class="sub" style="font-size:11.5px;text-align:center">Frases e áudio: Tatoeba (tatoeba.org), vozes de voluntários; frases sob CC BY 2.0 FR. Traduções feitas por colaboradores e podem variar.</p>`);
+  const credit = h(`<p class="sub" style="font-size:var(--fs-cap);text-align:center">Frases e áudio: Tatoeba (tatoeba.org), vozes de voluntários; frases sob CC BY 2.0 FR. Traduções feitas por colaboradores e podem variar.</p>`);
   const spd = h(`<div class="vz-chips"><button class="filter ${o.speed === 1 ? "on" : ""}" data-s="1">Normal</button><button class="filter ${o.speed === 0.7 ? "on" : ""}" data-s="0.7">🐢 Devagar</button></div>`);
   spd.querySelectorAll("[data-s]").forEach(b => b.addEventListener("click", () => { o.speed = +b.dataset.s; render(); }));
   if(o.mode === "ouvir"){
@@ -5702,7 +5703,7 @@ function viewVozIt(){
     const tr = h(`<button class="filter ${o.pt ? "on" : ""}" style="align-self:flex-start">${o.pt ? "✓ Mostrar tradução" : "Mostrar tradução"}</button>`); tr.addEventListener("click", () => { o.pt = !o.pt; render(); }); el.appendChild(tr);
     const per = 10, ids = o.order.slice(o.page * per, o.page * per + per);
     const list = h(`<section class="card" style="display:flex;flex-direction:column"></section>`);
-    ids.forEach(idx => { const v = IT_VOZ[idx]; const r = h(`<button class="cp-line" data-itp="${idx}" style="all:unset;display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;width:100%"><span class="game-ic" style="background:var(--accent-soft);flex:none">🔊</span><span style="flex:1;min-width:0"><b style="font-size:16px">${esc(v[1])}</b>${o.pt ? `<span class="sub" style="display:block;font-size:13px">${esc(v[2])}</span>` : ""}</span></button>`); r.addEventListener("click", () => { itPlay(o, idx, o.speed); }); list.appendChild(r); });
+    ids.forEach(idx => { const v = IT_VOZ[idx]; const r = h(`<button class="cp-line" data-itp="${idx}" style="all:unset;display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;width:100%"><span class="game-ic" style="background:var(--accent-soft);flex:none">🔊</span><span style="flex:1;min-width:0"><b style="font-size:16px">${esc(v[1])}</b>${o.pt ? `<span class="sub" style="display:block;font-size:var(--fs-sub)">${esc(v[2])}</span>` : ""}</span></button>`); r.addEventListener("click", () => { itPlay(o, idx, o.speed); }); list.appendChild(r); });
     el.appendChild(list);
     const nx = h(`<button class="btn btn-line btn-block">Mais frases</button>`); nx.addEventListener("click", () => { vozStop(); o.page = (o.page + 1) % Math.ceil(o.order.length / per); render(); scrollTo(0, 0); }); el.appendChild(nx);
     el.appendChild(credit); return el;
@@ -5713,7 +5714,7 @@ function viewVozIt(){
     if(!o.saved){ o.saved = true; ensureDay().game = true; addXp(Math.max(1, Math.round(avg / 10))); persist(); }
     el.appendChild(h(`<section class="soft" style="text-align:center"><div class="eyebrow">Ditado concluído</div><div style="font-size:60px;font-weight:600;margin-top:4px">${avg}%</div><p class="sub">das palavras ouvidas e escritas certas</p></section>`));
     const bad = o.res.filter(x => x.pct < 85);
-    if(bad.length){ const cc = h(`<section class="card"><div class="eyebrow">Para reforçar (salvas no Anki)</div></section>`); bad.forEach(x => { capiSaveLine(x.v[1], x.v[2]); cc.appendChild(h(`<div class="cp-line"><div><b>${esc(x.v[1])}</b><div class="sub" style="font-size:13px">${esc(x.v[2])}</div></div></div>`)); }); el.appendChild(cc); }
+    if(bad.length){ const cc = h(`<section class="card"><div class="eyebrow">Para reforçar (salvas no Anki)</div></section>`); bad.forEach(x => { capiSaveLine(x.v[1], x.v[2]); cc.appendChild(h(`<div class="cp-line"><div><b>${esc(x.v[1])}</b><div class="sub" style="font-size:var(--fs-sub)">${esc(x.v[2])}</div></div></div>`)); }); el.appendChild(cc); }
     const a = h(`<button class="btn btn-dark btn-block">Outra rodada</button>`); a.addEventListener("click", () => { startItVozes("ditado"); }); el.appendChild(a);
     const b = h(`<button class="btn btn-line btn-block">Fechar</button>`); b.addEventListener("click", quit); el.appendChild(b); return el;
   }
@@ -5729,7 +5730,7 @@ function viewVozIt(){
     setTimeout(() => { if(overlay === o && !o.r && !o.plays){ o.plays++; itPlay(o, idx, 1); } }, 250);
   }else{
     const r = o.r;
-    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.pct >= 85 ? "Você entendeu tudo" : r.pct >= 60 ? "Entendeu quase tudo" : "Ouça de novo e compare"}</span></div><div class="words">${r.words.map((w, k) => `<span class="${r.hit[k] ? "ok" : "miss"}">${esc(w)}</span>`).join(" ")}</div><div><b style="font-size:16px">${esc(v[1])}</b><div class="sub" style="font-size:13px">${esc(v[2])}</div></div></section>`));
+    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.pct >= 85 ? "Você entendeu tudo" : r.pct >= 60 ? "Entendeu quase tudo" : "Ouça de novo e compare"}</span></div><div class="words">${r.words.map((w, k) => `<span class="${r.hit[k] ? "ok" : "miss"}">${esc(w)}</span>`).join(" ")}</div><div><b style="font-size:16px">${esc(v[1])}</b><div class="sub" style="font-size:var(--fs-sub)">${esc(v[2])}</div></div></section>`));
     const nx = h(`<button class="btn btn-dark btn-block">${o.i + 1 >= N ? "Ver resultado" : "Próxima"} <span class="arr">→</span></button>`); nx.addEventListener("click", () => { vozStop(); o.i++; o.r = null; o.plays = 0; render(); scrollTo(0, 0); }); el.appendChild(nx);
   }
   el.appendChild(credit); return el;
@@ -5778,7 +5779,7 @@ function viewAbooks(){
     o.speed = o.speed || 1; o.vol = o.vol || 1;
     el.appendChild(h(`<section class="card"><b>${esc(x.t)}</b><p class="sub" style="margin-top:6px">${esc(x.pt)}</p></section>`));
     el.appendChild(vozPlayer(o, vozAud, {plain:true}));
-    el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">${esc(HV.credit)}</p>`));
+    el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap);text-align:center">${esc(HV.credit)}</p>`));
   }
   return el;
 }
@@ -5929,7 +5930,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v99";
+const APP_VER = "v100";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6091,13 +6092,13 @@ function micMini(target, st, key, onNext){
       <button class="btn btn-line" id="mmCmp" ${m.url?"":"disabled"}>🔁 Modelo → você</button>
     </div>
     ${m.url?`<audio controls src="${m.url}" style="width:100%"></audio>`:""}
-    ${r?`<div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><p class="sub" style="font-size:12.5px">${r.pct}% das palavras reconhecidas${m.heard?` · entendi: “${esc(m.heard)}”`:""}</p>`:""}
+    ${r?`<div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><p class="sub" style="font-size:var(--fs-cap)">${r.pct}% das palavras reconhecidas${m.heard?` · entendi: “${esc(m.heard)}”`:""}</p>`:""}
     ${m.url && azCfg() ? `<button class="btn btn-line" id="mmAz">${m.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
     ${m.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(m.az)}</div>` : ""}
     ${m.url && gmKey() ? `<button class="btn btn-line" id="mmGm">${m.gmBusy?"A IA está ouvindo…":"🤖 Avaliação da IA que ouve você"}</button>` : ""}
     ${m.coach ? coachCard(m.coach) : ""}
-    ${m.msg?`<p class="sub" style="font-size:12.5px">${esc(m.msg)}</p>`:""}
-    ${m.url && !r && !m.az && !m.coach ? (m.self ? `<p class="sub" style="font-size:13px"><b>${m.self==="3"?"Ótimo!":m.self==="2"?"Quase lá.":"Tudo bem."}</b> ${m.self==="3"?"Registrei como acerto.":"Ouça de novo o modelo, depois sua voz, e tente mais uma vez. Foque no ritmo e nas vogais."}</p>` : `<div class="eyebrow" style="margin-top:2px">Como foi? (autoavaliação)</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button class="btn btn-line" data-self="1">😕 Travei</button><button class="btn btn-line" data-self="2">🙂 Quase</button><button class="btn btn-line" data-self="3">😀 Soou bem</button></div>`) + (!azCfg() && !gmKey() ? `<button class="link" id="mmKeys" style="align-self:flex-start">Quer nota automática? Ative a avaliação por IA</button>` : "") : ""}
+    ${m.msg?`<p class="sub" style="font-size:var(--fs-cap)">${esc(m.msg)}</p>`:""}
+    ${m.url && !r && !m.az && !m.coach ? (m.self ? `<p class="sub" style="font-size:var(--fs-sub)"><b>${m.self==="3"?"Ótimo!":m.self==="2"?"Quase lá.":"Tudo bem."}</b> ${m.self==="3"?"Registrei como acerto.":"Ouça de novo o modelo, depois sua voz, e tente mais uma vez. Foque no ritmo e nas vogais."}</p>` : `<div class="eyebrow" style="margin-top:2px">Como foi? (autoavaliação)</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button class="btn btn-line" data-self="1">😕 Travei</button><button class="btn btn-line" data-self="2">🙂 Quase</button><button class="btn btn-line" data-self="3">😀 Soou bem</button></div>`) + (!azCfg() && !gmKey() ? `<button class="link" id="mmKeys" style="align-self:flex-start">Quer nota automática? Ative a avaliação por IA</button>` : "") : ""}
     ${m.url && onNext ? `<button class="btn btn-dark" id="mmNext">Continuar <span class="arr">→</span></button>` : ""}
   </section>`);
   box.querySelectorAll("[data-self]").forEach(b => b.addEventListener("click", () => {
@@ -6238,19 +6239,19 @@ function azCard(r){
   const cl = a => a>=80 ? "ok" : a>=60 ? "" : "miss";
   const weak = []; r.words.forEach(x => x.ph.forEach(p => { if(p.acc<60) weak.push(p.p+" em “"+x.w+"”"); }));
   return `<div class="score-big"><b>${r.acc}</b><span class="sub">precisão por som (0 a 100)</span></div>
-    <div class="sub" style="font-size:12.5px">Fluência ${r.flu} · Completude ${r.comp}</div>
+    <div class="sub" style="font-size:var(--fs-cap)">Fluência ${r.flu} · Completude ${r.comp}</div>
     <div class="words">${r.words.map(x => `<span class="${cl(x.acc)}" title="${esc(x.ph.map(p=>p.p+" "+p.acc).join(" · "))}">${esc(x.w)} <small>${x.acc}</small></span>`).join(" ")}</div>
-    ${weak.length ? `<p class="sub" style="font-size:12.5px"><b>Sons fracos:</b> ${weak.slice(0,6).map(esc).join("; ")}</p>` : `<p class="sub" style="font-size:12.5px">Nenhum som abaixo de 60. Bom!</p>`}
-    <p class="sub" style="font-size:11.5px">Nota do serviço Azure Speech. Mede os sons, mas é referência, não veredicto sobre o seu sotaque.</p>`;
+    ${weak.length ? `<p class="sub" style="font-size:var(--fs-cap)"><b>Sons fracos:</b> ${weak.slice(0,6).map(esc).join("; ")}</p>` : `<p class="sub" style="font-size:var(--fs-cap)">Nenhum som abaixo de 60. Bom!</p>`}
+    <p class="sub" style="font-size:var(--fs-cap)">Nota do serviço Azure Speech. Mede os sons, mas é referência, não veredicto sobre o seu sotaque.</p>`;
 }
 /* ---- IA que escuta (Gemini, faixa gratuita; chave do próprio usuário) ---- */
 function gmKeyCard(after){
   const gk = gmKey();
   const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Inteligência artificial (Gemini, gratuito)</div>
-    <p class="sub" style="font-size:12.5px">${gk ? "Ativada neste aparelho: Capi (tutor de conversa), exercícios novos, entrevista e avaliação da sua fala." : "Para usar o Capi (tutor de IA), crie uma chave grátis em aistudio.google.com (botão “Get API key”), copie e cole aqui."}</p>
-    ${gk ? "" : `<input class="in" data-k type="password" placeholder="Cole a chave do Gemini" autocomplete="off"><a class="link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:13px">Abrir o Google AI Studio ↗</a>`}
+    <p class="sub" style="font-size:var(--fs-cap)">${gk ? "Ativada neste aparelho: Capi (tutor de conversa), exercícios novos, entrevista e avaliação da sua fala." : "Para usar o Capi (tutor de IA), crie uma chave grátis em aistudio.google.com (botão “Get API key”), copie e cole aqui."}</p>
+    ${gk ? "" : `<input class="in" data-k type="password" placeholder="Cole a chave do Gemini" autocomplete="off"><a class="link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:var(--fs-sub)">Abrir o Google AI Studio ↗</a>`}
     <button class="btn ${gk?"btn-line":"btn-dark"}">${gk ? "Remover chave" : "Salvar chave"}</button>
-    <p class="sub" style="font-size:11.5px">A chave fica só neste aparelho. No plano gratuito, o Google pode usar o conteúdo enviado para melhorar os produtos dele.</p></section>`);
+    <p class="sub" style="font-size:var(--fs-cap)">A chave fica só neste aparelho. No plano gratuito, o Google pode usar o conteúdo enviado para melhorar os produtos dele.</p></section>`);
   $("button",c).addEventListener("click", () => {
     if(gk){ try{ localStorage.removeItem("nb-gm"); }catch(e){} toast("Chave removida."); render(); return; }
     const k = $("[data-k]",c).value.trim(); if(!k){ toast("Cole a chave."); return; }
@@ -6374,13 +6375,13 @@ const gmContents = inp => {
 };
 function provKeyCard(){
   const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">IA sem chave (opcional)</div>
-    <p class="sub" style="font-size:12.5px">O app usa de graça modelos abertos hospedados na Europa (OVHcloud) e, se falhar, o Pollinations. Não precisa de conta nem de chave, mas fica DESLIGADA até você ligar. Ao ligar, o texto que você escreve para o tutor (e trechos de aulas para gerar exercícios) é enviado a esses serviços de terceiros, sem seu perfil de estudo. Não escreva dados pessoais. A fala gravada nunca vai para eles.</p>
+    <p class="sub" style="font-size:var(--fs-cap)">O app usa de graça modelos abertos hospedados na Europa (OVHcloud) e, se falhar, o Pollinations. Não precisa de conta nem de chave, mas fica DESLIGADA até você ligar. Ao ligar, o texto que você escreve para o tutor (e trechos de aulas para gerar exercícios) é enviado a esses serviços de terceiros, sem seu perfil de estudo. Não escreva dados pessoais. A fala gravada nunca vai para eles.</p>
     <button class="filter ${keylessOn()?"on":""}" id="klTg">${keylessOn() ? "✓ Ligada: aceito enviar meu texto a OVHcloud/Pollinations" : "Ligar IA sem chave (envia texto a terceiros)"}</button>
     <div class="eyebrow" style="margin-top:6px">IAs gratuitas de reserva (opcional, com chave)</div>
-    <p class="sub" style="font-size:12.5px">Quando o Gemini estiver ocupado ou sem cota, o app tenta estas automaticamente. Todas têm plano grátis, sem cartão. Cole só as que quiser.</p>
-    ${FREE_PROV.map(p => `<div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:14px">${p.n}${provKey(p.id) ? " · ativa ✓" : ""}</b><a class="link" href="${p.url}" target="_blank" rel="noopener" style="font-size:12.5px">Criar chave ↗</a></div><p class="sub" style="font-size:12px">${p.tip}</p>${provKey(p.id) ? `<button class="btn btn-line" data-rm="${p.id}">Remover</button>` : `<input class="in" type="password" data-p="${p.id}" placeholder="Chave ${p.n}" autocomplete="off">`}</div>`).join("")}
+    <p class="sub" style="font-size:var(--fs-cap)">Quando o Gemini estiver ocupado ou sem cota, o app tenta estas automaticamente. Todas têm plano grátis, sem cartão. Cole só as que quiser.</p>
+    ${FREE_PROV.map(p => `<div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:14px">${p.n}${provKey(p.id) ? " · ativa ✓" : ""}</b><a class="link" href="${p.url}" target="_blank" rel="noopener" style="font-size:var(--fs-cap)">Criar chave ↗</a></div><p class="sub" style="font-size:var(--fs-cap)">${p.tip}</p>${provKey(p.id) ? `<button class="btn btn-line" data-rm="${p.id}">Remover</button>` : `<input class="in" type="password" data-p="${p.id}" placeholder="Chave ${p.n}" autocomplete="off">`}</div>`).join("")}
     <button class="btn btn-dark" id="pvSave">Salvar chaves</button>
-    <p class="sub" style="font-size:11.5px">As chaves ficam só neste aparelho. Os provedores gratuitos podem usar o conteúdo enviado para melhorar os produtos deles. A fala gravada continua indo apenas para o Gemini.</p></section>`);
+    <p class="sub" style="font-size:var(--fs-cap)">As chaves ficam só neste aparelho. Os provedores gratuitos podem usar o conteúdo enviado para melhorar os produtos deles. A fala gravada continua indo apenas para o Gemini.</p></section>`);
   c.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => { try{ localStorage.removeItem("nb-k-"+b.dataset.rm); localStorage.removeItem("nb-km-"+b.dataset.rm); }catch(e){} render(); }));
   $("#klTg",c).addEventListener("click", () => { try{ localStorage.setItem("nb-keyless", keylessOn() ? "0" : "1"); }catch(e){} render(); });
   $("#pvSave",c).addEventListener("click", () => { let n = 0; c.querySelectorAll("[data-p]").forEach(i => { const v = i.value.trim(); if(v){ try{ localStorage.setItem("nb-k-"+i.dataset.p, v); n++; }catch(e){} } }); toast(n ? "Chaves salvas." : "Cole uma chave."); if(n) render(); });
@@ -6450,14 +6451,14 @@ function coachCard(c){
   const lv = {otimo:["Muito bom","var(--ok)"], bom:["Bom, quase lá","var(--gold,#b8892b)"], treinar:["Vale treinar mais","var(--bad)"]}[c.level] || ["Resultado","var(--ink-2,#555)"];
   const col = {ok:"var(--ok)", meh:"var(--gold,#b8892b)", bad:"var(--bad)"};
   const words = (c.words||[]).map(w => `<span style="color:${col[w.s]||col.ok};${w.s==="bad"?"text-decoration:underline wavy;text-underline-offset:5px;":w.s==="meh"?"text-decoration:underline dotted;text-underline-offset:5px;":""}">${esc(w.w)}</span>`).join(" ");
-  const tips = (c.words||[]).filter(w => w.s && w.s!=="ok" && w.tip).slice(0,3).map(w => `<div style="display:flex;gap:8px;align-items:baseline"><b style="color:${col[w.s]}">${esc(w.w)}</b><span class="sub" style="font-size:13px">${esc(w.tip)}</span></div>`).join("");
+  const tips = (c.words||[]).filter(w => w.s && w.s!=="ok" && w.tip).slice(0,3).map(w => `<div style="display:flex;gap:8px;align-items:baseline"><b style="color:${col[w.s]}">${esc(w.w)}</b><span class="sub" style="font-size:var(--fs-sub)">${esc(w.tip)}</span></div>`).join("");
   return `<div class="card" style="background:var(--paper-2,#f4f1ea);display:flex;flex-direction:column;gap:10px">
     <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:${lv[1]}"></span><b>${lv[0]}</b></div>
     <div style="font-size:20px;line-height:1.5;font-weight:600">${words}</div>
-    ${c.heard ? `<div class="sub" style="font-size:12.5px">O Capi ouviu: “${esc(c.heard)}”</div>` : ""}
+    ${c.heard ? `<div class="sub" style="font-size:var(--fs-cap)">O Capi ouviu: “${esc(c.heard)}”</div>` : ""}
     ${c.good ? `<div style="font-size:14px">👍 ${esc(c.good)}</div>` : ""}
     ${tips ? `<div style="display:flex;flex-direction:column;gap:6px">${tips}</div>` : ""}
-    ${c.drill ? `<div class="sub" style="font-size:13px">🎯 ${esc(c.drill)}</div>` : ""}
+    ${c.drill ? `<div class="sub" style="font-size:var(--fs-sub)">🎯 ${esc(c.drill)}</div>` : ""}
   </div>`;
 }
 function gmErrMsg(e){
@@ -6471,10 +6472,10 @@ function viewPronRep(){
   el.appendChild(h(`<div><div class="eyebrow">Pronúncia</div><h1 class="headline" style="margin-top:6px">Meu <span class="script" style="font-size:32px">relatório</span></h1></div>`));
   const cfg = azCfg();
   const azs = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Nota por som (Azure)</div>
-    <p class="sub" style="font-size:12.5px">${cfg ? "Ativado ("+esc(cfg.region)+"). Depois de gravar, aparece o botão “Nota por som”. O áudio só vai à Microsoft quando você toca nele." : "Opcional. Com uma chave gratuita do Azure Speech, cada gravação ganha nota por palavra e por som. Passos: no portal.azure.com crie um recurso “Speech” (faixa F0, gratuita, 5 horas por mês), abra “Chaves e Ponto de extremidade” e cole abaixo a Chave 1 e a Região."}</p>
+    <p class="sub" style="font-size:var(--fs-cap)">${cfg ? "Ativado ("+esc(cfg.region)+"). Depois de gravar, aparece o botão “Nota por som”. O áudio só vai à Microsoft quando você toca nele." : "Opcional. Com uma chave gratuita do Azure Speech, cada gravação ganha nota por palavra e por som. Passos: no portal.azure.com crie um recurso “Speech” (faixa F0, gratuita, 5 horas por mês), abra “Chaves e Ponto de extremidade” e cole abaixo a Chave 1 e a Região."}</p>
     ${cfg ? "" : `<input id="azKey" class="in" type="password" placeholder="Chave 1 do Azure Speech" autocomplete="off"><input id="azReg" class="in" placeholder="Região (ex.: brazilsouth, eastus)" autocomplete="off" autocapitalize="off">`}
     <button class="btn ${cfg?"btn-line":"btn-dark"}" id="azSave">${cfg ? "Remover chave" : "Salvar"}</button>
-    <p class="sub" style="font-size:11.5px">A chave fica só neste aparelho. Italiano: nota por precisão, fluência e completude (prosódia e IPA só existem para inglês).</p></section>`);
+    <p class="sub" style="font-size:var(--fs-cap)">A chave fica só neste aparelho. Italiano: nota por precisão, fluência e completude (prosódia e IPA só existem para inglês).</p></section>`);
   $("#azSave",azs).addEventListener("click", () => {
     if(cfg){ try{ localStorage.removeItem("nb-az"); }catch(e){} toast("Chave removida."); render(); return; }
     const k = $("#azKey",azs).value.trim(), r = $("#azReg",azs).value.trim().toLowerCase().replace(/\s+/g,"");
@@ -6484,10 +6485,10 @@ function viewPronRep(){
   if(!window.claude) el.appendChild(azs);
   const gk = gmKey();
   const gms = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">IA que ouve você (Gemini, gratuito)</div>
-    <p class="sub" style="font-size:12.5px">${gk ? "Ativada. Depois de gravar, toque em “Avaliação da IA que ouve você”: ela escuta o áudio, aponta o que melhorar e propõe um exercício. O plano semanal abaixo também usa esta IA." : "Opcional e gratuita. Crie uma chave em aistudio.google.com (Get API key) e cole abaixo."}</p>
+    <p class="sub" style="font-size:var(--fs-cap)">${gk ? "Ativada. Depois de gravar, toque em “Avaliação da IA que ouve você”: ela escuta o áudio, aponta o que melhorar e propõe um exercício. O plano semanal abaixo também usa esta IA." : "Opcional e gratuita. Crie uma chave em aistudio.google.com (Get API key) e cole abaixo."}</p>
     ${gk ? "" : `<input id="gmKey" class="in" type="password" placeholder="Chave da API do Gemini" autocomplete="off">`}
     <button class="btn ${gk?"btn-line":"btn-dark"}" id="gmSave">${gk ? "Remover chave" : "Salvar"}</button>
-    <p class="sub" style="font-size:11.5px"><b>Privacidade:</b> no plano gratuito do Google, o conteúdo enviado (inclusive a sua voz) pode ser usado para melhorar os produtos deles. A chave fica só neste aparelho e o áudio só é enviado quando você toca no botão. A IA dá orientação, não uma medida exata de sotaque.</p></section>`);
+    <p class="sub" style="font-size:var(--fs-cap)"><b>Privacidade:</b> no plano gratuito do Google, o conteúdo enviado (inclusive a sua voz) pode ser usado para melhorar os produtos deles. A chave fica só neste aparelho e o áudio só é enviado quando você toca no botão. A IA dá orientação, não uma medida exata de sotaque.</p></section>`);
   $("#gmSave",gms).addEventListener("click", () => {
     if(gk){ try{ localStorage.removeItem("nb-gm"); }catch(e){} toast("Chave removida."); render(); return; }
     const k = $("#gmKey",gms).value.trim(); if(!k){ toast("Cole a chave."); return; }
@@ -6498,19 +6499,19 @@ function viewPronRep(){
   el.appendChild(h(`<div class="metrics card" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="metric"><b>${st.n}</b><span>tentativas</span></div><div class="metric"><b>${st.avg}%</b><span>palavras reconhecidas</span></div><div class="metric"><b>${st.trend===null?"–":(st.trend>0?"+":"")+st.trend}</b><span>tendência (10 últimas)</span></div></div>`));
   const li = (a, f) => a.length ? `<ul class="plan">${a.map(f).join("")}</ul>` : `<p class="sub">Nada recorrente ainda.</p>`;
   el.appendChild(h(`<section class="card"><div class="eyebrow">Palavras que mais falharam</div>${li(st.words, w=>`<li><b>${esc(w[0])}</b> · ${w[1]}x</li>`)}</section>`));
-  el.appendChild(h(`<section class="card"><div class="eyebrow">Trocas (esperado → reconhecido)</div>${li(st.subs, w=>`<li>${esc(w[0])} · ${w[1]}x</li>`)}<p class="sub" style="font-size:12px">Mostra o que o navegador entendeu no lugar. Pode ser ruído do microfone, não só pronúncia.</p></section>`));
+  el.appendChild(h(`<section class="card"><div class="eyebrow">Trocas (esperado → reconhecido)</div>${li(st.subs, w=>`<li>${esc(w[0])} · ${w[1]}x</li>`)}<p class="sub" style="font-size:var(--fs-cap)">Mostra o que o navegador entendeu no lugar. Pode ser ruído do microfone, não só pronúncia.</p></section>`));
   { const az = L().azLog || [];
     if(az.length){ const c = {}; az.forEach(x => (x.weak||[]).forEach(w => { c[w[0]] = (c[w[0]]||0)+1; }));
       const top = Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,6), av = Math.round(az.reduce((a,x)=>a+x.acc,0)/az.length);
       el.appendChild(h(`<section class="card"><div class="eyebrow">Nota por som (Azure)</div><p class="sub">${az.length} avaliações · precisão média ${av}</p>${li(top, w=>`<li>som <b>${esc(w[0])}</b> abaixo de 60 em ${w[1]} avaliações</li>`)}</section>`)); } }
   el.appendChild(h(`<section class="card"><div class="eyebrow">Sons para treinar</div>${li(st.sounds, x=>`<li><b>${esc(x.s)}</b> · ${x.n}x (ex.: ${x.ex.map(esc).join(", ")}). ${esc(x.tip)}</li>`)}</section>`));
   { const cl = (L().coachLog || []).slice(-3).reverse();
-    if(cl.length) el.appendChild(h(`<section class="card"><div class="eyebrow">Últimas avaliações da IA</div>${cl.map(x=>`<div style="margin-top:8px"><b>“${esc(x.t)}”</b><div class="sub" style="white-space:pre-wrap;font-size:12.5px">${esc(x.x)}</div></div>`).join("")}</section>`)); }
+    if(cl.length) el.appendChild(h(`<section class="card"><div class="eyebrow">Últimas avaliações da IA</div>${cl.map(x=>`<div style="margin-top:8px"><b>“${esc(x.t)}”</b><div class="sub" style="white-space:pre-wrap;font-size:var(--fs-cap)">${esc(x.x)}</div></div>`).join("")}</section>`)); }
   const fb = h(`<button class="btn btn-dark btn-block">🎯 Treinar agora as minhas mais difíceis</button>`); fb.addEventListener("click", () => startPronFocus(true)); el.appendChild(fb);
   const fs = h(`<button class="btn btn-line btn-block">🔁 Colocar as difíceis no treino espaçado</button>`); fs.addEventListener("click", () => { const n = spAdd(pronFocusList()); toast(n ? n+" itens entraram no treino espaçado." : "Já estão no treino espaçado."); }); el.appendChild(fs);
   const ai = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Plano com IA</div>
     <div class="ai-out sub" style="white-space:pre-wrap;line-height:1.5">${o.ai?esc(o.ai):"A IA lê só o resumo em texto acima (nunca o seu áudio) e monta um plano de treino."}</div>
-    ${(!window.claude && !gmKey() && !(()=>{try{return localStorage.getItem("nb-key")}catch(e){return ""}})())?`<p class="sub" style="font-size:12px">Para gerar o plano aqui no site, salve a chave gratuita do Gemini na seção “IA que ouve você” acima.</p>`:""}
+    ${(!window.claude && !gmKey() && !(()=>{try{return localStorage.getItem("nb-key")}catch(e){return ""}})())?`<p class="sub" style="font-size:var(--fs-cap)">Para gerar o plano aqui no site, salve a chave gratuita do Gemini na seção “IA que ouve você” acima.</p>`:""}
     <button class="btn btn-dark" id="aiGo">${o.ai?"Gerar de novo":"✨ Gerar plano com IA"}</button></section>`);
   $("#aiGo",ai).addEventListener("click", async () => {
     const k = $("#apiKey",ai); if(k && k.value.trim()){ try{ localStorage.setItem("nb-key", k.value.trim()); }catch(e){} }
@@ -6519,7 +6520,7 @@ function viewPronRep(){
     render();
   });
   el.appendChild(ai);
-  el.appendChild(h(`<p class="sub" style="font-size:12px">Os números vêm do reconhecimento de voz do navegador: indicam o que foi entendido, não medem sotaque.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">Os números vêm do reconhecimento de voz do navegador: indicam o que foi entendido, não medem sotaque.</p>`));
   return el;
 }
 
@@ -6544,7 +6545,7 @@ function viewPron(){
   // 1) avaliação automática pelo ditado do teclado
   const dict = h(`<section class="card dict">
     <div class="eyebrow">Conferir o que foi reconhecido</div>
-    <p class="sub" style="font-size:12.5px">Toque na caixa, troque o teclado para <b>${LANGS[state.lang].native}</b> e use o 🎤 do teclado (no Windows: <b>Win + H</b>). Fale a frase e toque em Conferir. O app compara as <b>palavras</b> reconhecidas com a frase; ele não analisa o som, o ritmo nem a entonação.</p>
+    <p class="sub" style="font-size:var(--fs-cap)">Toque na caixa, troque o teclado para <b>${LANGS[state.lang].native}</b> e use o 🎤 do teclado (no Windows: <b>Win + H</b>). Fale a frase e toque em Conferir. O app compara as <b>palavras</b> reconhecidas com a frase; ele não analisa o som, o ritmo nem a entonação.</p>
     <textarea id="dictIn" placeholder="Fale aqui pelo microfone do teclado…" autocomplete="off" autocapitalize="off" spellcheck="false">${esc(o.heard||"")}</textarea>
     <button class="btn btn-dark" id="dictGo">Conferir</button>
   </section>`);
@@ -6561,7 +6562,7 @@ function viewPron(){
   if(micOK()){
     const mic = h(`<section class="card dict">
       <div class="eyebrow">Gravar a sua voz</div>
-      <p class="sub" style="font-size:12.5px">Grave a frase, ouça a sua voz e compare com a voz nativa. ${SR_OK()?"O navegador também tenta reconhecer o que você disse e mostra as <b>palavras reconhecidas</b>.":(IS_IOS ? "No iPhone o Safari não deixa gravar e reconhecer ao mesmo tempo: compare de ouvido e use a nota do Azure ou a IA para avaliar." : "Neste navegador não há reconhecimento de voz: compare de ouvido.")} Isso não mede sotaque.</p>
+      <p class="sub" style="font-size:var(--fs-cap)">Grave a frase, ouça a sua voz e compare com a voz nativa. ${SR_OK()?"O navegador também tenta reconhecer o que você disse e mostra as <b>palavras reconhecidas</b>.":(IS_IOS ? "No iPhone o Safari não deixa gravar e reconhecer ao mesmo tempo: compare de ouvido e use a nota do Azure ou a IA para avaliar." : "Neste navegador não há reconhecimento de voz: compare de ouvido.")} Isso não mede sotaque.</p>
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
         <button class="btn ${o.recording?"btn-dark":"btn-line"}" id="micGo">${o.recording?"⏹ Parar":"🎙️ Gravar"}</button>
         <button class="btn btn-line" id="micCmp" ${o.rec?"":"disabled"}>🔁 Modelo → você</button>
@@ -6571,7 +6572,7 @@ function viewPron(){
       ${o.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(o.az)}</div>` : ""}
       ${o.rec && gmKey() ? `<button class="btn btn-line" id="mmGm2">${o.gmBusy?"A IA está ouvindo…":"🤖 Avaliação da IA que ouve você"}</button>` : ""}
       ${o.coach ? coachCard(o.coach) : ""}
-      ${o.micMsg?`<p class="sub" style="font-size:12.5px">${esc(o.micMsg)}</p>`:""}
+      ${o.micMsg?`<p class="sub" style="font-size:var(--fs-cap)">${esc(o.micMsg)}</p>`:""}
     </section>`);
     const gm2 = $("#mmGm2",mic);
     if(gm2) gm2.addEventListener("click", async () => { if(o.gmBusy) return; o.gmBusy = true; o.micMsg = ""; render(); try{ o.coach = await gmCoach(o.rec, it.t, o.az); }catch(e){ o.micMsg = gmErrMsg(e); } o.gmBusy = false; render(); });
@@ -6602,10 +6603,10 @@ function viewPron(){
     const verdict = r.pct>=90 ? "Excelente, deu para entender tudo" : r.pct>=70 ? "Bom! Quase tudo foi entendido" : r.pct>=40 ? "Dá para entender parte, vamos ajustar" : "Ainda não foi entendido, ouça e tente de novo";
     const res = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px">
       <div class="score-big"><b>${r.pct}%</b><span class="sub">${verdict}</span></div>
-      <div class="sub" style="font-size:12.5px">Tentativa ${o.attempts||1} · melhor ${o.best||r.pct}% · meta 90%</div>
+      <div class="sub" style="font-size:var(--fs-cap)">Tentativa ${o.attempts||1} · melhor ${o.best||r.pct}% · meta 90%</div>
       <div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div>
-      ${sf.length ? `<div class="feedback"><b>Sons em foco</b><ul class="plan">${sf.map(x=>`<li><b>${esc(x.s)}</b> (em “${esc(x.w)}”): ${esc(x.tip)}</li>`).join("")}</ul><p class="sub" style="font-size:12px;margin-top:6px">Dica pelo padrão das letras. Confirme ouvindo devagar a voz nativa.</p></div>` : ""}
-      <p class="sub" style="font-size:12.5px">O celular entendeu: “${esc(o.heard)}”</p>
+      ${sf.length ? `<div class="feedback"><b>Sons em foco</b><ul class="plan">${sf.map(x=>`<li><b>${esc(x.s)}</b> (em “${esc(x.w)}”): ${esc(x.tip)}</li>`).join("")}</ul><p class="sub" style="font-size:var(--fs-cap);margin-top:6px">Dica pelo padrão das letras. Confirme ouvindo devagar a voz nativa.</p></div>` : ""}
+      <p class="sub" style="font-size:var(--fs-cap)">O celular entendeu: “${esc(o.heard)}”</p>
       ${o.tips ? `<div class="feedback ${o.tips==="…"?"good":"good"}"><b>Dicas</b><div class="tips">${o.tips==="…"?"Pensando…":esc(o.tips)}</div></div>` : (r.missed.length ? `<button class="btn btn-line" id="tipsBtn">💡 Como acertar as palavras em vermelho</button>` : "")}
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><button class="btn btn-line" id="again">↺ Tentar de novo</button><button class="btn btn-dark" id="nextP">Próxima <span class="arr">→</span></button></div>
     </section>`);
@@ -6620,7 +6621,7 @@ function viewPron(){
   skip.addEventListener("click", () => { o.i++; render(); });
   el.appendChild(skip);
   const rp = h(`<button class="link" style="align-self:center">📈 Ver meu relatório de pronúncia</button>`); rp.addEventListener("click", () => open({type:"prep", back:overlay})); el.appendChild(rp);
-  el.appendChild(h(`<p class="sub" style="font-size:12px">A nota mostra se o reconhecimento de voz do teclado entendeu cada palavra. Isso é um indicador, não uma avaliação de sotaque.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">A nota mostra se o reconhecimento de voz do teclado entendeu cada palavra. Isso é um indicador, não uma avaliação de sotaque.</p>`));
   return el;
 }
 
@@ -6746,7 +6747,7 @@ function viewYou(){
       <div class="rc"><div class="rw">${smallRing((state.xp%100)/100,"var(--accent)")}<div class="rl"><b>${state.xp}</b><span>XP total</span></div></div><div class="rn">Nível de XP ${Math.floor(state.xp/100)+1}</div></div>
       <div class="rc"><div class="rw">${smallRing(units().length?done/units().length:0,"var(--ok)")}<div class="rl"><b>${done}/${units().length}</b><span>aulas</span></div></div><div class="rn">${LANGS[state.lang].name}</div></div>
       <div class="rc"><div class="rw">${smallRing(voc.length?known/voc.length:0,"var(--accent-ink)")}<div class="rl"><b>${known}</b><span>de ${voc.length}</span></div></div><div class="rn">Palavras</div></div>
-    </div><p class="sub" style="margin-top:10px;font-size:12.5px">❄️ Congelamento de sequência: <b>${frzSync().n}</b> disponível por semana. Se você pular só um dia, a sequência é mantida.</p></section>
+    </div><p class="sub" style="margin-top:10px;font-size:var(--fs-cap)">❄️ Congelamento de sequência: <b>${frzSync().n}</b> disponível por semana. Se você pular só um dia, a sequência é mantida.</p></section>
   </div>`);
   el.appendChild(profileCard());
   el.appendChild(errCard());
@@ -6768,9 +6769,9 @@ function viewYou(){
       <div class="set-row"><svg class="si" viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.5"/><circle cx="15.5" cy="8" r="2.5"/><circle cx="16" cy="15.5" r="2.5"/><path d="M12 21a9 9 0 1 1 9-9c0 2-1.5 3-3 3h-2a2 2 0 0 0-1.5 3.3A1.6 1.6 0 0 1 12 21z"/></svg><div><div class="set-title">Cores do app</div><div class="set-sub">Lavanda é o padrão</div></div>
         <div class="seg" id="palSeg">${[["lav","Lavanda"],["sal","Sálvia"]].map(([k,n])=>`<button data-p="${k}" class="${(state.palette||"lav")===k?"on":""}">${n}</button>`).join("")}</div></div>
       <div class="set-row"><svg class="si" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><div><div class="set-title">Voz</div><div class="set-sub" id="voiceSt">${audioStatus==="neural"?"Voz neural ativa ✓":audioStatus?"Voz neural falhou ("+esc(audioStatus)+")":"Toque em Testar para conferir"}</div></div>
-        <button class="btn btn-line" id="vTest" style="padding:8px 14px;font-size:13px">Testar</button></div>
+        <button class="btn btn-line" id="vTest" style="padding:8px 14px;font-size:var(--fs-sub)">Testar</button></div>
       <div class="set-row"><svg class="si" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg><div><div class="set-title">Vozes para o metrô</div><div class="set-sub" id="dlSt">Baixa todas as vozes de ${LANGS[state.lang].name.toLowerCase()} (cerca de ${state.lang==="en"?"6":"6"} MB) para tocar sem internet</div></div>
-        <button class="btn btn-line" id="dlBtn" style="padding:8px 14px;font-size:13px">Baixar</button></div>
+        <button class="btn btn-line" id="dlBtn" style="padding:8px 14px;font-size:var(--fs-sub)">Baixar</button></div>
       <button class="set-row" id="swap" style="width:100%;border:none;background:none;text-align:left;padding-inline:0"><svg class="si" viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg><div><div class="set-title">Idioma</div><div class="set-sub">${LANGS[state.lang].name} — trocar</div></div><span class="tl-chev">›</span></button>
       <button class="set-row" id="reprof" style="width:100%;border:none;background:none;text-align:left;padding-inline:0;border-top:1px solid var(--line)"><svg class="si" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4A8 8 0 1 1 20 12Z"/></svg><div><div class="set-title">Conversa com a IA</div><div class="set-sub">${state.prof ? "Perfil criado — refazer" : "Personalizar o estudo ao seu objetivo"}</div></div><span class="tl-chev">›</span></button>
       <button class="set-row" id="retest" style="width:100%;border:none;background:none;text-align:left;padding-inline:0;border-top:1px solid var(--line)"><svg class="si" viewBox="0 0 24 24"><path d="M5 19V9M12 19V5M19 19v-7"/></svg><div><div class="set-title">Teste de nível</div><div class="set-sub">${L().placement?`Atual: ${L().placement.level} (${L().placement.score})`:"Ainda não feito"} — refazer</div></div><span class="tl-chev">›</span></button>
