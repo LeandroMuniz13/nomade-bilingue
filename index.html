@@ -4680,11 +4680,13 @@ function startOrderGame(){
 /* =========================================================
    CONVERSAR (IA)
    ========================================================= */
+const chatPanelState = {setOpen:true};
 function viewChat(){
   const el = h(`<div class="screen">
     <div style="display:flex;align-items:center;gap:12px"><div style="flex:0 0 auto" aria-hidden="true">${capi("hi",64)}</div><div style="min-width:0"><p class="hello">Capi · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Pratique <span class="script" style="font-size:32px">de verdade</span></h1>
     <p class="sub" style="margin-top:6px">O Capi, seu tutor de IA, monta a cena: uma pessoa responde no seu nível, traduz e corrige seus erros. Escreva no idioma — ou em português, que ela te mostra como dizer.</p></div></div>
   </div>`);
+  el.appendChild(capiPanel(chatPanelState));
   if(!aiAvail()){ if(!navigator.onLine) el.appendChild(h(`<section class="card"><b>Sem internet</b><p class="sub" style="margin-top:4px">O Capi precisa de conexão. Quando voltar o sinal, ligue a IA sem chave em Você › Ajustes ou use uma chave sua.</p></section>`)); else { el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); } }
   CATS.filter(c=>c.id!=="base").forEach(c => {
     const list = SCENES[state.lang].filter(s=>s.cat===c.id);
@@ -4912,6 +4914,16 @@ function viewSceneSummary(o){
   row.appendChild(b1); row.appendChild(b2); el.appendChild(row);
   return el;
 }
+function capiPanel(o){
+  { const tones = [[0,"Gentil"],[1,"Zoeiro"],[2,"Sem dó"]], tn = state.capiTone==null ? 1 : state.capiTone;
+    const pn = h(`<details class="card capi-set"><summary>⚙️ Voz e jeito do Capi</summary><div class="cs-body"><div class="eyebrow">Jeito</div><div class="cs-row">${tones.map(([k,n]) => `<button type="button" class="chip-b ${tn===k?"on":""}" data-tone="${k}">${n}</button>`).join("")}</div><div class="eyebrow">Voz</div><div class="cs-row">${CAPI_VOICES.map(([k,n]) => `<button type="button" class="chip-b ${capiVoiceName()===k?"on":""}" data-voice="${k}">${k}<small>${n}</small></button>`).join("")}</div><button type="button" class="btn btn-line" id="csTest">▶ Ouvir uma amostra</button><p class="sub cs-msg" id="csMsg" style="font-size:var(--fs-cap)">${gmKey() ? "A voz usa o Gemini (nuvem). Sem internet, o Capi usa a voz do aparelho." : "Cole a chave do Gemini em Você › Ajustes para ouvir a voz natural do Capi."}</p></div></details>`);
+    pn.open = !!o.setOpen; pn.addEventListener("toggle", () => { o.setOpen = pn.open; });
+    pn.querySelectorAll("[data-tone]").forEach(b => b.addEventListener("click", () => { state.capiTone = +b.dataset.tone; persist(); render(); }));
+    pn.querySelectorAll("[data-voice]").forEach(b => b.addEventListener("click", () => { state.capiVoiceName = b.dataset.voice; persist(); o.setOpen = true; render(); }));
+    $("#csTest", pn).addEventListener("click", async () => { const m = $("#csMsg", pn); m.textContent = "Gerando a voz…"; const smp = {en:"Oh, come on! That was so close. Try it again, I know you can do it!", it:"Dai, ci sei quasi! Riprova, so che ce la fai!"}[state.lang] || "Hello!"; const ok = await capiSpeak(smp, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }}); m.textContent = ok ? "Tocando a voz do Gemini." : (gmKey() ? "Não consegui a voz do Gemini ("+capiTtsErr+"). Toquei a voz do aparelho." : "Sem chave: toquei a voz do aparelho."); });
+    return pn;
+  }
+}
 function viewScene(){
   const o = overlay;
   if(o.sum) return viewSceneSummary(o);
@@ -4954,14 +4966,7 @@ function viewScene(){
       o.rec = true; render();
     }catch(e){ o.rec = false; o.vmsg = micErrMsg(e); render(); }
   });
-  { const tones = [[0,"Gentil"],[1,"Zoeiro"],[2,"Sem dó"]], tn = state.capiTone==null ? 1 : state.capiTone;
-    const pn = h(`<details class="card capi-set"><summary>⚙️ Voz e jeito do Capi</summary><div class="cs-body"><div class="eyebrow">Jeito</div><div class="cs-row">${tones.map(([k,n]) => `<button type="button" class="chip-b ${tn===k?"on":""}" data-tone="${k}">${n}</button>`).join("")}</div><div class="eyebrow">Voz</div><div class="cs-row">${CAPI_VOICES.map(([k,n]) => `<button type="button" class="chip-b ${capiVoiceName()===k?"on":""}" data-voice="${k}">${k}<small>${n}</small></button>`).join("")}</div><button type="button" class="btn btn-line" id="csTest">▶ Ouvir uma amostra</button><p class="sub cs-msg" id="csMsg" style="font-size:var(--fs-cap)">${gmKey() ? "A voz usa o Gemini (nuvem). Sem internet, o Capi usa a voz do aparelho." : "Cole a chave do Gemini em Você › Ajustes para ouvir a voz natural do Capi."}</p></div></details>`);
-    pn.open = !!o.setOpen; pn.addEventListener("toggle", () => { o.setOpen = pn.open; });
-    pn.querySelectorAll("[data-tone]").forEach(b => b.addEventListener("click", () => { state.capiTone = +b.dataset.tone; persist(); render(); }));
-    pn.querySelectorAll("[data-voice]").forEach(b => b.addEventListener("click", () => { state.capiVoiceName = b.dataset.voice; persist(); o.setOpen = true; render(); }));
-    $("#csTest", pn).addEventListener("click", async () => { const m = $("#csMsg", pn); m.textContent = "Gerando a voz…"; const smp = {en:"Oh, come on! That was so close. Try it again, I know you can do it!", it:"Dai, ci sei quasi! Riprova, so che ce la fai!"}[state.lang] || "Hello!"; const ok = await capiSpeak(smp, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }}); m.textContent = ok ? "Tocando a voz do Gemini." : (gmKey() ? "Não consegui a voz do Gemini ("+capiTtsErr+"). Toquei a voz do aparelho." : "Sem chave: toquei a voz do aparelho."); });
-    el.appendChild(pn);
-  }
+  el.appendChild(capiPanel(o));
   { const vb = h(`<button class="link" style="align-self:flex-start">${state.capiVoice===false?"🔇 Capi em silêncio":"🔊 Capi fala as respostas"} · tocar para ${state.capiVoice===false?"ligar":"desligar"}</button>`); vb.addEventListener("click", () => { state.capiVoice = state.capiVoice===false; if(state.capiVoice===false){ try{ stopAudio(); }catch(e){} } persist(); render(); }); el.appendChild(vb); }
   el.appendChild(form);
   setTimeout(()=>{ const i=$("#msgIn"); if(i && !o.busy) i.focus({preventScroll:true}); window.scrollTo(0, document.body.scrollHeight); }, 30);
@@ -6142,7 +6147,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v108";
+const APP_VER = "v109";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
