@@ -171,6 +171,7 @@ body.focus main{padding-bottom:32px}
 /* ---------- imagens ---------- */
 .has-ph{background-size:cover; background-position:center; color:transparent}
 .has-ph > *{opacity:0}
+.pl-ic.has-ph{width:72px; height:42px; border-radius:10px; flex:0 0 72px}
 .m-photo{height:132px; border-radius:20px; background-color:var(--accent-soft); background-size:cover; background-position:center; position:relative; overflow:hidden; margin-bottom:2px}
 .m-photo::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(15,18,38,0) 45%,rgba(15,18,38,.62))}
 .m-photo b{position:absolute; left:14px; bottom:10px; z-index:1; color:#fff; font-family:var(--display); font-weight:var(--display-w); font-size:19px; letter-spacing:-.01em; text-shadow:0 1px 10px rgba(0,0,0,.35)}
@@ -2914,6 +2915,7 @@ function viewFilm(){
   const pk = FILM_PICKS.filter(x => x.l === state.lang);
   const pks = h(`<section class="card"><div class="eyebrow">Cenas prontas · toque para abrir</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${pk.map((x, i) => `<button class="pl-row" data-k="${i}"><span class="pl-ic">${({Friends:"☕",Shrek:"🧅","A Era":"🧊",Matrix:"💊",Shameless:"🏚️",Sherlock:"🔍","The Office":"🗂️",Peaky:"🎩",Fawlty:"🏨","Il Postino":"✉️","La vita":"🌹","L'amica":"📕","Smetto":"🧪"}[Object.keys({Friends:1,Shrek:1,"A Era":1,Matrix:1,Shameless:1,Sherlock:1,"The Office":1,Peaky:1,Fawlty:1,"Il Postino":1,"La vita":1,"L'amica":1,"Smetto":1}).find(k => x.f.startsWith(k))] || "🐠")}</span><span class="pl-tx"><b>${esc(x.f)}</b><small>${esc(x.t)} · nível estimado ${x.lv}</small></span></button>`).join("")}</div><p class="sub" style="font-size:var(--fs-cap);margin-top:8px">São vídeos públicos do YouTube, abertos no player oficial. Eu não consegui conferir um a um se o dono permite abrir aqui; se algum não abrir, use a busca abaixo. O nível é uma estimativa minha: desenho animado costuma ser mais fácil que sitcom.</p></section>`);
   el.appendChild(pks);
+  $$(".pl-row[data-k]", pks).forEach(r => { const x = pk[+r.dataset.k]; if(x && x.id) phApply($(".pl-ic", r), "https://i.ytimg.com/vi/" + x.id + "/mqdefault.jpg"); });
   const q = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">1. Ache a cena</div><input id="fq" type="text" placeholder="Nome do filme ou cena, ou uma expressão" autocomplete="off" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-line" id="fy">Buscar no YouTube</button><button class="btn btn-line" id="fg">Ouvir no YouGlish</button></div><p class="sub" style="font-size:var(--fs-cap)">Os dois abrem em outra aba. Copie o link do vídeo que gostou e cole abaixo. Prefira os clipes oficiais dos estúdios. O YouGlish mostra a expressão dita por muitas pessoas; o crédito é dele.</p></section>`);
   $("#fy", q).addEventListener("click", () => { const v = $("#fq", q).value.trim(); if(v) window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(v + (state.lang === "en" ? " movie scene english subtitles" : " scena film italiano sottotitoli")), "_blank", "noopener"); });
   $("#fg", q).addEventListener("click", () => { const v = $("#fq", q).value.trim(); if(v) window.open("https://youglish.com/pronounce/" + encodeURIComponent(v) + "/" + (state.lang === "en" ? "english/us" : "italian"), "_blank", "noopener"); });
@@ -3141,7 +3143,9 @@ function viewMissionTrail(){
     <div><p class="hello">Jornada · ${lg.name}</p><h1 class="headline" style="margin-top:2px">Sua jornada <span class="script" style="font-size:32px">em capítulos</span></h1>
     <p class="sub" style="margin-top:6px">Faça na ordem. Cada capítulo prepara você para uma situação real e termina numa conversa com nota, que rende um carimbo no passaporte.</p></div>
   </div>`);
-  el.insertBefore(modeToggle(), el.children[1]);
+  const hero = h(`<div class="m-photo" style="height:118px" role="img" aria-label="${state.lang==="it"?"Roma":"Nova York"}"></div>`);
+  phApply(hero, PHOTOS[state.lang==="it"?"roma":"nova-york"].u); el.insertBefore(hero, el.children[1]);
+  el.insertBefore(modeToggle(), el.children[2]);
   const infos = ms.map(missionInfo), stamps = infos.filter(i => i.stamped).length;
   const rec = recommendedUnit();
   const nextM = ms.find((m,i) => !infos[i].stamped && infos[i].done < infos[i].us.length) || ms.find((m,i) => !infos[i].stamped);
@@ -3151,15 +3155,17 @@ function viewMissionTrail(){
     if(m.id !== curId){
       const row = h(`<button class="card chap-row ${inf.stamped?"ok":""}"><span class="m-ic">${m.icon}</span><span style="min-width:0;text-align:left"><div class="eyebrow">Capítulo ${i+1}${inf.stamped?" · 🏅 carimbo":nextM===m?" · agora":""}</div><div class="m-title" style="font-size:15.5px">${esc(m.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${inf.done}/${inf.us.length} ${inf.us.length===1?"lição":"lições"} · ${lvs.join("–")}</div></span><span class="tl-chev">›</span></button>`);
       row.addEventListener("click", () => { openChap = m.id; render(); row.scrollIntoView && setTimeout(() => { const x = document.querySelector(".mission.open"); if(x) x.scrollIntoView({block:"start"}); }, 30); });
-      el.appendChild(row); return;
+      phApply($(".m-ic", row), phUrl(m.icon)); el.appendChild(row); return;
     }
     const sec = h(`<section class="card mission open ${inf.stamped?"stamped":""}">
+      <div class="m-photo" id="mph"></div>
       <div class="m-head"><span class="m-ic">${m.icon}</span><div style="min-width:0"><div class="eyebrow">Capítulo ${i+1}${inf.stamped?" · 🏅 carimbo conquistado":nextM===m?" · AGORA":""}</div><div class="m-title">${esc(m.title)}</div></div><span class="pill lv">${lvs.length>1?lvs[0]+"–"+lvs[lvs.length-1]:lvs[0]||""}</span></div>
       <div class="m-goal">🎯 <b>Ao final você consegue:</b> ${esc(m.goal)}</div>
       <div class="m-bar"><i style="width:${inf.us.length?Math.round(inf.done/inf.us.length*100):0}%"></i></div>
       <div class="sub" style="font-size:var(--fs-cap);margin-top:-4px">${inf.done} de ${inf.us.length} lições</div>
       <div class="list"></div>
     </section>`);
+    { const mp = $("#mph", sec), pu = phUrl(m.icon); mp.removeAttribute("id"); if(pu) phApply(mp, pu); else mp.remove(); }
     inf.us.forEach(u => {
       const done = L().done[u.id], isRec = rec && rec.id===u.id;
       const b = h(`<button class="unit ${done?"done":isRec?"rec":""}">
@@ -4654,7 +4660,7 @@ function viewChat(){
     const sec = h(`<section class="card"><div class="eyebrow">${c.name}</div><div style="margin-top:4px"></div></section>`);
     list.forEach(s => {
       const b = h(`<button class="scn"><span class="ic">${s.icon}</span><span><div style="font-weight:700;font-size:14.5px">${esc(s.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${esc(s.desc)}</div></span></button>`);
-      b.addEventListener("click", () => startScene(s));
+      b.addEventListener("click", () => startScene(s)); phApply($(".ic", b), phUrl(s.icon));
       $("div:last-child",sec).appendChild(b);
     });
     el.appendChild(sec);
@@ -4871,7 +4877,7 @@ function splitSentences(text){
   const t = String(text).replace(/\s+/g," ").trim().slice(0,4000);
   return (t.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || []).map(x => x.trim()).filter(x => /[A-Za-z]/.test(x)).slice(0,60);
 }
-const PHOTOS = {};
+const PHOTOS = {"intro": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Business_agreement_handshake_at_coffee_shop.jpg/960px-Business_agreement_handshake_at_coffee_shop.jpg", "a": "rawpixel.com", "l": "CC0", "p": "https://commons.wikimedia.org/wiki/File:Business_agreement_handshake_at_coffee_shop.jpg"}, "aeroporto-ny": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/2022_JetBlue_Terminal_5_JFK_Airport_2.jpg/960px-2022_JetBlue_Terminal_5_JFK_Airport_2.jpg", "a": "Beyond My Ken", "l": "CC BY-SA 4.0", "p": "https://commons.wikimedia.org/wiki/File:2022_JetBlue_Terminal_5_JFK_Airport_2.jpg"}, "aeroporto-roma": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Aeroporto_di_Roma-Fiumicino_%282024%29_2.jpg/960px-Aeroporto_di_Roma-Fiumicino_%282024%29_2.jpg", "a": "Air fans", "l": "CC0", "p": "https://commons.wikimedia.org/wiki/File:Aeroporto_di_Roma-Fiumicino_(2024)_2.jpg"}, "mercado": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Aisle_in_L_Intermarche_supermarket_in_Quebec_City.jpg/960px-Aisle_in_L_Intermarche_supermarket_in_Quebec_City.jpg", "a": "Wilfredor", "l": "CC BY-SA 4.0", "p": "https://commons.wikimedia.org/wiki/File:Aisle_in_L_Intermarche_supermarket_in_Quebec_City.jpg"}, "restaurante": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Restaurant_table_at_Amantaka_luxury_Resort_%26_Hotel_in_Luang_Prabang_Laos.jpg/960px-Restaurant_table_at_Amantaka_luxury_Resort_%26_Hotel_in_Luang_Prabang_Laos.jpg", "a": "Basile Morin", "l": "CC BY-SA 4.0", "p": "https://commons.wikimedia.org/wiki/File:Restaurant_table_at_Amantaka_luxury_Resort_%26_Hotel_in_Luang_Prabang_Laos.jpg"}, "trattoria": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Spaghetti_%2853257476437%29_%28cropped%29.png/960px-Spaghetti_%2853257476437%29_%28cropped%29.png", "a": "Choo Yut Shing", "l": "CC BY 3.0", "p": "https://commons.wikimedia.org/wiki/File:Spaghetti_(53257476437)_(cropped).png"}, "trabalho": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/HUB_Ashdod_accelerator_meeting_room_at_Kivunim_Youth_Centre.jpg/960px-HUB_Ashdod_accelerator_meeting_room_at_Kivunim_Youth_Centre.jpg", "a": "מקף־עברי", "l": "CC0", "p": "https://commons.wikimedia.org/wiki/File:HUB_Ashdod_accelerator_meeting_room_at_Kivunim_Youth_Centre.jpg"}, "entrevista": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Business_man_and_woman_handshake_in_work_office.jpg/960px-Business_man_and_woman_handshake_in_work_office.jpg", "a": "perzon seo", "l": "CC BY 2.0", "p": "https://commons.wikimedia.org/wiki/File:Business_man_and_woman_handshake_in_work_office.jpg"}, "nativo": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Caf%C3%A9_des_plantes%2C_Nantes_2026.jpg/960px-Caf%C3%A9_des_plantes%2C_Nantes_2026.jpg", "a": "Smiley.toerist", "l": "CC BY-SA 4.0", "p": "https://commons.wikimedia.org/wiki/File:Caf%C3%A9_des_plantes,_Nantes_2026.jpg"}, "serie": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Dedicated_home_theater.jpg/960px-Dedicated_home_theater.jpg", "a": "Geoff Sloan", "l": "CC BY 2.0", "p": "https://commons.wikimedia.org/wiki/File:Dedicated_home_theater.jpg"}, "hotel": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Reception_area_at_Balch_Hotel_in_Dufur%2C_Oregon.jpg/960px-Reception_area_at_Balch_Hotel_in_Dufur%2C_Oregon.jpg", "a": "Mattsjc", "l": "CC BY 4.0", "p": "https://commons.wikimedia.org/wiki/File:Reception_area_at_Balch_Hotel_in_Dufur,_Oregon.jpg"}, "rua": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Street_view_in_the_quite_Utrechtsestraat_with_people_walking_%26_talking%3B_free_photo_Amsterdam%2C_Fons_Heijnsbroek_12-10-2021.jpg/960px-Street_view_in_the_quite_Utrechtsestraat_with_people_walking_%26_talking%3B_free_photo_Amsterdam%2C_Fons_Heijnsbroek_12-10-2021.jpg", "a": "Fons Heijnsbroek", "l": "CC0", "p": "https://commons.wikimedia.org/wiki/File:Street_view_in_the_quite_Utrechtsestraat_with_people_walking_%26_talking%3B_free_photo_Amsterdam,_Fons_Heijnsbroek_12-10-2021.jpg"}, "roma": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Colosseum_of_Rome%2C_Italy.jpg/960px-Colosseum_of_Rome%2C_Italy.jpg", "a": "Wilfredor", "l": "CC0", "p": "https://commons.wikimedia.org/wiki/File:Colosseum_of_Rome,_Italy.jpg"}, "nova-york": {"u": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Brooklyn_Bridge%2C_view_from_Brooklyn_Bridge_Park%2C_New_York_City%2C_20231002_0851_1561.jpg/960px-Brooklyn_Bridge%2C_view_from_Brooklyn_Bridge_Park%2C_New_York_City%2C_20231002_0851_1561.jpg", "a": "Jakub Hałun", "l": "CC BY 4.0", "p": "https://commons.wikimedia.org/wiki/File:Brooklyn_Bridge,_view_from_Brooklyn_Bridge_Park,_New_York_City,_20231002_0851_1561.jpg"}};
 const phKey = (icon, lg) => ({"👋":"intro","☀️":"intro","✈️":lg==="it"?"aeroporto-roma":"aeroporto-ny","🛒":"mercado","🍽️":"restaurante","🍔":"restaurante","🍝":"trattoria","💼":"trabalho","☕":"trabalho","🎯":"entrevista","🗣️":"nativo","📺":"serie","🏨":"hotel","🧭":"rua"})[icon];
 const phUrl = icon => { const k = phKey(icon, state.lang); return k && PHOTOS[k] ? PHOTOS[k].u : ""; };
 function phApply(el, url){ if(!el || !url) return; const im = new Image(); if(url.indexOf("wikimedia") > 0) im.crossOrigin = "anonymous"; im.onload = () => { el.style.backgroundImage = "url('" + url + "')"; el.classList.add("has-ph"); }; im.src = url; }
@@ -5946,7 +5952,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v101";
+const APP_VER = "v102";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6822,6 +6828,9 @@ function viewYou(){
   if(!doneUnits.length) box.appendChild(h(`<p class="sub" style="padding:6px 0">Nenhuma aula concluída ainda.</p>`));
   doneUnits.forEach(u => box.appendChild(h(`<div class="score-row"><span>${u.icon} ${esc(u.title)}</span><span>${esc(L().done[u.id])}</span></div>`)));
   el.appendChild(sc);
+  const cr = h(`<section class="card"><div class="sec-head"><h2>Créditos das fotos</h2></div><p class="sub" style="margin-top:6px">Fotos do Wikimedia Commons, com licença livre. Miniaturas dos vídeos: YouTube.</p><div style="margin-top:8px"></div></section>`);
+  Object.keys(PHOTOS).forEach(k => { const x = PHOTOS[k]; cr.lastElementChild.appendChild(h(`<div class="score-row"><span style="min-width:0"><a href="${x.p}" target="_blank" rel="noopener noreferrer" style="color:inherit">${esc(k)}</a> · ${esc(x.a)}</span><span>${esc(x.l)}</span></div>`)); });
+  el.appendChild(cr);
   return el;
 }
 
