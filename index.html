@@ -3308,7 +3308,7 @@ function profCard(){
 }
 function viewLesson(){
   const o = overlay, u = o.unit;
-  if(!o.practice && !o._pf){ o._pf = true; if((gmKey() || provAny()) && navigator.onLine) aiFresh(u).then(a => { o.aiEx = a; }).catch(()=>{}); }
+  if(!o.practice && !o._pf){ o._pf = true; if((gmKey() || provAny() || keylessOn()) && navigator.onLine) aiFresh(u).then(a => { o.aiEx = a; }).catch(()=>{}); }
   if(o.stage==="ex" && !o.exs) o.exs = o.practice ? u.exercises : buildSession(u, o.aiEx);
   const EXS = o.exs || u.exercises;
   const total = 2 + u.vocab.length + EXS.length;
@@ -4437,7 +4437,7 @@ function viewChat(){
     <div><p class="hello">Conversar · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Pratique <span class="script" style="font-size:32px">de verdade</span></h1>
     <p class="sub" style="margin-top:6px">Uma pessoa da cena responde no seu nível, traduz e corrige seus erros. Escreva no idioma — ou em português, que ela te mostra como dizer.</p></div>
   </div>`);
-  if(!aiAvail()){ el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); }
+  if(!aiAvail()){ if(!navigator.onLine) el.appendChild(h(`<section class="card"><b>Sem internet</b><p class="sub" style="margin-top:4px">O tutor de IA precisa de conexão. Quando voltar o sinal, ele funciona sem chave nenhuma.</p></section>`)); else { el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); } }
   CATS.filter(c=>c.id!=="base").forEach(c => {
     const list = SCENES[state.lang].filter(s=>s.cat===c.id);
     if(!list.length) return;
@@ -4472,7 +4472,7 @@ function startScene(s){
 }
 function askAI(){
   const o = overlay;
-  if(!aiAvail()){ o.busy=false; o.msgs.push({role:"sys", text:"Para conversar com a IA, cole a chave gratuita do Gemini em Você › Ajustes (ou no topo da tela Conversar)."}); render(); return; }
+  if(!aiAvail()){ o.busy=false; o.msgs.push({role:"sys", text:(navigator.onLine ? "A IA sem chave está desligada. Ligue em Você › Ajustes ou cole uma chave gratuita." : "Sem internet: o tutor de IA precisa de conexão.")}); render(); return; }
   aiSampleGet().then(sample => {
     if(!sample){ o.busy=false; o.msgs.push({role:"sys", text:"Conversa indisponível agora."}); render(); return; }
     const input = [{role:"user", content:systemPrompt(o.s)}];
@@ -5651,7 +5651,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v84";
+const APP_VER = "v85";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5779,7 +5779,7 @@ async function pronAI(st){
   if(window.claude && window.claude.use){
     const sample = await window.claude.use("sample"); const r = await sample(prompt, {cache:false}); return typeof r==="string" ? r : (r && r.text) || String(r);
   }
-  if(gmKey() || provAny()) return await aiTextAny(prompt, 900, false);
+  if(gmKey() || provAny() || keylessOn()) return await aiTextAny(prompt, 900, false);
   let key = ""; try{ key = localStorage.getItem("nb-key") || ""; }catch(e){}
   if(!key) throw new Error("nokey");
   const res = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}, body:JSON.stringify({model:"claude-sonnet-5-5", max_tokens:700, messages:[{role:"user", content:prompt}]})});
@@ -5986,6 +5986,45 @@ function learnCard(){
   on("r", startSrs); on("n", () => journeyGo(j)); on("g", startForca);
   return c;
 }
+/* ---------- IA SEM CHAVE (testada em 02/11/2026 a partir do site): OVHcloud AI Endpoints + Pollinations legado ---------- */
+const OVH = {base:"https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", prefer:["Meta-Llama-3_3-70B-Instruct","Qwen3.6-27B","Qwen3.8-27B","Mistral-Small-3.2-24B-Instruct-2506","Qwen3.5-9B","gpt-oss-120b"], cool:{}, list:null};
+const keylessOn = () => { try{ return localStorage.getItem("nb-keyless") !== "0"; }catch(e){ return true; } };
+async function ovhModels(){
+  if(OVH.list) return OVH.list;
+  let ids = [];
+  try{ const r = await fetch(OVH.base+"/models"); if(r.ok) ids = ((await r.json()).data || []).map(x => x.id); }catch(e){}
+  const ok = OVH.prefer.filter(m => !ids.length || ids.includes(m));
+  OVH.list = ok.length ? ok : OVH.prefer; return OVH.list;
+}
+async function ovhCall(inp, maxTok, json){
+  const models = await ovhModels(), now = Date.now(); let last = null;
+  const order = models.filter(m => (OVH.cool[m]||0) <= now).concat(models.filter(m => (OVH.cool[m]||0) > now));
+  for(const model of order.slice(0, 5)){
+    try{
+      const body = {model, messages:toChat(inp), max_tokens:maxTok||900, temperature:0.4}; if(json) body.response_format = {type:"json_object"};
+      let res = await fetch(OVH.base+"/chat/completions", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+      if(res.status===400 && json){ delete body.response_format; body.messages = toChat(inp).concat([{role:"user", content:"Responda somente com JSON válido."}]); res = await fetch(OVH.base+"/chat/completions", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}); }
+      if(res.status===429){ OVH.cool[model] = Date.now()+40000; last = new Error("quota"); continue; }
+      if(!res.ok){ OVH.cool[model] = Date.now()+120000; last = new Error("busy"); continue; }
+      const j = await res.json(), txt = (((j.choices||[])[0]||{}).message||{}).content;
+      if(txt && String(txt).trim()) return String(txt).replace(/<think>[\s\S]*?<\/think>/g,"").trim();
+      last = new Error("empty");
+    }catch(e){ last = e; }
+  }
+  throw last || new Error("busy");
+}
+async function pollCall(inp, maxTok, json){
+  const body = {model:"openai", messages:toChat(inp), max_tokens:Math.max(maxTok||900, 700), temperature:0.4}; if(json) body.response_format = {type:"json_object"};
+  const res = await fetch("https://text.pollinations.ai/openai", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  if(!res.ok) throw new Error(res.status===429 ? "quota" : "busy");
+  const j = await res.json(), txt = (((j.choices||[])[0]||{}).message||{}).content;
+  if(!txt || !String(txt).trim()) throw new Error("empty");
+  return String(txt).trim();
+}
+async function keylessCall(inp, maxTok, json){
+  if(!navigator.onLine) throw new Error("offline");
+  try{ return await ovhCall(inp, maxTok, json); }catch(e1){ try{ return await pollCall(inp, maxTok, json); }catch(e2){ throw e1; } }
+}
 /* ---------- Provedores grátis de reserva (formato OpenAI) ---------- */
 const FREE_PROV = [
   {id:"groq", n:"Groq", base:"https://api.groq.com/openai/v1", model:"llama-3.3-70b-versatile", url:"https://console.groq.com/keys", tip:"Muito rápido. Sem cartão."},
@@ -6026,8 +6065,9 @@ async function provCall(inp, maxTok, json){
 }
 async function aiTextAny(inp, maxTok, json){
   let err = null;
-  if(gmKey()){ try{ return await gmCall({contents:gmContents(inp)}, maxTok, json, true); }catch(e){ err = e; if(e && e.message==="key" && !provAny()) throw e; } }
-  if(provAny()) return provCall(inp, maxTok, json);
+  if(gmKey()){ try{ return await gmCall({contents:gmContents(inp)}, maxTok, json, true); }catch(e){ err = e; if(e && e.message==="key" && !provAny() && !keylessOn()) throw e; } }
+  if(provAny()){ try{ return await provCall(inp, maxTok, json); }catch(e){ err = e; } }
+  if(keylessOn()) return keylessCall(inp, maxTok, json);
   throw err || new Error("nokey");
 }
 const gmContents = inp => {
@@ -6037,19 +6077,23 @@ const gmContents = inp => {
   return out;
 };
 function provKeyCard(){
-  const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">IAs gratuitas de reserva</div>
+  const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">IA sem chave (já ativa)</div>
+    <p class="sub" style="font-size:12.5px">O app usa de graça modelos abertos hospedados na Europa (OVHcloud) e, se falhar, o Pollinations. Não precisa de conta nem de chave. O que você escreve para o tutor é enviado a esses serviços; evite dados pessoais. A fala gravada nunca vai para eles.</p>
+    <button class="filter ${keylessOn()?"on":""}" id="klTg">${keylessOn() ? "✓ IA sem chave ligada" : "IA sem chave desligada"}</button>
+    <div class="eyebrow" style="margin-top:6px">IAs gratuitas de reserva (opcional, com chave)</div>
     <p class="sub" style="font-size:12.5px">Quando o Gemini estiver ocupado ou sem cota, o app tenta estas automaticamente. Todas têm plano grátis, sem cartão. Cole só as que quiser.</p>
     ${FREE_PROV.map(p => `<div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:14px">${p.n}${provKey(p.id) ? " · ativa ✓" : ""}</b><a class="link" href="${p.url}" target="_blank" rel="noopener" style="font-size:12.5px">Criar chave ↗</a></div><p class="sub" style="font-size:12px">${p.tip}</p>${provKey(p.id) ? `<button class="btn btn-line" data-rm="${p.id}">Remover</button>` : `<input class="in" type="password" data-p="${p.id}" placeholder="Chave ${p.n}" autocomplete="off">`}</div>`).join("")}
     <button class="btn btn-dark" id="pvSave">Salvar chaves</button>
     <p class="sub" style="font-size:11.5px">As chaves ficam só neste aparelho. Os provedores gratuitos podem usar o conteúdo enviado para melhorar os produtos deles. A fala gravada continua indo apenas para o Gemini.</p></section>`);
   c.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => { try{ localStorage.removeItem("nb-k-"+b.dataset.rm); localStorage.removeItem("nb-km-"+b.dataset.rm); }catch(e){} render(); }));
+  $("#klTg",c).addEventListener("click", () => { try{ localStorage.setItem("nb-keyless", keylessOn() ? "0" : "1"); }catch(e){} render(); });
   $("#pvSave",c).addEventListener("click", () => { let n = 0; c.querySelectorAll("[data-p]").forEach(i => { const v = i.value.trim(); if(v){ try{ localStorage.setItem("nb-k-"+i.dataset.p, v); n++; }catch(e){} } }); toast(n ? "Chaves salvas." : "Cole uma chave."); if(n) render(); });
   return c;
 }
-function aiAvail(){ return !!(window.claude && window.claude.use) || !!gmKey() || provAny(); }
+function aiAvail(){ return !!(window.claude && window.claude.use) || !!gmKey() || provAny() || (keylessOn() && navigator.onLine); }
 function aiSampleGet(){
   if(window.claude && window.claude.use) return window.claude.use("sample");
-  if(!gmKey() && !provAny()) return Promise.resolve(null);
+  if(!gmKey() && !provAny() && !(keylessOn() && navigator.onLine)) return Promise.resolve(null);
   const f = async (inp, o) => ({text: await aiTextAny(inp, (o && o.maxTokens) || 1200, false)});
   f.json = async (inp, o) => gmJson(await aiTextAny(inp, 2800, true));
   return Promise.resolve(f);
