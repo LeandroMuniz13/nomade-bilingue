@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" role="img" aria-labelledby="title desc">
+  <title id="title">Capi chega a Roma</title>
+  <desc id="desc">A capivara viajante Capi diante do Coliseu, sob o sol de fim de tarde.</desc>
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#f7d9a4"/><stop offset="1" stop-color="#f2b47e"/></linearGradient>
+    <linearGradient id="hill" x2="0" y2="1"><stop stop-color="#87966c"/><stop offset="1" stop-color="#52674d"/></linearGradient>
+    <linearGradient id="body" x2="0" y2="1"><stop stop-color="#bd8258"/><stop offset="1" stop-color="#93613f"/></linearGradient>
+    <linearGradient id="stone" x2="0" y2="1"><stop stop-color="#e6bd8b"/><stop offset="1" stop-color="#bd8058"/></linearGradient>
+    <filter id="shadow" x="-.2" y="-.2" width="1.4" height="1.5"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="1200" height="480" rx="34" fill="url(#sky)"/>
+  <circle cx="945" cy="94" r="52" fill="#fff0bd" opacity=".8"/>
+  <path d="M0 292c170-46 276-29 421 5s270 13 407-30 245-31 372 3v210H0Z" fill="#d8a879" opacity=".56"/>
+  <path d="M0 354c185-44 320-5 484 19s303 1 420-28 193-23 296 2v133H0Z" fill="url(#hill)"/>
+  <!-- Coliseum -->
+  <g fill="url(#stone)" stroke="#9d684d" stroke-width="5" stroke-linejoin="round">
+    <path d="M585 297V168q0-22 22-30 22-7 44 0 22 8 22 30v129h-24v-91q-20-18-40 0v91Zm88 0V153q0-22 22-31 22-8 44 0 22 9 22 31v144h-24V188q-20-18-40 0v109Zm88 0V173q0-21 21-29 22-8 44 0 22 8 22 29v124h-24v-72q-20-18-40 0v72Zm88 0V198q0-19 20-26 20-7 40 0 20 7 20 26v99h-23v-39q-18-16-36 0v39Z"/>
+    <path d="M567 293q178-43 378 0l-6 28q-185-34-367 0Z"/>
+    <path d="M548 317q204-39 415 0v22q-207-31-415 0Z"/>
+  </g>
+  <g fill="#f5d6a7" opacity=".65"><path d="M608 141q40-17 80 0v12q-40-12-80 0Zm88-10q40-17 80 0v12q-40-12-80 0Zm88 9q40-17 80 0v12q-40-12-80 0Z"/></g>
+  <!-- Cypress trees and cypress-shaped Italian landscape -->
+  <g fill="#405b49"><path d="M501 324q-29-58 0-132 29 74 0 132Zm-42 8q-21-47 0-107 22 60 0 107Zm513-8q-28-58 0-132 29 74 0 132Zm43 8q-22-47 0-107 21 60 0 107Z"/></g>
+  <ellipse cx="252" cy="409" rx="173" ry="24" fill="#30443a" opacity=".28" filter="url(#shadow)"/>
+  <!-- Capi, the traveler -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M139 340q-12-50 3-99 12-41 48-58 42-19 89-4 43 13 57 57 15 45 0 104Z" fill="url(#body)"/>
+    <path d="M152 266q-16-27-3-49 12-18 29-4 15 14 5 42Zm147-5q-10-31 6-47 16-14 28 5 11 20-4 46Z" fill="#a96f49" stroke="#805236" stroke-width="6"/>
+    <path d="M166 288q8-18 23 0m104 0q8-18 23 0" fill="none" stroke="#352b28" stroke-width="9"/>
+    <path d="M200 304q38-18 80 0 19 9 16 30-3 19-26 24h-65q-23-6-25-25-2-20 20-29Z" fill="#d8a07a"/>
+    <ellipse cx="237" cy="324" rx="8" ry="6" fill="#43332c"/><ellipse cx="275" cy="324" rx="8" ry="6" fill="#43332c"/>
+    <path d="M241 345q15 12 30 0" fill="none" stroke="#f1d2b5" stroke-width="5"/>
+    <path d="M146 261q88-37 176 0l-3 23q-87-31-171 0Z" fill="#d59b39" stroke="#ad762a" stroke-width="4"/>
+    <path d="M178 253q10-46 54-46t54 46" fill="#55715a" stroke="#3f5947" stroke-width="5"/>
+    <path d="M188 253q43-14 90 0" fill="none" stroke="#e6bd72" stroke-width="6"/>
+    <path d="M156 350q81 27 160 0l8 92q-84 34-177 0Z" fill="#55715a" stroke="#3f5947" stroke-width="5"/>
+    <path d="M206 360v70m62-69v69" stroke="#e0bc79" stroke-width="5" opacity=".85"/>
+    <path d="M148 373q-22 16-26 42m205-40q25 12 31 38" fill="none" stroke="#93613f" stroke-width="18"/>
+    <path d="M188 438q-16 17-40 17m116-17q16 17 41 17" fill="none" stroke="#754e38" stroke-width="15"/>
+  </g>
+  <!-- Travel map and warm foreground -->
+  <path d="M0 428q152-28 304 0t306 0 306 0 284-2v54H0Z" fill="#e2aa68" opacity=".9"/>
+  <g transform="translate(986 370) rotate(-8)">
+    <path d="M0 0q23-12 46 0v70q-23-12-46 0Zm46 0q24-12 48 0v70Q70 58 46 70Z" fill="#fff2d2" stroke="#9c6549" stroke-width="4"/>
+    <path d="M15 22h22m-22 12h22m23-12h20m-20 12h20" stroke="#bd8058" stroke-width="4"/>
+    <path d="m62 50 8 7 13-17" fill="none" stroke="#55715a" stroke-width="5"/>
+  </g>
+</svg>
+
