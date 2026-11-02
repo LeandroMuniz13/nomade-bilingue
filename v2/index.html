@@ -889,47 +889,54 @@ button:active:not(:disabled){transform:scale(.985)}
 .sk-bar.b2{height:5px;opacity:.9}
 .sk-v{white-space:normal}
 .v2-preview-banner{padding:8px 14px;margin:8px auto 10px;width:min(100% - 20px,420px);box-sizing:border-box;border-radius:999px;background:#f5e7c9;color:#594733;text-align:center;font:700 12px/1.3 system-ui,sans-serif}.v2-preview-banner span{font-weight:500;margin-left:6px}.v2-preview-banner a{color:inherit;font-weight:800;text-underline-offset:2px}
-/* V2 visual direction: Italian travel journal in warm paper, terracotta and olive. */
+/* V2 visual direction: focused, editorial, adult language-learning UI. */
 html.preview-v2,html.preview-v2.ap-dark,html.preview-v2.ap-auto,html.preview-v2.pal-lav{
-  --bg:#F6F0E5!important;--surface:#FFFBF4!important;--surface-2:#EFE2CE!important;--line:#E2CFB7!important;
-  --ink:#30271F!important;--ink-dim:#756557!important;--ink-faint:#91806E!important;
-  --accent:#A84C35!important;--accent-ink:#783322!important;--accent-soft:#F1D9CA!important;--accent-mist:#F8EAE0!important;
-  --gold:#D5A44B!important;--gold-ink:#74511C!important;--gold-soft:#F8EDCE!important;
-  --night:#2E493B!important;--night-2:#3B5948!important;--on-night:#FFF9F0!important;--on-night-dim:#D6DFD2!important;
-  --ok:#55795B!important;--ok-soft:#E4EDDF!important;--bad:#A84C35!important;--bad-soft:#F6E1D7!important;
-  --leaf:#718A63!important;--leaf-dark:#435D45!important;--leaf-light:#B4C49D!important;--lemon:#D5A44B!important;
-  --capi-ink:#30271F!important;--shadow:0 14px 34px -20px rgba(71,46,28,.28)!important;
-  --display:var(--serif)!important;--display-w:400!important;--display-s:1!important;--navy:#2E493B!important;
-  --tint-1:#F1D9CA!important;--tint-2:#F8EDCE!important;--tint-3:#E8E3D6!important;--tint-4:#DFE8DA!important;
+  --bg:#F3F6F8!important;--surface:#FFFFFF!important;--surface-2:#E9EFF3!important;--line:#D9E2E8!important;
+  --ink:#1B2D3A!important;--ink-dim:#526775!important;--ink-faint:#738592!important;
+  --accent:#176B82!important;--accent-ink:#155264!important;--accent-soft:#DCECF0!important;--accent-mist:#EDF5F7!important;
+  --gold:#B98735!important;--gold-ink:#684D1F!important;--gold-soft:#F3EBD9!important;
+  --night:#18384B!important;--night-2:#244B61!important;--on-night:#F8FBFC!important;--on-night-dim:#C4D4DC!important;
+  --ok:#47765C!important;--ok-soft:#E3EEE7!important;--bad:#A95045!important;--bad-soft:#F6E8E5!important;
+  --leaf:#668A78!important;--leaf-dark:#365B4D!important;--leaf-light:#AAC4B5!important;
+  --capi-body:#A87958!important;--capi-shade:#825D46!important;--capi-light:#F5EBDD!important;--capi-snout:#583F31!important;
+  --capi-ink:#26343D!important;--capi-gold-shade:#A8782E!important;--capi-hat:#203E50!important;
+  --shadow:0 8px 24px -16px rgba(26,48,63,.20)!important;
+  --display:var(--font)!important;--display-w:700!important;--display-s:1!important;--navy:#18384B!important;
+  --tint-1:#DCECF0!important;--tint-2:#F3EBD9!important;--tint-3:#E9EFF3!important;--tint-4:#E3EEE7!important;
   color-scheme:light!important;
 }
 html.preview-v2 body{background:var(--bg)!important;color:var(--ink)!important}
 html.preview-v2 #app{max-width:620px}
+html.preview-v2 .v2-preview-banner{background:#E4EDF1;color:#365365;border:1px solid #D7E3E9;border-radius:8px;font:600 11px/1.4 var(--font);letter-spacing:.02em}
+html.preview-v2 .v2-preview-banner a{color:#155264;font-weight:700}
 html.preview-v2 .top{padding-inline:10px}
-html.preview-v2 #view>.screen{gap:16px}
-html.preview-v2 .hello{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:800;letter-spacing:.03em}
-html.preview-v2 .headline{font-family:var(--serif);font-size:clamp(38px,8vw,48px);line-height:.96;font-weight:400;letter-spacing:-.02em}
-html.preview-v2 .screen>.sub{max-width:48ch;font-size:14px;line-height:1.55}
-html.preview-v2 .v2-journey-art{height:215px!important;border:1px solid rgba(88,61,37,.14);border-radius:28px;background-position:42% 52%;box-shadow:0 16px 32px -18px rgba(70,45,27,.36)}
-html.preview-v2 .v2-journey-art::after{background:linear-gradient(180deg,rgba(28,37,28,0) 45%,rgba(28,37,28,.66))}
-html.preview-v2 .v2-journey-art b{left:18px;bottom:15px;font-family:var(--serif);font-weight:400;font-size:25px;letter-spacing:.01em}
-html.preview-v2 .m-photo{height:164px;border-radius:22px}
-html.preview-v2 .mission.open{padding:16px;border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:24px;background:var(--surface);box-shadow:var(--shadow);gap:14px}
-html.preview-v2 .mission .m-photo{height:160px;margin-bottom:2px}
+html.preview-v2 #view>.screen{gap:14px}
+html.preview-v2 .hello{display:block;padding:0;background:none;color:var(--accent);font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+html.preview-v2 .headline{font-family:var(--font);font-size:clamp(28px,6vw,34px);line-height:1.18;font-weight:750;letter-spacing:-.035em}
+html.preview-v2 .script{font:inherit;font-style:normal;letter-spacing:inherit;color:inherit}
+html.preview-v2 .screen>.sub{max-width:52ch;font-size:14px;line-height:1.5}
+html.preview-v2 .v2-journey-art{height:170px!important;border:1px solid rgba(32,61,79,.12);border-radius:16px;background-position:center 42%;box-shadow:0 7px 20px -13px rgba(24,56,75,.28)}
+html.preview-v2 .v2-journey-art::after{background:linear-gradient(180deg,rgba(17,39,53,0) 35%,rgba(17,39,53,.62))}
+html.preview-v2 .v2-journey-art b{left:16px;bottom:14px;font:700 13px/1.2 var(--font);letter-spacing:.08em}
+html.preview-v2 .v2-capi-mark{position:absolute;right:14px;bottom:10px;z-index:2;width:62px;height:62px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.75);border-radius:16px;background:rgba(255,255,255,.9);box-shadow:0 5px 14px rgba(16,37,49,.16)}
+html.preview-v2 .v2-capi-mark .capi{display:block;width:54px;height:54px}
+html.preview-v2 .m-photo{height:144px;border-radius:16px}
+html.preview-v2 .mission.open{padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow);gap:12px}
+html.preview-v2 .mission .m-photo{height:144px;margin-bottom:2px}
 html.preview-v2 .m-head{gap:10px}
-html.preview-v2 .m-title{font-size:17px;line-height:1.22}
-html.preview-v2 .m-goal{padding:13px 14px;border-left:3px solid var(--accent);background:var(--accent-mist);line-height:1.55}
-html.preview-v2 .m-bar{height:8px;background:var(--surface-2)}
-html.preview-v2 .mission .list{display:flex;flex-direction:column;gap:8px}
-html.preview-v2 .mission .unit{margin:0;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--bg);transition:transform .15s ease,border-color .15s ease}
+html.preview-v2 .m-title{font-size:16px;line-height:1.25}
+html.preview-v2 .m-goal{padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;background:var(--accent-mist);line-height:1.5}
+html.preview-v2 .m-bar{height:7px;background:var(--surface-2)}
+html.preview-v2 .mission .list{display:flex;flex-direction:column;gap:7px}
+html.preview-v2 .mission .unit{margin:0;padding:11px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:border-color .15s ease}
 html.preview-v2 .mission .unit+.unit{border-top:1px solid var(--line)}
-html.preview-v2 .mission .unit:hover{transform:translateY(-1px);border-color:var(--accent)}
-html.preview-v2 .chap-row{padding:13px 14px;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:0 7px 18px -14px rgba(70,45,27,.34);transition:transform .15s ease,border-color .15s ease}
-html.preview-v2 .chap-row:hover{transform:translateY(-1px);border-color:var(--accent)}
+html.preview-v2 .mission .unit:hover{border-color:var(--accent)}
+html.preview-v2 .chap-row{padding:12px 13px;border:1px solid var(--line);border-radius:15px;background:var(--surface);box-shadow:0 3px 12px -9px rgba(26,48,63,.22);transition:border-color .15s ease}
+html.preview-v2 .chap-row:hover{border-color:var(--accent)}
 html.preview-v2 .chap-row.ok{background:var(--ok-soft)}
-html.preview-v2 .m-ic,html.preview-v2 .u-ic{border-radius:15px}
-html.preview-v2 nav.nav{box-shadow:0 16px 34px -14px rgba(39,61,49,.4),0 2px 8px rgba(39,61,49,.12)}
-@media(min-width:700px){html.preview-v2 #app{max-width:720px}html.preview-v2 #view>.screen{gap:18px}html.preview-v2 .v2-journey-art{height:250px!important}html.preview-v2 .mission.open{padding:22px}}
+html.preview-v2 .m-ic,html.preview-v2 .u-ic{border-radius:12px}
+html.preview-v2 nav.nav{box-shadow:0 10px 22px -15px rgba(24,56,75,.40),0 2px 6px rgba(24,56,75,.12)}
+@media(min-width:700px){html.preview-v2 #app{max-width:720px}html.preview-v2 #view>.screen{gap:16px}html.preview-v2 .v2-journey-art{height:190px!important}html.preview-v2 .mission.open{padding:18px}}
 </style>
 
 <div id="app">
@@ -3305,8 +3312,8 @@ function viewMissionTrail(){
     <div><p class="hello">Jornada · ${lg.name}</p><h1 class="headline" style="margin-top:2px">Sua jornada <span class="script" style="font-size:32px">em capítulos</span></h1>
     <p class="sub" style="margin-top:6px">Da primeira conversa à chegada a Roma: pratique italiano em situações reais, capítulo por capítulo.</p></div>
   </div>`);
-  const hero = h(`<div class="m-photo v2-journey-art" style="height:190px;background-position:center 48%" role="img" aria-label="${state.lang==="it"?"Capi em Roma":"Nova York"}"><b>${state.lang==="it"?"Roma · Si parte!":"New York"}</b></div>`);
-  phApply(hero, (state.lang==="it" && artUrl("cap-italia")) || artUrl("hero-nyc") || PHOTOS[state.lang==="it"?"roma":"nova-york"].u); el.insertBefore(hero, el.children[0]);
+  const hero = h(`<div class="m-photo v2-journey-art" style="height:170px;background-position:center 48%" role="img" aria-label="${state.lang==="it"?"Roma, Itália":"Nova York"}"><b>${state.lang==="it"?"ROMA · ITALIANO":"NEW YORK"}</b>${state.lang==="it"?`<span class="v2-capi-mark">${capi("hi",54)}</span>`:""}</div>`);
+  phApply(hero, (state.lang==="en" && artUrl("hero-nyc")) || PHOTOS[state.lang==="it"?"roma":"nova-york"].u); el.insertBefore(hero, el.children[0]);
   el.insertBefore(modeToggle(), el.children[2]);
   const infos = ms.map(missionInfo), stamps = infos.filter(i => i.stamped).length;
   const rec = recommendedUnit();
@@ -5221,7 +5228,7 @@ const phKey = (icon, lg) => ({"👋":"intro","☀️":"intro","✈️":lg==="it"
 const ART_MAP = {"cap1": "../art/cap1.025c3b36.webp", "cap2": "../art/cap2.1f2e92a1.webp", "cap3": "../art/cap3.6e8b82ac.webp", "cap4": "../art/cap4.b79d8101.webp", "cap5": "../art/cap5.7fb5c597.webp", "cap6": "../art/cap6.d0e41846.webp", "cap7": "../art/cap7.6a3d502a.webp", "hero-nyc": "../art/hero-nyc.49d10100.webp", "cap-italia": "../art/cap-italia.svg"};
 const ART_CHAP = {m1:"cap1", m3:"cap2", m2:"cap3", m4:"cap4", m5:"cap5", m6:"cap6", m7:"cap7"};
 const artUrl = k => ART_MAP[k] || "";
-const ART_IT_CHAP = {m3:"cap-italia"};
+const ART_IT_CHAP = {};
 const artChap = id => state.lang==="en" ? artUrl(ART_CHAP[id]) : artUrl(ART_IT_CHAP[id]);
 const phUrl = icon => { const k = phKey(icon, state.lang); return k && PHOTOS[k] ? PHOTOS[k].u : ""; };
 function phApply(el, url){ if(!el || !url) return; const im = new Image(); if(url.indexOf("wikimedia") > 0) im.crossOrigin = "anonymous"; im.onload = () => { el.style.backgroundImage = "url('" + url + "')"; el.classList.add("has-ph"); }; im.src = url; }
