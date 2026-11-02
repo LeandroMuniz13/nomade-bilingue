@@ -3263,11 +3263,11 @@ function viewMissionTrail(){
   phApply(hero, (state.lang==="en" && artUrl("hero-nyc")) || PHOTOS[state.lang==="it"?"roma":"nova-york"].u); el.insertBefore(hero, el.children[1]);
   el.insertBefore(modeToggle(), el.children[2]);
   const infos = ms.map(missionInfo), stamps = infos.filter(i => i.stamped).length;
-  const rec = recommendedUnit();
   const nextM = ms.find((m,i) => !infos[i].stamped && infos[i].done < infos[i].us.length) || ms.find((m,i) => !infos[i].stamped);
   const curId = openChap || (nextM && nextM.id);
   ms.forEach((m,i) => {
     const inf = infos[i], lvs = [...new Set(inf.us.map(u=>u.level))];
+    const chapterNext = inf.us.find(u => !L().done[u.id]);
     if(m.id !== curId){
       const row = h(`<button class="card chap-row ${inf.stamped?"ok":""}">${artChap(m.id)?`<span class="m-ic has-art" style="background-image:url('${artChap(m.id)}')"></span>`:`<span class="m-ic">${m.icon}</span>`}<span style="min-width:0;text-align:left"><div class="eyebrow">Capítulo ${i+1}${inf.stamped?" · 🏅 carimbo":nextM===m?" · agora":""}</div><div class="m-title" style="font-size:15.5px">${esc(m.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${inf.done}/${inf.us.length} ${inf.us.length===1?"lição":"lições"} · ${lvs.join("–")}</div></span><span class="tl-chev">›</span></button>`);
       row.addEventListener("click", () => { openChap = m.id; render(); row.scrollIntoView && setTimeout(() => { const x = document.querySelector(".mission.open"); if(x) x.scrollIntoView({block:"start"}); }, 30); });
@@ -3283,7 +3283,7 @@ function viewMissionTrail(){
     </section>`);
     { const mp = $("#mph", sec), pu = artChap(m.id) || phUrl(m.icon); mp.removeAttribute("id"); if(pu) phApply(mp, pu); else mp.remove(); }
     inf.us.forEach(u => {
-      const done = L().done[u.id], isRec = rec && rec.id===u.id;
+      const done = L().done[u.id], isRec = chapterNext && chapterNext.id===u.id;
       const b = h(`<button class="unit ${done?"done":isRec?"rec":""}">
         <span class="u-ic">${u.icon||"•"}</span>
         <span><div class="u-title">${esc(u.title)}</div><div class="u-sub">${esc(u.subtitle)}</div></span>
