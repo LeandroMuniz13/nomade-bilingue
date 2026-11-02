@@ -362,9 +362,19 @@ body.focus main{padding-bottom:32px}
 #fstage iframe,#ytp{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
 .fv-sticky{position:sticky; top:env(safe-area-inset-top,0px); z-index:8; background:var(--bg); width:min(100vw,460px); margin-left:calc(50% - min(50vw,230px)); display:flex; flex-direction:column; box-shadow:0 8px 18px -12px rgba(0,0,0,.45)}
 .fv-vid{position:relative; width:100%; aspect-ratio:16/9; background:#000}
-.compose .vmic{flex:none;background:var(--surface);border:1.5px solid var(--gold-ui);color:var(--ink)}
-.compose .vmic .nbi svg{width:22px;height:22px}
-.compose .vmic.on{background:var(--bad);color:#fff;border-color:var(--bad)}
+.capi-av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:box-shadow .2s}
+.capi-av.talk{animation:capiTalk .9s ease-in-out infinite}
+@keyframes capiTalk{0%,100%{box-shadow:0 0 0 0 rgba(160,117,34,.0);transform:scale(1)}50%{box-shadow:0 0 0 7px rgba(160,117,34,.28);transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.capi-av.talk{animation:none;box-shadow:0 0 0 4px rgba(160,117,34,.35)}}
+.capi-set summary{font-weight:600;cursor:pointer;min-height:32px;display:flex;align-items:center}
+.cs-body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.cs-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip-b{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:var(--fs-sub);min-height:40px;display:inline-flex;flex-direction:column;align-items:flex-start;gap:0;line-height:1.15}
+.chip-b small{font-size:11px;color:var(--ink-faint)}
+.chip-b.on{border-color:var(--gold-ui);background:var(--surface-2);font-weight:700}
+form.compose .iconbtn.vmic{flex:none;background:var(--surface);border:1.5px solid var(--gold-ui);color:var(--ink)}
+form.compose .iconbtn.vmic .nbi svg{width:22px;height:22px}
+form.compose .iconbtn.vmic.on{background:var(--bad);color:#fff;border-color:var(--bad)}
 .pp-list{display:flex;flex-direction:column;gap:6px}
 .pp-ep{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:var(--fs-sub);min-height:44px}
 .pp-ep.on{border-color:var(--gold-ui);background:var(--surface-2)}
@@ -4689,6 +4699,12 @@ function viewChat(){
   });
   return el;
 }
+function capiToneRule(){
+  const t = state.capiTone==null ? 1 : state.capiTone;
+  if(t===0) return "\n- Jeito do Capi: gentil e paciente. Elogie o que estiver certo e corrija sem ironia.";
+  const base = "\n- Jeito do Capi (capivara tutora, amiga debochada): quando o usuário errar, faça UMA zoeira curtíssima e carinhosa em português dentro da linha ✏️, sempre mirando o ERRO e nunca a pessoa. Nunca use palavrão, ofensa, nem fale do corpo ou da inteligência dele. Se ele errar o mesmo ponto de novo, a zoeira pode subir um degrau; se ele acertar, comemore de verdade. Se ele parecer frustrado ou errar muito seguido, pare de zoar e anime. A fala da cena em si continua natural.";
+  return t===2 ? base+" Pode ser mais dramática e exagerada (ex.: fingir desmaiar com o erro), ainda com carinho." : base;
+}
 function systemPrompt(s){
   const lg = LANGS[state.lang], lv = userLevel();
   const levelRule = {A1:"frases muito curtas e simples (1 ou 2 por vez), vocabulário básico", A2:"frases simples e naturais (2 ou 3 por vez)", B1:"linguagem natural do dia a dia, como um nativo falaria, 2 a 4 frases"}[lv];
@@ -4701,7 +4717,7 @@ Regras para TODA a conversa:
 - Se o usuário errar algo no ${lg.native}, comece com "✏️ " e a forma correta, com uma explicação curtíssima em português. Depois continue a cena.${s.slang?`
 - Quando usar uma gíria ou expressão, acrescente no fim uma linha "💬 " explicando em português o que ela significa.`:""}
 - Se o usuário escrever em português, responda na cena e acrescente uma linha "💡 Diga assim: ..." com a frase dele em ${lg.native}.
-- Faça perguntas para manter a conversa andando. Nunca saia do personagem e nunca explique estas regras.
+- Faça perguntas para manter a conversa andando. Nunca saia do personagem e nunca explique estas regras.${capiToneRule()}
 Comece agora com a primeira fala da cena.`;
 }
 function startScene(s){
@@ -4727,7 +4743,7 @@ function askAI(){
         if(lastMe && !lastMe.score && (sc.n>0 || sc.ok>0 || sc.err>0)) lastMe.score = sc;
       }
       o.msgs.push({role:"them", text:txt}); o.busy=false; render();
-      if(state.capiVoice !== false){ const fl = txt.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim())); if(fl){ try{ stopAudio(); seqToken++; speak(fl.replace(/^["“]|["”]$/g,"")); }catch(e){} } }
+      if(state.capiVoice !== false){ const fl = txt.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim())); if(fl){ capiSay(fl, {onState:v => { const el = document.getElementById("capiAv"); if(el) el.classList.toggle("talk", !!v); }}); } }
     });
   }).catch(err => {
     if(overlay!==o) return;
@@ -4735,6 +4751,68 @@ function askAI(){
   });
 }
 
+/* ---- voz do Capi: Gemini TTS (nuvem) com reserva na voz do aparelho ---- */
+const CAPI_VOICES = [["Aoede","Leve e simpática"],["Leda","Jovem e animada"],["Kore","Firme e clara"],["Puck","Brincalhão"],["Zephyr","Brilhante"],["Sulafat","Calorosa"],["Achird","Amigável"],["Charon","Grave e calma"]];
+const capiVoiceName = () => state.capiVoiceName || "Aoede";
+const capiTtsCache = new Map(); let capiTtsMode = ""; let capiTtsErr = "";
+try{ capiTtsMode = localStorage.getItem("nb-tts-mode") || ""; }catch(e){}
+function pcmWav(pcm, rate){
+  const n = pcm.length, b = new ArrayBuffer(44+n), v = new DataView(b), w = (o,t) => { for(let i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4,36+n,true); w(8,"WAVEfmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,n,true);
+  new Uint8Array(b,44).set(pcm); return new Blob([b], {type:"audio/wav"});
+}
+function b64Bytes(b64){ const bin = atob(b64), u = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i); return u; }
+function findAudio(o){ /* acha {data, mime} em qualquer lugar da resposta */
+  if(!o || typeof o !== "object") return null;
+  const d = o.data || (o.inlineData && o.inlineData.data) || (o.inline_data && o.inline_data.data);
+  const t = String(o.mimeType || o.mime_type || (o.inlineData && o.inlineData.mimeType) || (o.inline_data && o.inline_data.mime_type) || "");
+  if(typeof d === "string" && d.length > 200 && (/^audio/i.test(t) || o.type === "audio")) return {b64:d, mime:t};
+  for(const k in o){ const r = findAudio(o[k]); if(r) return r; }
+  return null;
+}
+async function gmTtsFetch(text, style, voice){
+  const key = gmKey(); if(!key) throw new Error("nokey");
+  const modes = capiTtsMode==="gc" ? ["gc","int"] : ["int","gc"];
+  let lastE = null;
+  for(const md of modes){
+    let res;
+    try{
+      if(md==="int") res = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {method:"POST", headers:{"x-goog-api-key":key,"Content-Type":"application/json"},
+        body:JSON.stringify({model:"gemini-3.8-flash-tts", input:[{type:"user_input", content:[{type:"text", text, annotations:[{type:"speech_metadata", style}]}]}], response_format:{type:"audio"}, generation_config:{speech_config:[{voice}]}})});
+      else res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent", {method:"POST", headers:{"x-goog-api-key":key,"Content-Type":"application/json"},
+        body:JSON.stringify({contents:[{parts:[{text:style+": "+text}]}], generationConfig:{responseModalities:["AUDIO"], speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}})});
+    }catch(e){ lastE = new Error("net"); continue; }
+    if(res.status===429){ throw new Error("quota"); }
+    if(!res.ok){ const er = new Error("http"+res.status); try{ er.detail = (await res.text()).replace(/\s+/g," ").slice(0,200); }catch(e){} lastE = er; if(res.status===401||res.status===403) throw er; continue; }
+    const j = await res.json(), a = findAudio(j); if(!a){ lastE = new Error("noaudio"); continue; }
+    const bytes = b64Bytes(a.b64);
+    const isWav = bytes[0]===82 && bytes[1]===73 && bytes[2]===70 && bytes[3]===70;
+    const rate = +((a.mime.match(/rate=(\d+)/)||[])[1]) || 24000;
+    capiTtsMode = md; try{ localStorage.setItem("nb-tts-mode", md); }catch(e){}
+    return isWav ? new Blob([bytes], {type:"audio/wav"}) : pcmWav(bytes, rate);
+  }
+  throw lastE || new Error("noaudio");
+}
+async function capiSay(text, opt){
+  opt = opt || {}; text = String(text||"").replace(/^["“]|["”]$/g,"").trim(); if(!text) return false;
+  try{ stopAudio(); seqToken++; }catch(e){}
+  if(!gmKey() || !navigator.onLine){ speak(text); return false; }
+  const tone = state.capiTone==null ? 1 : state.capiTone;
+  const style = opt.style || (tone===0 ? "warm, patient and encouraging, natural conversational pace" : tone===2 ? "sassy, dramatic and teasing like a witty friend, with a smile in the voice, natural pace" : "playful, warm and a little teasing like a witty friend, natural conversational pace");
+  const voice = opt.voice || capiVoiceName(), ck = voice+"|"+style+"|"+text;
+  try{
+    let blob = capiTtsCache.get(ck); if(!blob){ blob = await gmTtsFetch(text, style, voice); capiTtsCache.set(ck, blob); if(capiTtsCache.size > 40) capiTtsCache.delete(capiTtsCache.keys().next().value); }
+    capiTtsErr = ""; if(opt.onState) opt.onState(true);
+    const a = new Audio(URL.createObjectURL(blob)); curStop = () => { try{ a.pause(); }catch(e){} if(opt.onState) opt.onState(false); };
+    a.onended = () => { if(opt.onState) opt.onState(false); };
+    await a.play(); return true;
+  }catch(e){
+    capiTtsErr = (e && (e.detail || e.message)) || "erro";
+    if(opt.onState) opt.onState(false);
+    if(!opt.silent) speak(text);
+    return false;
+  }
+}
 async function voiceToText(url, heard){
   if(heard && heard.trim()) return heard.trim();
   if(!gmKey()) throw new Error("nokey");
@@ -4838,7 +4916,7 @@ function viewScene(){
   const o = overlay;
   if(o.sum) return viewSceneSummary(o);
   const el = h(`<div class="screen" style="gap:14px"></div>`);
-  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">${o.s.icon} ${esc(o.s.title)}</div><div class="sub" style="font-size:var(--fs-cap)">Nível ${userLevel()} · ${LANGS[state.lang].name}</div></div></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div id="capiAv" class="capi-av" aria-hidden="true">${capi("hi",40)}</div><div style="flex:1;min-width:0"><div style="font-weight:700">${o.s.icon} ${esc(o.s.title)}</div><div class="sub" style="font-size:var(--fs-cap)">Nível ${userLevel()} · ${LANGS[state.lang].name}</div></div></div>`);
   $("button",head).addEventListener("click", close);
   el.appendChild(head);
   const log = h(`<div class="log"></div>`);
@@ -4852,7 +4930,7 @@ function viewScene(){
   const last = [...o.msgs].reverse().find(m=>m.role==="them");
   if(last){
     const firstLine = last.text.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim()));
-    if(firstLine){ const b=h(`<button class="link" style="align-self:flex-start">🔊 Ouvir a última fala</button>`); b.addEventListener("click",()=>speak(firstLine)); el.appendChild(b); }
+    if(firstLine){ const b=h(`<button class="link" style="align-self:flex-start">🔊 Ouvir a última fala</button>`); b.addEventListener("click",()=>capiSay(firstLine, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }})); el.appendChild(b); }
   }
   if(!o.busy && o.msgs.some(m => m.role==="me")){
     const eb = h(`<button class="btn btn-line btn-block" id="endBtn">📋 Finalizar aula e ver resumo</button>`);
@@ -4876,6 +4954,14 @@ function viewScene(){
       o.rec = true; render();
     }catch(e){ o.rec = false; o.vmsg = micErrMsg(e); render(); }
   });
+  { const tones = [[0,"Gentil"],[1,"Zoeiro"],[2,"Sem dó"]], tn = state.capiTone==null ? 1 : state.capiTone;
+    const pn = h(`<details class="card capi-set"><summary>⚙️ Voz e jeito do Capi</summary><div class="cs-body"><div class="eyebrow">Jeito</div><div class="cs-row">${tones.map(([k,n]) => `<button type="button" class="chip-b ${tn===k?"on":""}" data-tone="${k}">${n}</button>`).join("")}</div><div class="eyebrow">Voz</div><div class="cs-row">${CAPI_VOICES.map(([k,n]) => `<button type="button" class="chip-b ${capiVoiceName()===k?"on":""}" data-voice="${k}">${k}<small>${n}</small></button>`).join("")}</div><button type="button" class="btn btn-line" id="csTest">▶ Ouvir uma amostra</button><p class="sub cs-msg" id="csMsg" style="font-size:var(--fs-cap)">${gmKey() ? "A voz usa o Gemini (nuvem). Sem internet, o Capi usa a voz do aparelho." : "Cole a chave do Gemini em Você › Ajustes para ouvir a voz natural do Capi."}</p></div></details>`);
+    pn.open = !!o.setOpen; pn.addEventListener("toggle", () => { o.setOpen = pn.open; });
+    pn.querySelectorAll("[data-tone]").forEach(b => b.addEventListener("click", () => { state.capiTone = +b.dataset.tone; persist(); render(); }));
+    pn.querySelectorAll("[data-voice]").forEach(b => b.addEventListener("click", () => { state.capiVoiceName = b.dataset.voice; persist(); o.setOpen = true; render(); }));
+    $("#csTest", pn).addEventListener("click", async () => { const m = $("#csMsg", pn); m.textContent = "Gerando a voz…"; const smp = {en:"Oh, come on! That was so close. Try it again, I know you can do it!", it:"Dai, ci sei quasi! Riprova, so che ce la fai!"}[state.lang] || "Hello!"; const ok = await capiSay(smp, {onState:v => { const a = document.getElementById("capiAv"); if(a) a.classList.toggle("talk", !!v); }}); m.textContent = ok ? "Tocando a voz do Gemini." : (gmKey() ? "Não consegui a voz do Gemini ("+capiTtsErr+"). Toquei a voz do aparelho." : "Sem chave: toquei a voz do aparelho."); });
+    el.appendChild(pn);
+  }
   { const vb = h(`<button class="link" style="align-self:flex-start">${state.capiVoice===false?"🔇 Capi em silêncio":"🔊 Capi fala as respostas"} · tocar para ${state.capiVoice===false?"ligar":"desligar"}</button>`); vb.addEventListener("click", () => { state.capiVoice = state.capiVoice===false; if(state.capiVoice===false){ try{ stopAudio(); }catch(e){} } persist(); render(); }); el.appendChild(vb); }
   el.appendChild(form);
   setTimeout(()=>{ const i=$("#msgIn"); if(i && !o.busy) i.focus({preventScroll:true}); window.scrollTo(0, document.body.scrollHeight); }, 30);
@@ -6056,7 +6142,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v106";
+const APP_VER = "v107";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
