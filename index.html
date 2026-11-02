@@ -1,4 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com; media-src 'self' blob: data: https://accent.gmu.edu https://archive.org https://*.archive.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#D9DDF7">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
@@ -3183,9 +3184,12 @@ const gmJson = raw => {
   }
   return JSON.parse(t.slice(st).replace(/[^}\]]*$/,""));
 };
+function safeB(x){ return esc(String(x==null?"":x)).replace(/&lt;(\/?)(b|i|em|strong)&gt;/gi,"<$1$2>"); }
+const PROF_RE = /\u0001[\s\S]*?\u0002/g;
+function safeUrl(u){ try{ const x = new URL(String(u), location.href); return (x.protocol==="https:"||x.protocol==="http:") ? x.href : "#"; }catch(e){ return "#"; } }
 function profCtx(){
   const p = state.prof; if(!p) return "";
-  return `\nPerfil do aluno (use para personalizar situações, exemplos e vocabulário): objetivo: ${p.goal||"-"}; contextos de uso: ${(p.contexts||[]).join(", ")||"-"}; interesses: ${(p.interests||[]).join(", ")||"-"}; dificuldades: ${(p.weak||[]).join(", ")||"-"}; estilo: ${p.style||"-"}.`;
+  return `\u0001\nPerfil do aluno (use para personalizar situações, exemplos e vocabulário): objetivo: ${p.goal||"-"}; contextos de uso: ${(p.contexts||[]).join(", ")||"-"}; interesses: ${(p.interests||[]).join(", ")||"-"}; dificuldades: ${(p.weak||[]).join(", ")||"-"}; estilo: ${p.style||"-"}.\u0002`;
 }
 async function aiFresh(u){
   if(!gmKey() || !navigator.onLine) return [];
@@ -3320,7 +3324,7 @@ function viewLesson(){
   if(o.stage==="tip"){
     el.appendChild(h(`<div><h1 class="headline">${esc(u.title)}</h1><p class="sub" style="margin-top:4px">${esc(u.subtitle)} · nível ${u.level}</p></div>`));
     if(UNIT_GOALS[u.id]) el.appendChild(h(`<div class="m-goal">🎯 <b>Meta desta lição:</b> ao final você consegue ${esc(UNIT_GOALS[u.id])}</div>`));
-    el.appendChild(h(`<div class="tip">${u.tip}</div>`));
+    el.appendChild(h(`<div class="tip">${safeB(u.tip)}</div>`));
     const b = h(`<button class="btn btn-dark btn-block">Ver as expressões <span class="arr">→</span></button>`);
     b.addEventListener("click", () => { o.stage="vocab"; render(); });
     el.appendChild(b);
@@ -4437,7 +4441,7 @@ function viewChat(){
     <div><p class="hello">Conversar · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Pratique <span class="script" style="font-size:32px">de verdade</span></h1>
     <p class="sub" style="margin-top:6px">Uma pessoa da cena responde no seu nível, traduz e corrige seus erros. Escreva no idioma — ou em português, que ela te mostra como dizer.</p></div>
   </div>`);
-  if(!aiAvail()){ if(!navigator.onLine) el.appendChild(h(`<section class="card"><b>Sem internet</b><p class="sub" style="margin-top:4px">O tutor de IA precisa de conexão. Quando voltar o sinal, ele funciona sem chave nenhuma.</p></section>`)); else { el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); } }
+  if(!aiAvail()){ if(!navigator.onLine) el.appendChild(h(`<section class="card"><b>Sem internet</b><p class="sub" style="margin-top:4px">O tutor de IA precisa de conexão. Quando voltar o sinal, ligue a IA sem chave em Você › Ajustes ou use uma chave sua.</p></section>`)); else { el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); } }
   CATS.filter(c=>c.id!=="base").forEach(c => {
     const list = SCENES[state.lang].filter(s=>s.cat===c.id);
     if(!list.length) return;
@@ -4623,7 +4627,7 @@ function viewScene(){
    ========================================================= */
 const fmtDate = s => { const [y,m,d] = String(s).split("-"); return d && m ? `${d}/${m}` : esc(s); };
 function newsRow(n){
-  const row = h(`<a class="news-item news-link" href="${esc(n.url)}" target="_blank" rel="noopener">
+  const row = h(`<a class="news-item news-link" href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">
     <span style="min-width:0">
       <span class="news-meta">${esc(n.topic)} · ${esc(n.source)} · ${fmtDate(n.date)}</span>
       <div class="news-title">${esc(n.headline)}</div>
@@ -4876,7 +4880,7 @@ const BOOK_ART = (() => {
 const bookArt = id => BOOK_ART[id] ? "url('data:image/svg+xml;utf8," + encodeURIComponent(BOOK_ART[id]).replace(/'/g,"%27") + "')" : "";
 function bookCover(b){
   const m = b.free && b.free.gutenberg && b.free.gutenberg.match(/ebooks\/(\d+)/);
-  const ic = `<span class="m-ic">${b.icon||"📚"}</span>`;
+  const ic = `<span class="m-ic">${esc(b.icon||"📚")}</span>`;
   if(!m || window.claude) return ic;
   return `<span class="m-cov"><img src="https://www.gutenberg.org/cache/epub/${m[1]}/pg${m[1]}.cover.medium.jpg" alt="Capa de ${esc(b.title)}" loading="lazy" onerror="this.parentNode.outerHTML=this.parentNode.getAttribute('data-ic')"></span>`.replace('<span class="m-cov">', `<span class="m-cov" data-ic='${ic.replace(/'/g,"&#39;")}'>`);
 }
@@ -5210,7 +5214,7 @@ const PODS = {
 };
 const pods = () => PODS[state.lang] || [];
 function dailyPod(){ const l = pods(); if(!l.length) return null; const d = Math.floor(Date.now()/86400000); const lv = userLevel(); const ok = l.filter(p => { const m = p.lv.match(/[ABC]\d/g) || []; return m.length && LEVEL_ORDER[m[0]] <= LEVEL_ORDER[lv]+0; }); const pool = ok.length ? ok : l; return pool[d % pool.length]; }
-function podLinks(p){ const q = encodeURIComponent(p.q || p.n); return `<div class="links"><a href="${esc(p.site)}" target="_blank" rel="noopener">Site oficial ↗</a><a href="https://podcasts.apple.com/search?term=${q}" target="_blank" rel="noopener">Apple Podcasts ↗</a><a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Spotify ↗</a><a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">YouTube ↗</a></div>`; }
+function podLinks(p){ const q = encodeURIComponent(p.q || p.n); return `<div class="links"><a href="${esc(safeUrl(p.site))}" target="_blank" rel="noopener">Site oficial ↗</a><a href="https://podcasts.apple.com/search?term=${q}" target="_blank" rel="noopener">Apple Podcasts ↗</a><a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Spotify ↗</a><a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">YouTube ↗</a></div>`; }
 function startPod(p){ p = p || dailyPod(); if(!p){ toast("Ainda não há podcasts neste idioma."); return; } open({type:"podp", pid:p.id}); }
 function viewPodp(){
   const o = overlay, p = pods().find(x => x.id===o.pid) || pods()[0], el = h(`<div class="screen"></div>`);
@@ -5651,7 +5655,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v86";
+const APP_VER = "v87";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5921,6 +5925,7 @@ async function azAssess(url, ref){
   const wav = await azWav(url);
   const loc = state.lang === "it" ? "it-IT" : "en-US";
   const hdr = btoa(JSON.stringify({ReferenceText:ref, GradingSystem:"HundredMark", Granularity:"Phoneme", Dimension:"Comprehensive", EnableMiscue:true}));
+  if(!/^[a-z0-9-]{3,30}$/i.test(String(c.region))) throw new Error("region");
   const res = await fetch(`https://${c.region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${loc}&format=detailed`, {method:"POST", headers:{"Ocp-Apim-Subscription-Key":c.key, "Content-Type":"audio/wav; codecs=audio/pcm; samplerate=16000", "Accept":"application/json", "Pronunciation-Assessment":hdr}, body:wav});
   if(res.status===401 || res.status===403) throw new Error("key");
   if(res.status===429) throw new Error("quota");
@@ -5988,7 +5993,7 @@ function learnCard(){
 }
 /* ---------- IA SEM CHAVE (testada em 02/11/2026 a partir do site): OVHcloud AI Endpoints + Pollinations legado ---------- */
 const OVH = {base:"https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", prefer:["Mistral-Small-3.2-24B-Instruct-2506","Meta-Llama-3_3-70B-Instruct","gpt-oss-120b","Mistral-Nemo-Instruct-2407"], cool:{}, list:null};
-const keylessOn = () => { try{ return localStorage.getItem("nb-keyless") !== "0"; }catch(e){ return true; } };
+const keylessOn = () => { try{ return localStorage.getItem("nb-keyless") === "1"; }catch(e){ return false; } };
 async function ovhModels(){
   if(OVH.list) return OVH.list;
   let ids = [];
@@ -6042,8 +6047,8 @@ async function provModel(p, key, force){
   if(!pick) throw new Error("model"); try{ localStorage.setItem("nb-km-"+p.id, pick); }catch(e){} return pick;
 }
 function toChat(inp){
-  if(typeof inp === "string") return [{role:"user", content:inp}];
-  return (inp||[]).map(m => ({role:m.role==="assistant" ? "assistant" : m.role==="system" ? "system" : "user", content:String(m.content||"")}));
+  if(typeof inp === "string") return [{role:"user", content:inp.replace(PROF_RE,"")}];
+  return (inp||[]).map(m => ({role:m.role==="assistant" ? "assistant" : m.role==="system" ? "system" : "user", content:String(m.content||"").replace(PROF_RE,"")}));
 }
 async function provCall(inp, maxTok, json){
   let last = null;
@@ -6072,15 +6077,16 @@ async function aiTextAny(inp, maxTok, json){
   throw err || new Error("nokey");
 }
 const gmContents = inp => {
-  if(typeof inp === "string") return [{role:"user", parts:[{text:inp}]}];
+  const K = x => String(x).replace(/[\u0001\u0002]/g,"");
+  if(typeof inp === "string") return [{role:"user", parts:[{text:K(inp)}]}];
   const out = [];
-  (inp||[]).forEach(m => { const r = m.role==="assistant" ? "model" : "user", t = String(m.content||""); const l = out[out.length-1]; if(l && l.role===r) l.parts[0].text += "\n\n"+t; else out.push({role:r, parts:[{text:t}]}); });
+  (inp||[]).forEach(m => { const r = m.role==="assistant" ? "model" : "user", t = K(m.content||""); const l = out[out.length-1]; if(l && l.role===r) l.parts[0].text += "\n\n"+t; else out.push({role:r, parts:[{text:t}]}); });
   return out;
 };
 function provKeyCard(){
-  const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">IA sem chave (já ativa)</div>
-    <p class="sub" style="font-size:12.5px">O app usa de graça modelos abertos hospedados na Europa (OVHcloud) e, se falhar, o Pollinations. Não precisa de conta nem de chave. O que você escreve para o tutor é enviado a esses serviços; evite dados pessoais. A fala gravada nunca vai para eles.</p>
-    <button class="filter ${keylessOn()?"on":""}" id="klTg">${keylessOn() ? "✓ IA sem chave ligada" : "IA sem chave desligada"}</button>
+  const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">IA sem chave (opcional)</div>
+    <p class="sub" style="font-size:12.5px">O app usa de graça modelos abertos hospedados na Europa (OVHcloud) e, se falhar, o Pollinations. Não precisa de conta nem de chave, mas fica DESLIGADA até você ligar. Ao ligar, o texto que você escreve para o tutor (e trechos de aulas para gerar exercícios) é enviado a esses serviços de terceiros, sem seu perfil de estudo. Não escreva dados pessoais. A fala gravada nunca vai para eles.</p>
+    <button class="filter ${keylessOn()?"on":""}" id="klTg">${keylessOn() ? "✓ Ligada: aceito enviar meu texto a OVHcloud/Pollinations" : "Ligar IA sem chave (envia texto a terceiros)"}</button>
     <div class="eyebrow" style="margin-top:6px">IAs gratuitas de reserva (opcional, com chave)</div>
     <p class="sub" style="font-size:12.5px">Quando o Gemini estiver ocupado ou sem cota, o app tenta estas automaticamente. Todas têm plano grátis, sem cartão. Cole só as que quiser.</p>
     ${FREE_PROV.map(p => `<div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:14px">${p.n}${provKey(p.id) ? " · ativa ✓" : ""}</b><a class="link" href="${p.url}" target="_blank" rel="noopener" style="font-size:12.5px">Criar chave ↗</a></div><p class="sub" style="font-size:12px">${p.tip}</p>${provKey(p.id) ? `<button class="btn btn-line" data-rm="${p.id}">Remover</button>` : `<input class="in" type="password" data-p="${p.id}" placeholder="Chave ${p.n}" autocomplete="off">`}</div>`).join("")}
@@ -6431,7 +6437,7 @@ function viewArticle(){
       el.appendChild(h(`<div class="feedback good"><b>Notícia lida ✓</b>Volte amanhã para reler em voz alta — ler e ouvir juntos fixa o vocabulário.</div>`));
     }
   }
-  el.appendChild(h(`<p class="src">Fonte: ${esc(n.source)}, ${fmtDate(n.date)}. Texto adaptado para estudo. <a href="${esc(n.url)}" target="_blank" rel="noopener">Ler a matéria original ↗</a></p>`));
+  el.appendChild(h(`<p class="src">Fonte: ${esc(n.source)}, ${fmtDate(n.date)}. Texto adaptado para estudo. <a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">Ler a matéria original ↗</a></p>`));
   return el;
 }
 
