@@ -458,6 +458,26 @@ ul.plan{margin:10px 0 0; padding-left:18px; display:flex; flex-direction:column;
 .vz-row{display:flex; align-items:center; gap:10px}
 .vz-row input[type=range]{flex:1}
 .vz-t{font-size:12px; color:var(--ink-dim); min-width:38px; text-align:center; font-variant-numeric:tabular-nums}
+.vz-lines{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.vz-line{display:flex;flex-direction:column;gap:2px;text-align:left;background:transparent;border:1px solid transparent;border-radius:12px;padding:8px 10px;font-size:17px;line-height:1.45;color:var(--ink)}
+.vz-line.act{background:var(--accent-soft);border-color:var(--accent)}
+.vz-pt{font-size:13.5px;color:var(--ink-dim)}
+.vz-w{text-decoration:underline dotted;text-underline-offset:3px}
+.vz-gl{display:none;margin-top:8px;padding:8px 12px;border-radius:12px;background:var(--surface-2,#F3EFE6);font-size:14px}
+.vz-gl.on{display:block}
+.vz-blank{display:inline-block;min-width:70px;border-bottom:2px solid var(--accent)}
+.six{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.six-t{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--line);background:var(--six-bg,var(--surface));border-radius:20px;padding:14px;min-height:128px}
+.six-ic{font-size:38px;line-height:1;margin-bottom:6px}
+.six-t b{font-size:16px}
+.six-t small{font-size:12.5px;color:var(--ink-dim);line-height:1.3}
+.fc-word{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.fc-word span{width:30px;height:40px;border-bottom:3px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+.fc-word span.lost{color:var(--bad,#B4443A)}
+.fc-kb{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+.fc-kb button{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:15px;padding:0}
+.fc-kb button.ok{background:var(--ok-soft);border-color:transparent}
+.fc-kb button.no{opacity:.35}
 .pgrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
 .ptile{display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:left; border:1px solid var(--line); background:var(--surface); border-radius:var(--r-m); padding:12px; min-height:92px}
 .ptile .game-ic{width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px}
@@ -760,7 +780,7 @@ button:active:not(:disabled){transform:scale(.985)}
 .sk-row{grid-template-columns:104px minmax(0,1fr) 92px!important}
 .sk-bars{display:flex;flex-direction:column;gap:3px}
 .sk-bar.b2{height:5px;opacity:.9}
-.sk-v{white-space:nowrap}
+.sk-v{white-space:normal}
 </style>
 
 <div id="app">
@@ -1409,7 +1429,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes};
+    const map = {lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, hub:viewHub, forca:viewForca, abooks:viewAbooks};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -1776,7 +1796,7 @@ function planCandidates(){
     if(sc) out.chat = {key:"chat", ic:"💬", t:"Conversar: "+sc.title, s:"Conversa com a IA, correção no final", min:7, p:P("prod")-4, act:() => startScene(sc)};
   }
   { const sg = nextSong(); if(sg) out.sing = {key:"sing", ic:"🎤", t:"Karaokê: "+sg.title, s:"Cante junto com a base · 4 min", min:4, p:P("listen")-6, act:() => startKara(sg)}; }
-  if(state.lang==="en"){ const da = dailyAccent(); out.voz = {key:"voz", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Pessoa real falando · ouça e repare", min:3, p:P("listen")-4, act:() => startVozes(da)}; }
+  if(state.lang==="en"){ const da = dailyAccent(); out.voz = {key:"voz", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Pessoa real falando · texto e ditado", min:3, p:P("listen")-4, act:() => startVozes(da)}; }
   { const dp = dailyPod(); if(dp) out.pod = {key:"pod", ic:"🎧", t:"Podcast: "+dp.n, s:dp.acc+" · "+dp.len+" · escuta longa", min:8, p:P("listen")-10, act:() => startPod(dp)}; }
   return out;
 }
@@ -2090,7 +2110,7 @@ function startLadder(){
 }
 function ladAskAI(o){
   const q = o.qs[o.i], lg = LANGS[state.lang];
-  if(!aiAvail()){ toast("Cole a chave gratuita do Gemini em Meu relatório de pronúncia para usar a IA."); return; }
+  if(!aiAvail()){ toast("Cole a chave gratuita do Gemini em Você › Ajustes para usar a IA."); return; }
   const k = q.mode === "cloze" ? q.k : ladAlts(q.ans)[0], avoid = (xfer()[q.id] || []).map(c => c.t).concat(q.t ? [q.t] : []).slice(0, 4).join(" | ");
   o.busy = true; render();
   aiSampleGet().then(sample => {
@@ -2714,7 +2734,7 @@ function viewFilm(){
     $$("[data-d]", saved).forEach(b => b.addEventListener("click", () => { const v = filmStore.get(); v.splice(+b.dataset.d, 1); filmStore.set(v); drawSaved(); }));
   };
   async function openVideo(id, a, b, name){
-    kill(); A = a || 0; B = b || 0; stage.style.display = "flex";
+    kill(); A = a || 0; B = b || 0; stage.style.display = "flex"; setTimeout(() => { try{ stage.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){} }, 60);
     stage.innerHTML = `<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden"><div id="ytp" style="position:absolute;inset:0"></div></div>
       <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="eyebrow">3. Treine o trecho</div>
       <div id="ftime" style="font-weight:700">Trecho: <span id="fa">${fmtClock(A)}</span> → <span id="fb">${B ? fmtClock(B) : "fim"}</span></div>
@@ -2776,8 +2796,8 @@ function viewHome(){
   if(first) el.appendChild(hero); else el.appendChild(h(`<div><p class="hello">${greeting()} · ${chapLine}</p><h1 class="headline" style="margin-top:2px">O que fazer <span class="script" style="font-size:32px">hoje</span></h1></div>`));
   /* status compacto */
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
-  if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); }
-  else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); }
+  if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); el.appendChild(sixCard()); }
+  else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); el.appendChild(sixCard()); }
   /* atalhos: no máximo 4, só depois da 1ª lição */
   if(!first){
     el.appendChild(shelfCard(true));
@@ -2801,7 +2821,7 @@ function viewHome(){
       ${missionsOf().length ? `<div class="how2-row"><b>2</b><span><b>Avance por capítulos.</b> Cada um prepara você para uma situação real.</span></div>
       <div class="how2-row"><b>3</b><span><b>Prove numa conversa.</b> No fim do capítulo, a IA conversa com você e dá nota.</span></div>` : `<div class="how2-row"><b>2</b><span><b>Siga a jornada.</b> As unidades vão do básico à viagem e ao dia a dia.</span></div>
       <div class="how2-row"><b>3</b><span><b>Converse com a IA.</b> Ela responde no seu nível e corrige você.</span></div>`}
-      <p class="sub" style="font-size:12.5px;margin-top:6px">Jogos, Anki, leituras e notícias aparecem aqui depois da primeira lição.</p></section>`));
+      </section>`));
   }
   /* próximos capítulos */
   const ms = missionsOf();
@@ -4014,7 +4034,7 @@ function startCustom(){
   const o = overlay;
   const items = revAll().filter(i => i.streak<3).sort((a,b)=>b.miss-a.miss).slice(0,8);
   if(items.length < 3){ if(o) o.busy=false; toast("Erre ou marque “Ainda não” em mais alguns itens e eu monto a aula."); if(o) render(); return; }
-  if(!aiAvail()){ toast("Cole a chave gratuita do Gemini em Meu relatório de pronúncia para usar a IA."); return; }
+  if(!aiAvail()){ toast("Cole a chave gratuita do Gemini em Você › Ajustes para usar a IA."); return; }
   o.busy = true; render();
   const lg = LANGS[state.lang], lv = userLevel();
   const list = items.map((i,k) => (k+1)+". “"+i.t+"”"+(i.kind==="x"?"":" = "+i.pt)).join("\n");
@@ -4404,6 +4424,7 @@ function viewChat(){
     <div><p class="hello">Conversar · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Pratique <span class="script" style="font-size:32px">de verdade</span></h1>
     <p class="sub" style="margin-top:6px">Uma pessoa da cena responde no seu nível, traduz e corrige seus erros. Escreva no idioma — ou em português, que ela te mostra como dizer.</p></div>
   </div>`);
+  if(!aiAvail()) el.appendChild(gmKeyCard());
   CATS.filter(c=>c.id!=="base").forEach(c => {
     const list = SCENES[state.lang].filter(s=>s.cat===c.id);
     if(!list.length) return;
@@ -4438,7 +4459,7 @@ function startScene(s){
 }
 function askAI(){
   const o = overlay;
-  if(!aiAvail()){ o.busy=false; o.msgs.push({role:"sys", text:"Para conversar com a IA, cole a chave gratuita do Gemini em Praticar › Meu relatório de pronúncia."}); render(); return; }
+  if(!aiAvail()){ o.busy=false; o.msgs.push({role:"sys", text:"Para conversar com a IA, cole a chave gratuita do Gemini em Você › Ajustes (ou no topo da tela Conversar)."}); render(); return; }
   aiSampleGet().then(sample => {
     if(!sample){ o.busy=false; o.msgs.push({role:"sys", text:"Conversa indisponível agora."}); render(); return; }
     const input = [{role:"user", content:systemPrompt(o.s)}];
@@ -4489,7 +4510,7 @@ function endScene(o){
     addXp(5 + Math.round(st.avg||0)); persist();
   }
   render(); scrollTo(0,0);
-  if(!aiAvail()){ o.sum.busy=false; o.sum.err="Cole a chave gratuita do Gemini em Meu relatório de pronúncia para usar o resumo por IA."; render(); return; }
+  if(!aiAvail()){ o.sum.busy=false; o.sum.err="Cole a chave gratuita do Gemini em Você › Ajustes para usar o resumo por IA."; render(); return; }
   aiSampleGet().then(sample => {
     if(!sample){ o.sum.busy=false; o.sum.err="Resumo por IA indisponível agora."; render(); return; }
     const lg = LANGS[state.lang];
@@ -4629,7 +4650,7 @@ function splitSentences(text){
 }
 const rdTrOn = () => state.rdTr !== false;
 function startOwnText(){ open({type:"story", st:null, paste:true, tr:rdTrOn()}); }
-function startStory(st){ stopAudio(); seqToken++; open({type:"story", st, tr:rdTrOn()}); }
+function startStory(st, audio){ stopAudio(); seqToken++; open({type:"story", st, tr:rdTrOn(), autoplay:!!audio}); }
 function ankiAdd(t, pt, note, ctx){
   const s2 = SRS(); if(Object.values(s2.cards).some(c => c.t===t)) return false;
   const id = "u:"+Date.now().toString(36)+Math.floor(Math.random()*9999);
@@ -4659,7 +4680,7 @@ function viewStory(){
   if(o.paste){
     const hd = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div style="flex:1;min-width:0"><div style="font-weight:700">Ler meu texto</div><div class="sub" style="font-size:12px">${LANGS[state.lang].name}</div></div></div>`);
     $("button",hd).addEventListener("click", back); el.appendChild(hd);
-    el.appendChild(h(`<div><h1 class="headline">Cole um <span class="script" style="font-size:32px">trecho</span></h1><p class="sub" style="margin-top:6px">Um capítulo de um livro que você já tem, um artigo, uma letra. Toque nas palavras para ver o significado no contexto (a IA traduz com o app aberto no Claude) e salve as novas no Anki.</p></div>`));
+    el.appendChild(h(`<div><h1 class="headline">Cole um <span class="script" style="font-size:32px">trecho</span></h1><p class="sub" style="margin-top:6px">Um capítulo de um livro que você já tem, um artigo, uma letra. Toque nas palavras para ver o significado no contexto (a IA traduz quando a chave do Gemini está ativa) e salve as novas no Anki.</p></div>`));
     const f = h(`<form class="card dict"><div class="eyebrow">Título (opcional)</div><input id="ownT" class="in" placeholder="Ex.: Capítulo 1" autocomplete="off"><div class="eyebrow">Texto em ${LANGS[state.lang].name.toLowerCase()}</div><textarea id="ownX" placeholder="Cole aqui (até 4.000 caracteres)…" style="min-height:180px"></textarea><button class="btn btn-dark" type="submit">Começar a ler</button></form>`);
     f.addEventListener("submit", e => {
       e.preventDefault();
@@ -4717,6 +4738,7 @@ function viewStory(){
     }
     if(tk === seqToken){ playing = false; $$(".rd-s",body).forEach(x=>x.classList.remove("now")); const b = $("#rdAll",bar); if(b) b.textContent = "▶ Ouvir tudo"; }
   });
+  if(o.autoplay){ o.autoplay = false; setTimeout(() => { const b = $("#rdAll"); if(b && overlay===o) b.click(); }, 350); }
   /* folha da palavra */
   const closeSheet = () => { const x = $(".rd-sheet", el); if(x) x.remove(); $$(".w.sel",body).forEach(w => w.classList.remove("sel")); };
   body.addEventListener("click", e => {
@@ -4733,7 +4755,7 @@ function viewStory(){
     if(!(st.gloss && st.gloss[w])){
       aiJson(`Traduza a palavra "${w}" para o português do Brasil, no sentido que ela tem nesta frase em ${LANGS[state.lang].name}: "${sent.t}". Responda somente JSON: {"pt":"até 4 palavras"}`)
         .then(j => { const g = String((j&&j.pt)||"").trim(); if(g){ st.gloss = st.gloss || {}; st.gloss[w] = g; const gel = $("#rdG",sh); if(gel) gel.textContent = g; } })
-        .catch(() => { const gel = $("#rdG",sh); if(gel) gel.textContent = "Tradução por IA indisponível (abra o app no Claude)."; });
+        .catch(() => { const gel = $("#rdG",sh); if(gel) gel.textContent = "Tradução por IA indisponível. Ative a chave do Gemini em Você › Ajustes."; });
     }
     el.appendChild(sh);
   });
@@ -4766,7 +4788,16 @@ function searchFeatures(){
     ["📄","Colar meu texto","ler meu texto colar", () => startOwnText()],
     ["📰","Notícias","notícias semana", () => { newsSub="news"; go("news"); }],
     ["🎵","Música","músicas letras canções", () => { newsSub="music"; go("news"); }],
-    ["💬","Conversar com IA","chat conversa cena", () => go("chat")],
+    ["💬","Tutor de IA · conversar","chat conversa cena tutor ia", () => go("chat")],
+    ["🎬","Filmes, séries e cenas de cinema","filme filmes série séries cinema cena vídeo video legenda", () => { newsSub="videos"; go("news"); }],
+    ["🎙️","Podcasts","podcast podcasts ouvir episódio", () => { newsSub="pods"; go("news"); }],
+    ["🌍","Vozes reais · sotaques","vozes sotaque sotaques accent pessoas reais ditado", () => startVozes(dailyAccent())],
+    ["📖","Audiolivros","audiolivro audiolivros audiobook ouvir livro", () => open({type:"abooks"})],
+    ["🎤","Karaokê","karaoke karaokê cantar música", () => { newsSub="music"; go("news"); }],
+    ["🪢","Forca","forca jogo palavra hangman", () => startForca()],
+    ["🗂️","Vocabulário","vocabulário palavras flashcards cartões", () => open({type:"hub", k:"vocab"})],
+    ["🎮","Jogos","jogos jogo games brincar", () => open({type:"hub", k:"games"})],
+    ["🔑","Chave da IA (Gemini)","chave gemini api ia key", () => go("you")],
     ["🧭","Trilha de lições","missões lições unidades", () => go("learn")],
     ["👤","Meu progresso e ajustes","perfil xp ajustes", () => go("you")]
   ];
@@ -4884,7 +4915,7 @@ function libNow(){
   if(cn) out.push({k:"Ver · Cena de cinema", ic:"🎬", t:cn.title, s:"Sem legenda · "+cn.genre+" · "+cn.lvl, act:() => startCinema(cn.id)});
   const sg = nextSong();
   if(sg) out.push({k:"Ouvir · Karaokê", ic:"🎤", t:sg.title, s:"Cante junto, as palavras acendem · "+sg.level, act:() => startKara(sg)});
-  if(state.lang==="en"){ const da = dailyAccent(); out.push({k:"Ouvir · Vozes reais", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Pessoas de verdade, com velocidade e pausa", act:() => startVozes(da)}); }
+  if(state.lang==="en"){ const da = dailyAccent(); out.push({k:"Ouvir · Vozes reais", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Entenda pessoas reais: texto, tradução e ditado", act:() => startVozes(da)}); }
   const dp = dailyPod();
   if(dp) out.push({k:"Ouvir · Podcast", ic:"🎧", t:dp.n, s:dp.acc+" · "+dp.len+" · "+dp.lv, act:() => startPod(dp)});
   const bk = books().find(b => !ss[b.id]);
@@ -4923,7 +4954,7 @@ function viewNews(){
   const grp = GROUPS.find(g => g[2].includes(newsSub)) || GROUPS[0];
   const sNames = {stories:"Histórias", books:"Livros", news:"Notícias", cur:"Curiosidades", places:"Lugares", quiz:"Testes", videos:"Cenas e filmes", music:"Música e karaokê", pods:"Podcasts", voices:"Vozes reais"};
   const avail = k => !((k==="stories" && !stories().length) || (k==="books" && !books().length) || (k==="pods" && !pods().length) || (k==="voices" && state.lang!=="en"));
-  const heads = {now:["O que ler, ver e ouvir","agora"], videos:["Cenas","e filmes"], news:["Leia o mundo","em "+lg.native], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","e karaokê"], pods:["Podcasts","para o ouvido"], voices:["Vozes reais","de cada sotaque"]};
+  const heads = {now:["O que ler, ver e ouvir","agora"], videos:["Cenas","e filmes"], news:["Leia o mundo","em "+lg.name.toLowerCase()], stories:["Histórias","para ler tocando"], books:["Livros","grátis para ler"], cur:["Curiosidades","que ninguém te conta"], places:["Lugares","e o que dizer lá"], quiz:["Teste","o que você sabe"], music:["Música","e karaokê"], pods:["Podcasts","para o ouvido"], voices:["Vozes reais","de cada sotaque"]};
   const [h1, h2] = heads[newsSub];
   const el = h(`<div class="screen">
     <div><p class="hello">Biblioteca · ${lg.name}</p><h1 class="headline" style="margin-top:2px">${h1} <span class="script" style="font-size:32px">${h2}</span></h1></div>
@@ -5120,7 +5151,7 @@ function viewKara(){
   const o = overlay, sg = o.sg, el = h(`<div class="screen"></div>`);
   if(!o.bpm) o.bpm = 90;
   const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1"><span class="pill lv">${esc(sg.level)}</span>Karaokê · ${esc(sg.theme)}</div></div>`);
-  $("button",head).addEventListener("click", () => { karaStop(o, false); open({type:"song", sg, showTr:false}); });
+  $("button",head).addEventListener("click", () => { karaStop(o, false); if(o.from==="song") open({type:"song", sg, showTr:false}); else close(); });
   el.appendChild(head);
   el.appendChild(h(`<div><h1 class="headline">${sg.icon||"🎤"} ${esc(sg.title)}</h1><p class="sub" style="margin-top:4px">A base instrumental é criada pelo app, funciona sem internet e toca mesmo no silencioso. Cante junto: as palavras acendem no ritmo.</p></div>`));
   const seg = h(`<div class="seg">${Object.keys(KARA_BPM).map(b => `<button data-b="${b}" class="${+b===o.bpm?"on":""}">${KARA_BPM[b]}</button>`).join("")}</div>`);
@@ -5226,99 +5257,279 @@ const VOICE_PT = "Por favor, ligue para a Stella. Peça a ela que traga estas co
 const voiceUrl = (acc, id) => "https://accent.gmu.edu/audio/"+(acc==="br" ? "portuguese" : "english")+id+".mp3";
 const vzWho = (v, acc) => (v[1]==="F" ? "Mulher" : "Homem")+", "+v[2]+" anos · "+v[3]+(acc==="br" ? ", Brasil" : "");
 const vzT = t => { t = Math.max(0, Math.floor(t||0)); return Math.floor(t/60)+":"+String(t%60).padStart(2,"0"); };
-let vozAud = null;
-function vozStop(){ if(vozAud){ try{ vozAud.pause(); vozAud.src = ""; }catch(e){} vozAud = null; } }
-function dailyAccent(){ const ks = Object.keys(VOICES).filter(k => k!=="br"); return ks[Math.floor(Date.now()/86400000) % ks.length]; }
-function startVozes(acc, quiz){ if(state.lang!=="en"){ toast("As vozes reais são de inglês. Troque o idioma para Inglês."); return; } stopAudio(); open({type:"vozes", acc:acc||"us", i:0, speed:1, vol:1, loop:false, quiz:!!quiz, xpg:{}}); }
-function vozQuizNext(o){
-  const ks = Object.keys(VOICES).filter(k => k!=="br"), acc = ks[Math.floor(Math.random()*ks.length)], i = Math.floor(Math.random()*VOICES[acc].length);
-  const others = shuffle(ks.filter(k => k!==acc)).slice(0,3); o.q = {acc, i, opts:shuffle([acc].concat(others)), ans:null};
+const VOZ_CHUNKS = [
+  ["Please call Stella.", "Por favor, ligue para a Stella."],
+  ["Ask her to bring these things with her from the store:", "Peça a ela que traga estas coisas da loja:"],
+  ["Six spoons of fresh snow peas,", "seis colheres de ervilhas frescas,"],
+  ["five thick slabs of blue cheese,", "cinco fatias grossas de queijo azul,"],
+  ["and maybe a snack for her brother Bob.", "e talvez um lanche para o irmão dela, Bob."],
+  ["We also need a small plastic snake", "Também precisamos de uma pequena cobra de plástico"],
+  ["and a big toy frog for the kids.", "e de um grande sapo de brinquedo para as crianças."],
+  ["She can scoop these things into three red bags,", "Ela pode colocar essas coisas em três sacolas vermelhas,"],
+  ["and we will go meet her Wednesday at the train station.", "e vamos encontrá-la na quarta-feira na estação de trem."]
+];
+const VOZ_GLOSS = {store:"loja", spoons:"colheres", fresh:"frescas", "snow peas":"ervilhas-tortas", thick:"grossas", slabs:"fatias / pedaços", cheese:"queijo", snack:"lanche", brother:"irmão", plastic:"plástico", snake:"cobra", toy:"brinquedo", frog:"sapo", kids:"crianças", scoop:"pegar com colher / juntar", bags:"sacolas", Wednesday:"quarta-feira", station:"estação", meet:"encontrar"};
+const VOZ_BLANKS = [[0,"Stella",["Stella","Bella","Sheila","Ella"]],[1,"store",["store","stove","stork","star"]],[2,"spoons",["spoons","spoon","moons","balloons"]],[2,"peas",["peas","peace","bees","keys"]],[3,"thick",["thick","sick","trick","thin"]],[3,"cheese",["cheese","cheeks","chase","jeans"]],[4,"snack",["snack","snake","snap","stack"]],[4,"Bob",["Bob","Rob","Bop","Pop"]],[5,"snake",["snake","snack","steak","shake"]],[6,"frog",["frog","fog","dog","flock"]],[7,"scoop",["scoop","school","soup","scope"]],[7,"three",["three","tree","free","see"]],[7,"bags",["bags","backs","bugs","beds"]],[8,"Wednesday",["Wednesday","Tuesday","weekday","Thursday"]],[8,"train",["train","rain","trend","plane"]]];
+function vozTimes(dur){
+  const lead = Math.min(1.2, dur*0.04), tail = Math.min(1, dur*0.03), w = VOZ_CHUNKS.map(c => c[0].length + (/[.:]$/.test(c[0]) ? 16 : 7));
+  const tot = w.reduce((a,b)=>a+b,0), span = Math.max(1, dur-lead-tail); let t = lead;
+  return w.map(x => { const s = t; t += x/tot*span; return {s, e:t}; });
 }
-function vozPlayer(o, acc, i, onEnd){
+let vozAud = null, vozSegEnd = null;
+function vozStop(){ if(vozAud){ try{ vozAud.onerror = null; vozAud.ontimeupdate = null; vozAud.onended = null; vozAud.pause(); vozAud.removeAttribute("src"); vozAud.load(); }catch(e){} vozAud = null; } vozSegEnd = null; }
+function dailyAccent(){ const ks = Object.keys(VOICES).filter(k => k!=="br"); return ks[Math.floor(Date.now()/86400000) % ks.length]; }
+function startVozes(acc, mode){ if(state.lang!=="en"){ toast("As vozes reais são de inglês. Troque o idioma para Inglês."); return; } stopAudio(); open({type:"vozes", acc:acc||"us", i:0, speed:1, vol:1, loop:false, mode:mode==="ditado"?"ditado":"ouvir", pt:false, xpg:{}, cur:-1, dit:null, ditN:0, ditOk:0}); }
+function vozAudio(acc, i){
   const v = VOICES[acc][i], key = acc+v[0];
-  if(!vozAud || vozAud.__key !== key){
-    vozStop(); const a = new Audio(voiceUrl(acc, v[0])); a.preload = "auto"; a.__key = key; vozAud = a;
-    try{ a.preservesPitch = true; a.webkitPreservesPitch = true; }catch(e){}
-  }
-  const a = vozAud; a.playbackRate = o.speed; a.loop = !!o.loop; if(!IS_IOS) a.volume = o.vol;
+  if(!vozAud || vozAud.__key !== key){ vozStop(); const a = new Audio(voiceUrl(acc, v[0])); a.preload = "auto"; a.__key = key; vozAud = a; try{ a.preservesPitch = true; a.webkitPreservesPitch = true; }catch(e){} }
+  return vozAud;
+}
+function vozSeg(a, s, e, rate){ stopAudio(); a.currentTime = Math.max(0, s-0.25); if(rate) a.playbackRate = rate; vozSegEnd = e+0.35; a.play().catch(() => { try{ toast("Não consegui tocar. Verifique a internet e toque de novo."); }catch(x){} }); }
+function vozPlayer(o, a, opts){
+  opts = opts || {};
+  a.playbackRate = o.speed; a.loop = !!o.loop && !opts.seg; if(!IS_IOS) a.volume = o.vol;
   const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:12px">
-    <div class="vz-ctl"><button data-a="back" aria-label="Voltar 10 segundos">−10</button><button class="big" data-a="play" aria-label="Tocar">▶</button><button data-a="fwd" aria-label="Avançar 10 segundos">+10</button></div>
-    <div class="vz-row"><span class="vz-t" data-r="cur">0:00</span><input class="vz-seek" type="range" min="0" max="1000" value="0" data-r="seek" aria-label="Posição"><span class="vz-t" data-r="dur">--:--</span></div>
-    <div><div class="eyebrow" style="margin-bottom:6px">Velocidade</div><div class="seg" style="width:100%">${[0.6,0.8,1,1.2,1.5].map(x => `<button data-sp="${x}" class="${o.speed===x?"on":""}">${String(x).replace(".",",")}x</button>`).join("")}</div></div>
+    <div class="vz-ctl"><button data-a="back" aria-label="Voltar 5 segundos">−5</button><button class="big" data-a="play" aria-label="Tocar">▶</button><button data-a="fwd" aria-label="Avançar 5 segundos">+5</button></div>
+    ${opts.seg ? "" : `<div class="vz-row"><span class="vz-t" data-r="cur">0:00</span><input class="vz-seek" type="range" min="0" max="1000" value="0" data-r="seek" aria-label="Posição"><span class="vz-t" data-r="dur">--:--</span></div>`}
+    <div><div class="eyebrow" style="margin-bottom:6px">Velocidade</div><div class="seg" style="width:100%">${[0.6,0.75,0.9,1,1.25].map(x => `<button data-sp="${x}" class="${o.speed===x?"on":""}">${String(x).replace(".",",")}x</button>`).join("")}</div></div>
     ${IS_IOS ? `<p class="sub" style="font-size:12px">Volume: use os botões do iPhone.</p>` : `<div class="vz-row"><span style="font-size:16px">🔈</span><input type="range" min="0" max="100" value="${Math.round(o.vol*100)}" data-r="vol" aria-label="Volume"><span style="font-size:16px">🔊</span></div>`}
-    <div style="display:flex;gap:8px"><button class="filter ${o.loop?"on":""}" data-a="loop">🔁 Repetir</button><button class="filter" data-a="restart">⏮ Do início</button></div>
+    ${opts.seg || opts.plain ? "" : `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="filter" data-a="rep">↺ Repetir frase</button><button class="filter" data-a="slow">🐢 Frase devagar</button><button class="filter ${o.loop?"on":""}" data-a="loop">🔁 Repetir tudo</button></div>`}
   </section>`);
   const q = s => box.querySelector(s), playB = q('[data-a="play"]'), seek = q('[data-r="seek"]');
-  const sync = () => { const d = a.duration; q('[data-r="cur"]').textContent = vzT(a.currentTime); q('[data-r="dur"]').textContent = isFinite(d) ? vzT(d) : "--:--"; if(isFinite(d) && d>0 && !seek.__drag) seek.value = Math.round(a.currentTime/d*1000); playB.textContent = a.paused ? "▶" : "⏸"; };
-  ["timeupdate","loadedmetadata","play","pause","ended","durationchange"].forEach(ev => a.addEventListener(ev, sync));
-  a.addEventListener("ended", () => { if(onEnd) onEnd(); });
-  a.addEventListener("error", () => { const m = q('[data-r="dur"]'); m.textContent = "erro"; try{ toast("Não consegui carregar a gravação. Verifique a internet."); }catch(e){} });
-  playB.addEventListener("click", () => { if(a.paused){ stopAudio(); a.play().catch(() => { try{ toast("Não consegui tocar. Toque de novo."); }catch(e){} }); } else a.pause(); });
-  q('[data-a="back"]').addEventListener("click", () => { a.currentTime = Math.max(0, a.currentTime-10); });
-  q('[data-a="fwd"]').addEventListener("click", () => { a.currentTime = Math.min(isFinite(a.duration) ? a.duration : 1e9, a.currentTime+10); });
-  q('[data-a="restart"]').addEventListener("click", () => { a.currentTime = 0; a.play().catch(()=>{}); });
-  q('[data-a="loop"]').addEventListener("click", () => { o.loop = !o.loop; a.loop = o.loop; q('[data-a="loop"]').classList.toggle("on", o.loop); });
-  seek.addEventListener("input", () => { seek.__drag = true; if(isFinite(a.duration)) a.currentTime = seek.value/1000*a.duration; });
-  seek.addEventListener("change", () => { seek.__drag = false; });
+  const sync = () => {
+    const d = a.duration;
+    if(seek){ q('[data-r="cur"]').textContent = vzT(a.currentTime); q('[data-r="dur"]').textContent = isFinite(d) ? vzT(d) : "--:--"; if(isFinite(d) && d>0 && !seek.__drag) seek.value = Math.round(a.currentTime/d*1000); }
+    playB.textContent = a.paused ? "▶" : "⏸";
+  };
+  a.ontimeupdate = () => { if(vozSegEnd!=null && a.currentTime >= vozSegEnd){ a.pause(); vozSegEnd = null; a.playbackRate = o.speed; } sync(); if(opts.onTime) opts.onTime(a.currentTime, a.duration); };
+  ["loadedmetadata","play","pause","durationchange"].forEach(ev => a.addEventListener(ev, sync));
+  a.onended = () => { sync(); if(opts.onEnd) opts.onEnd(); };
+  a.onerror = () => { const m = q('[data-r="dur"]'); if(m) m.textContent = "offline"; try{ toast("Não consegui carregar a gravação. Precisa de internet."); }catch(e){} };
+  const curSeg = () => { const d = a.duration; if(!isFinite(d)) return null; const ts = vozTimes(d); let k = ts.findIndex(t => a.currentTime < t.e); if(k<0) k = ts.length-1; return ts[k]; };
+  playB.addEventListener("click", () => {
+    if(!a.paused){ a.pause(); return; }
+    if(opts.seg){ const sg = opts.seg(); if(sg){ vozSeg(a, sg.s, sg.e); return; } }
+    stopAudio(); a.play().catch(() => { try{ toast("Não consegui tocar. Verifique a internet e toque de novo."); }catch(e){} });
+  });
+  q('[data-a="back"]').addEventListener("click", () => { a.currentTime = Math.max(0, a.currentTime-5); });
+  q('[data-a="fwd"]').addEventListener("click", () => { a.currentTime = Math.min(isFinite(a.duration) ? a.duration : 1e9, a.currentTime+5); });
+  if(!opts.seg){
+    if(!opts.plain){
+    q('[data-a="rep"]').addEventListener("click", () => { const sg = curSeg(); if(sg) vozSeg(a, sg.s, sg.e); });
+    q('[data-a="slow"]').addEventListener("click", () => { const sg = curSeg(); if(sg) vozSeg(a, sg.s, sg.e, 0.7); });
+    q('[data-a="loop"]').addEventListener("click", () => { o.loop = !o.loop; a.loop = o.loop; q('[data-a="loop"]').classList.toggle("on", o.loop); });
+    }
+    seek.addEventListener("input", () => { seek.__drag = true; vozSegEnd = null; if(isFinite(a.duration)) a.currentTime = seek.value/1000*a.duration; });
+    seek.addEventListener("change", () => { seek.__drag = false; });
+  }
   box.querySelectorAll("[data-sp]").forEach(b => b.addEventListener("click", () => { o.speed = +b.dataset.sp; a.playbackRate = o.speed; box.querySelectorAll("[data-sp]").forEach(x => x.classList.toggle("on", +x.dataset.sp===o.speed)); }));
   const vol = q('[data-r="vol"]'); if(vol) vol.addEventListener("input", () => { o.vol = vol.value/100; a.volume = o.vol; });
   sync();
   return box;
 }
-function viewVozes(){
-  const o = overlay, el = h(`<div class="screen"></div>`);
-  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1">Vozes reais · sotaques</div></div>`);
+function vozGlossHtml(t){
+  let s = esc(t);
+  Object.keys(VOZ_GLOSS).sort((a,b) => b.length-a.length).forEach(w => { s = s.replace(new RegExp("\\b("+w+")\\b","g"), `<span class="vz-w" data-g="${w}">$1</span>`); });
+  return s.replace(/<span class="vz-w" data-g="([^"]+)"><span class="vz-w" data-g="[^"]+">([^<]+)<\/span><\/span>/g, `<span class="vz-w" data-g="$1">$2</span>`);
+}
+function vozHead(o, el){
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1">Vozes reais · entender o que dizem</div></div>`);
   $("button",head).addEventListener("click", () => { vozStop(); close(); });
   el.appendChild(head);
-  const mode = h(`<div class="seg"><button data-m="0" class="${o.quiz?"":"on"}">Explorar</button><button data-m="1" class="${o.quiz?"on":""}">Desafio: qual sotaque?</button></div>`);
-  mode.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { const q = b.dataset.m==="1"; if(q===o.quiz) return; vozStop(); o.quiz = q; if(q) vozQuizNext(o); render(); }));
+  const mode = h(`<div class="seg"><button data-m="ouvir" class="${o.mode==="ouvir"?"on":""}">🎧 Ouvir com texto</button><button data-m="ditado" class="${o.mode==="ditado"?"on":""}">✍️ Ditado</button></div>`);
+  mode.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { if(b.dataset.m===o.mode) return; vozStop(); o.mode = b.dataset.m; o.dit = null; render(); scrollTo(0,0); }));
   el.appendChild(mode);
-  if(!o.quiz){
-    const acc = o.acc, list = VOICES[acc], v = list[o.i];
-    el.appendChild(h(`<div><h1 class="headline">${VOICE_ACC[acc].f} ${esc(VOICE_ACC[acc].n)}</h1><p class="sub" style="margin-top:4px">${esc(vzWho(v, acc))}</p></div>`));
-    const chips = h(`<div class="vz-chips">${Object.keys(VOICES).map(k => `<button class="filter ${k===acc?"on":""}" data-k="${k}">${VOICE_ACC[k].f} ${esc(VOICE_ACC[k].n.replace(/ \(.*\)/,"").replace("Brasileiros falando inglês","Brasileiros"))}</button>`).join("")}</div>`);
-    chips.querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => { vozStop(); o.acc = b.dataset.k; o.i = 0; render(); }));
-    el.appendChild(chips);
-    const sp = h(`<div class="vz-chips">${list.map((x,k) => `<button class="filter ${k===o.i?"on":""}" data-i="${k}">${k+1} · ${x[1]==="F"?"♀":"♂"} ${x[2]}</button>`).join("")}</div>`);
-    sp.querySelectorAll("[data-i]").forEach(b => b.addEventListener("click", () => { vozStop(); o.i = +b.dataset.i; render(); }));
+  const chips = h(`<div class="vz-chips">${Object.keys(VOICES).map(k => `<button class="filter ${k===o.acc?"on":""}" data-k="${k}">${VOICE_ACC[k].f} ${esc(VOICE_ACC[k].n.replace(/ \(.*\)/,"").replace("Brasileiros falando inglês","Brasileiros"))}</button>`).join("")}</div>`);
+  chips.querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => { vozStop(); o.acc = b.dataset.k; o.i = 0; o.dit = null; render(); }));
+  el.appendChild(chips);
+}
+function viewVozes(){
+  const o = overlay, el = h(`<div class="screen"></div>`);
+  vozHead(o, el);
+  const acc = o.acc, list = VOICES[acc];
+  if(o.mode==="ouvir"){
+    const v = list[o.i], a = vozAudio(acc, o.i);
+    el.appendChild(h(`<div><h1 class="headline" style="font-size:26px">${VOICE_ACC[acc].f} ${esc(VOICE_ACC[acc].n)}</h1><p class="sub" style="margin-top:4px">Voz ${o.i+1} de ${list.length} · ${esc(vzWho(v, acc))}</p></div>`));
+    const sp = h(`<div class="vz-chips">${list.map((x,k) => `<button class="filter ${k===o.i?"on":""}" data-i="${k}">${k+1} · ${x[1]==="F"?"♀":"♂"} ${esc(x[3].split(",")[0])}</button>`).join("")}</div>`);
+    sp.querySelectorAll("[data-i]").forEach(b => b.addEventListener("click", () => { vozStop(); o.i = +b.dataset.i; o.cur = -1; render(); }));
     el.appendChild(sp);
-    el.appendChild(vozPlayer(o, acc, o.i, () => { const k = acc+v[0]; if(!o.xpg[k]){ o.xpg[k] = 1; addXp(2); persist(); try{ toast("+2 XP por ouvir até o fim"); }catch(e){} } }));
-    el.appendChild(h(`<section class="card"><div class="eyebrow">O que reparar neste sotaque</div><p style="margin-top:6px;line-height:1.5">${esc(VOICE_ACC[acc].tip)}</p></section>`));
-    const tr = h(`<section class="card"><div class="eyebrow">O trecho que todos leem</div><p style="margin-top:6px;line-height:1.55">${esc(VOICE_TXT)}</p>${o.pt ? `<p class="sub" style="margin-top:8px;line-height:1.5">${esc(VOICE_PT)}</p>` : ""}<button class="link" style="margin-top:6px">${o.pt?"Ocultar":"Mostrar"} tradução</button></section>`);
-    $("button",tr).addEventListener("click", () => { o.pt = !o.pt; render(); });
-    el.appendChild(tr);
-    const nav = h(`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button class="btn btn-line">‹ Outra voz</button><button class="btn btn-dark">Outro sotaque ›</button></div>`);
-    const [pv, nx] = nav.querySelectorAll("button");
-    pv.addEventListener("click", () => { vozStop(); o.i = (o.i+1) % list.length; render(); });
-    nx.addEventListener("click", () => { vozStop(); const ks = Object.keys(VOICES); o.acc = ks[(ks.indexOf(acc)+1) % ks.length]; o.i = 0; render(); });
+    const txt = h(`<section class="card vz-txt"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="eyebrow">O que a pessoa está dizendo</div><button class="link" data-a="pt">${o.pt?"Ocultar":"Mostrar"} tradução</button></div>
+      <div class="vz-lines">${VOZ_CHUNKS.map((c,k) => `<button class="vz-line" data-k="${k}"><span class="vz-en">${vozGlossHtml(c[0])}</span>${o.pt ? `<span class="vz-pt">${esc(c[1])}</span>` : ""}</button>`).join("")}</div>
+      <p class="sub" style="font-size:11.5px;margin-top:8px">Toque numa frase para ouvir só ela. Toque numa palavra sublinhada para ver o significado. O destaque acompanha o áudio de forma aproximada.</p><div class="vz-gl" aria-live="polite"></div></section>`);
+    const lines = [...txt.querySelectorAll(".vz-line")], gl = $(".vz-gl", txt);
+    $('[data-a="pt"]', txt).addEventListener("click", () => { o.pt = !o.pt; render(); });
+    lines.forEach(b => b.addEventListener("click", ev => {
+      const w = ev.target.closest(".vz-w");
+      if(w){ gl.innerHTML = `<b>${esc(w.dataset.g)}</b> = ${esc(VOZ_GLOSS[w.dataset.g])}`; gl.classList.add("on"); }
+      const d = a.duration; if(!isFinite(d)){ a.load(); try{ toast("Carregando a gravação… toque de novo em instantes."); }catch(e){} return; }
+      const t = vozTimes(d)[+b.dataset.k]; vozSeg(a, t.s, t.e);
+    }));
+    const mark = (t, d) => { if(!isFinite(d)) return; const ts = vozTimes(d); let k = ts.findIndex(x => t < x.e); if(k<0) k = ts.length-1; if(t < ts[0].s - 0.1) k = -1; if(k===o.cur) return; o.cur = k; lines.forEach((l,j) => l.classList.toggle("act", j===k)); };
+    el.appendChild(vozPlayer(o, a, {onTime:mark, onEnd:() => { const k = acc+v[0]; if(!o.xpg[k]){ o.xpg[k] = 1; addXp(2); persist(); try{ toast("+2 XP por ouvir até o fim"); }catch(e){} } }}));
+    el.appendChild(txt);
+    el.appendChild(h(`<section class="card"><div class="eyebrow">Para entender este sotaque</div><p style="margin-top:6px;line-height:1.5">${esc(VOICE_ACC[acc].tip)}</p></section>`));
+    const nav = h(`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button class="btn btn-line">Outra voz ›</button><button class="btn btn-dark">✍️ Fazer ditado</button></div>`);
+    const [nv, dt] = nav.querySelectorAll("button");
+    nv.addEventListener("click", () => { vozStop(); o.i = (o.i+1) % list.length; o.cur = -1; render(); scrollTo(0,0); });
+    dt.addEventListener("click", () => { vozStop(); o.mode = "ditado"; o.dit = null; render(); scrollTo(0,0); });
     el.appendChild(nav);
   } else {
-    if(!o.q) vozQuizNext(o);
-    const qz = o.q, v = VOICES[qz.acc][qz.i];
-    el.appendChild(h(`<div><h1 class="headline">Qual é o <span class="script" style="font-size:32px">sotaque?</span></h1><p class="sub" style="margin-top:4px">Ouça quantas vezes quiser, mude a velocidade e escolha.</p></div>`));
-    el.appendChild(vozPlayer(o, qz.acc, qz.i));
+    if(!o.dit){ const b = VOZ_BLANKS[o.ditN % VOZ_BLANKS.length]; o.dit = {b, i: Math.floor(Math.random()*list.length), opts: shuffle(b[2].slice()), ans:null}; }
+    const d = o.dit, v = list[d.i], a = vozAudio(acc, d.i), ck = VOZ_CHUNKS[d.b[0]];
+    el.appendChild(h(`<div><h1 class="headline" style="font-size:26px">Que palavra <span class="script" style="font-size:30px">você ouviu?</span></h1><p class="sub" style="margin-top:4px">${VOICE_ACC[acc].f} ${esc(VOICE_ACC[acc].n)} · ${esc(vzWho(v, acc))} · acertos ${o.ditOk}/${o.ditN}</p></div>`));
+    const seg = () => { const du = a.duration; if(!isFinite(du)){ a.load(); try{ toast("Carregando a gravação… toque de novo em instantes."); }catch(e){} return null; } return vozTimes(du)[d.b[0]]; };
+    el.appendChild(vozPlayer(o, a, {seg}));
+    const blank = esc(ck[0]).replace(new RegExp("\\b"+d.b[1]+"\\b"), d.ans ? `<b class="${d.ans===d.b[1]?"ok":"bad"}">${esc(d.b[1])}</b>` : `<span class="vz-blank">_____</span>`);
+    el.appendChild(h(`<section class="card"><div class="eyebrow">Frase</div><p style="margin-top:6px;font-size:19px;line-height:1.5">${blank}</p>${d.ans ? `<p class="sub" style="margin-top:6px">${esc(ck[1])}</p>` : ""}</section>`));
     const opts = h(`<div class="opts"></div>`);
-    qz.opts.forEach(k => {
-      const b = h(`<button class="opt">${VOICE_ACC[k].f} ${esc(VOICE_ACC[k].n)}</button>`);
-      if(qz.ans){ b.disabled = true; if(k===qz.acc) b.classList.add("right"); else if(k===qz.ans) b.classList.add("wrong"); }
-      b.addEventListener("click", () => { if(qz.ans) return; qz.ans = k; if(k===qz.acc){ addXp(2); try{ sfx.right(); }catch(e){} } else { try{ sfx.wrong(); }catch(e){} } persist(); render(); });
+    d.opts.forEach(w => {
+      const b = h(`<button class="opt">${esc(w)}</button>`);
+      if(d.ans){ b.disabled = true; if(w===d.b[1]) b.classList.add("right"); else if(w===d.ans) b.classList.add("wrong"); }
+      b.addEventListener("click", () => { if(d.ans) return; d.ans = w; o.ditN++; if(w===d.b[1]){ o.ditOk++; addXp(2); try{ sfx.right(); }catch(e){} } else { try{ sfx.wrong(); }catch(e){} } persist(); render(); });
       opts.appendChild(b);
     });
     el.appendChild(opts);
-    if(qz.ans){
-      el.appendChild(h(`<section class="card"><b>${qz.ans===qz.acc ? "Isso aí! +2 XP" : "Era: "+esc(VOICE_ACC[qz.acc].n)}</b><p class="sub" style="margin-top:4px">${esc(vzWho(v, qz.acc))}</p><p style="margin-top:6px;line-height:1.5">${esc(VOICE_ACC[qz.acc].tip)}</p></section>`));
-      const nx = h(`<button class="btn btn-dark btn-block">Próxima voz <span class="arr">→</span></button>`); nx.addEventListener("click", () => { vozStop(); vozQuizNext(o); render(); scrollTo(0,0); }); el.appendChild(nx);
-    }
+    if(d.ans){
+      const nx = h(`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button class="btn btn-line">↺ Ouvir de novo</button><button class="btn btn-dark">Próxima <span class="arr">→</span></button></div>`);
+      const [again, next] = nx.querySelectorAll("button");
+      again.addEventListener("click", () => { const sg = seg(); if(sg) vozSeg(a, sg.s, sg.e, 0.75); });
+      next.addEventListener("click", () => { vozStop(); o.dit = null; render(); scrollTo(0,0); });
+      el.appendChild(nx);
+    } else el.appendChild(h(`<p class="sub" style="text-align:center">Toque em ▶ para ouvir só esta frase. Pode repetir e diminuir a velocidade.</p>`));
   }
-  el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">Gravações: Speech Accent Archive, George Mason University (speech accent archive), licença CC BY-NC-SA 4.0. Precisam de internet.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">Gravações: Speech Accent Archive, George Mason University, licença CC BY-NC-SA 4.0. Precisam de internet.</p>`));
   return el;
 }
 function viewVoicesTab(el){
-  el.appendChild(h(`<p class="sub">Pessoas de verdade, de cada país, lendo o mesmo texto. Ouça as diferenças, escolha a velocidade, volte e avance. Depois teste o seu ouvido no desafio.</p>`));
-  const c = h(`<button class="btn btn-dark btn-block">🎯 Desafio: qual é o sotaque?</button>`); c.addEventListener("click", () => startVozes("us", true)); el.appendChild(c);
+  el.appendChild(h(`<p class="sub">Pessoas de verdade, de cada país, lendo o mesmo texto. Escolha o sotaque, ouça com o texto acompanhando e a tradução, repita a frase devagar e depois faça o ditado.</p>`));
   const g = h(`<div class="pgrid"></div>`);
   Object.keys(VOICES).forEach(k => { const b = h(`<button class="ptile"><span class="game-ic" style="background:var(--accent-soft)">${VOICE_ACC[k].f}</span><b>${esc(VOICE_ACC[k].n)}</b><small>${VOICES[k].length} ${VOICES[k].length===1?"voz":"vozes"}</small></button>`); b.addEventListener("click", () => startVozes(k)); g.appendChild(b); });
   el.appendChild(g);
+}
+/* =========================================================
+   SEIS FORMAS DE APRENDER — portas de entrada claras (Início)
+   ========================================================= */
+function sixWays(){
+  const sst = srsStats();
+  return [
+    {k:"film", ic:"🎬", bg:"var(--tint-1)", t:"Filmes e séries", s:"Cenas reais com legenda", act:() => { newsSub = "videos"; go("news"); }},
+    {k:"books", ic:"📚", bg:"var(--tint-2)", t:"Livros", s:"Histórias no seu nível", act:() => { newsSub = books().length ? "books" : "stories"; go("news"); }},
+    {k:"vocab", ic:"🗂️", bg:"var(--tint-3)", t:"Vocabulário", s:sst.due ? sst.due+" para revisar hoje" : "Cartões, revisão e erros", act:() => open({type:"hub", k:"vocab"})},
+    {k:"tutor", ic:"🤖", bg:"var(--tint-4)", t:"Tutor de IA", s:"Converse e seja corrigido", act:() => go("chat")},
+    {k:"audio", ic:"🎧", bg:"var(--tint-2)", t:"Audiolivros e áudio", s:"Vozes reais, podcasts, música", act:() => open({type:"hub", k:"audio"})},
+    {k:"games", ic:"🎮", bg:"var(--tint-1)", t:"Jogos", s:"Aprender brincando", act:() => open({type:"hub", k:"games"})}
+  ];
+}
+function sixCard(){
+  const sec = h(`<section><div class="sec-head"><h2>Seis formas de aprender</h2></div><div class="six"></div></section>`);
+  sixWays().forEach(x => { const b = h(`<button class="six-t" style="--six-bg:${x.bg}"><span class="six-ic">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></button>`); b.addEventListener("click", x.act); $(".six",sec).appendChild(b); });
+  return sec;
+}
+function hubItems(k){
+  const en = state.lang==="en", sst = srsStats(), nbs = revStats();
+  if(k==="vocab") return {t:"Vocabulário", s:"Aprenda palavras dentro de frases e revise no momento certo, antes de esquecer.", items:[
+    {ic:"🗂️", t:"Revisão do dia", s:`${sst.due} a revisar · ${sst.newToday} novas`, act:startSrs},
+    {ic:"🃏", t:"Cartões das aulas", s:"Adivinhe pelo contexto e vire", act:() => startDeck(false)},
+    {ic:"📒", t:"Caderno de erros", s:nbs.all ? `${nbs.due} para hoje` : "Seus erros ficam aqui", act:() => open({type:"notebook", f:"all"})},
+    {ic:"🪜", t:"Prova de domínio", s:"Só conta como sabida com prova", act:startLadder},
+    {ic:"🎯", t:"Palavras difíceis", s:"As que você mais erra", act:() => startPronFocus(false)},
+    {ic:"🧠", t:"Complete a frase", s:"A palavra certa no contexto", act:startCloze}]};
+  if(k==="audio") return {t:"Audiolivros e áudio", s:"Ouça gente de verdade e textos longos. Comece devagar e aumente a velocidade.", items:[
+    {ic:"📖", t:"Audiolivros", s:"Livros e histórias com o texto acompanhando", act:() => open({type:"abooks"})},
+    ...(en ? [{ic:"🌍", t:"Vozes reais", s:"Entenda cada sotaque, com texto", act:() => startVozes(dailyAccent())}] : []),
+    ...(pods().length ? [{ic:"🎙️", t:"Podcasts", s:"Episódios para o seu nível", act:() => { newsSub = "pods"; go("news"); }}] : []),
+    {ic:"🎤", t:"Música e karaokê", s:"Cante com a letra", act:() => { newsSub = "music"; go("news"); }},
+    {ic:"👂", t:"Ouça e escolha", s:"Frases rápidas, 1 minuto", act:startEar},
+    {ic:"✍️", t:"Ditado", s:"Escreva o que ouviu", act:startDict}]};
+  return {t:"Jogos", s:"Rápidos, para o metrô. Tudo funciona sem internet.", items:[
+    {ic:"⚡", t:"Desafio relâmpago", s:"60 segundos de traduções", act:startBlitz},
+    {ic:"🧩", t:"Jogo da memória", s:"Expressão e tradução", act:startMemory},
+    {ic:"🪢", t:"Forca", s:"Descubra a palavra letra a letra", act:startForca},
+    {ic:"🔤", t:"Monte a frase", s:"Coloque na ordem certa", act:startOrderGame},
+    {ic:"⌨️", t:"Traduza e escreva", s:"Do português, digitando", act:startTyped},
+    ...(en ? [{ic:"🌍", t:"Ditado de sotaques", s:"Que palavra você ouviu? (online)", act:() => startVozes(dailyAccent(), "ditado")}] : [])]};
+}
+function viewHub(){
+  const o = overlay, H2 = hubItems(o.k), el = h(`<div class="screen"></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1">Seis formas de aprender</div></div>`);
+  $("button",head).addEventListener("click", close); el.appendChild(head);
+  el.appendChild(h(`<div><h1 class="headline">${esc(H2.t)}</h1><p class="sub" style="margin-top:4px">${esc(H2.s)}</p></div>`));
+  const g = h(`<div class="pgrid"></div>`);
+  H2.items.forEach(x => { const b = h(`<button class="ptile"><span class="game-ic" style="background:var(--accent-soft)">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></button>`); b.addEventListener("click", x.act); g.appendChild(b); });
+  el.appendChild(g);
+  return el;
+}
+/* ---------- Audiolivros ---------- */
+const AESOP = [
+  {n:3, t:"Hercules and the Wagoner · The Kid and the Wolf · The Town Mouse and the Country Mouse · The Fox and the Grapes", pt:"Hércules e o carroceiro (ajude a si mesmo); o cabrito e o lobo; o rato da cidade e o rato do campo; a raposa e as uvas."},
+  {n:5, t:"The Lion and the Mouse · The Shepherd Boy and the Wolf · The Gnat and the Bull · The Plane Tree", pt:"O leão e o rato (bondade nunca é perdida); o menino que gritava lobo; o mosquito e o touro; o plátano."},
+  {n:32, t:"The Hare and the Tortoise · The Bees and Wasps, and the Hornet · The Lark and Her Young Ones · The Cat and the Old Rat", pt:"A lebre e a tartaruga; as abelhas, as vespas e o vespão; a cotovia e os filhotes; o gato e o rato velho."},
+  {n:33, t:"The Fox and the Crow · The Ass and His Shadow · The Miller, His Son, and the Ass · The Ant and the Dove", pt:"A raposa e o corvo; o burro e a sombra; o moleiro, o filho e o burro; a formiga e a pomba."},
+  {n:35, t:"The Lion, the Ass, and the Fox · The Lion's Share · The Mole and his Mother · The North Wind and the Sun", pt:"O leão, o burro e a raposa; a parte do leão; a toupeira e a mãe; o vento norte e o sol."}
+];
+const aesopUrl = n => "https://archive.org/download/aesopforchildren_1308_librivox/theaesopforchildren_"+String(n).padStart(2,"0")+"_aesop_64kb.mp3";
+function viewAbooks(){
+  const o = overlay, el = h(`<div class="screen"></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1">Audiolivros</div></div>`);
+  $("button",head).addEventListener("click", () => { vozStop(); close(); }); el.appendChild(head);
+  el.appendChild(h(`<div><h1 class="headline">Ouça e <span class="script" style="font-size:32px">acompanhe</span></h1><p class="sub" style="margin-top:4px">O áudio toca e a frase da vez fica destacada. Toque em qualquer palavra para ver o significado e salvar no Anki. Funciona sem internet.</p></div>`));
+  const list = books().map(b => { try{ return bookDoc(b); }catch(e){ return null; } }).filter(x => x && x.sentences).concat(stories()).slice(0, 40), g = h(`<div style="display:flex;flex-direction:column;gap:8px"></div>`);
+  list.forEach(st => { const b = h(`<button class="shrow"><span class="sh-ic">${st.icon||"📖"}</span><span><b>${esc(st.title)}</b><small>${esc(st.titlePt||st.topic||"")} · ${docMinutes(st)} min${st.level?" · "+esc(st.level):""}</small></span><span class="tl-chev">▶</span></button>`); b.addEventListener("click", () => startStory(st, true)); g.appendChild(b); });
+  el.appendChild(g);
+  if(state.lang==="en"){
+    el.appendChild(h(`<div class="sec-head" style="margin-top:8px"><h2>Voz humana · Fábulas de Esopo</h2></div>`));
+    el.appendChild(h(`<p class="sub">Leitura de voluntários do LibriVox (domínio público), 4 fábulas por faixa, sem texto sincronizado. Nível intermediário. Precisa de internet.</p>`));
+    const chips = h(`<div class="vz-chips">${AESOP.map((x,k) => `<button class="filter ${k===(o.ae||0)?"on":""}" data-k="${k}">Faixa ${x.n}</button>`).join("")}</div>`);
+    chips.querySelectorAll("[data-k]").forEach(b => b.addEventListener("click", () => { vozStop(); o.ae = +b.dataset.k; render(); }));
+    el.appendChild(chips);
+    const x = AESOP[o.ae||0];
+    if(!vozAud || vozAud.__key !== "ae"+x.n){ vozStop(); const a = new Audio(aesopUrl(x.n)); a.preload = "metadata"; a.__key = "ae"+x.n; vozAud = a; try{ a.preservesPitch = true; }catch(e){} }
+    o.speed = o.speed || 1; o.vol = o.vol || 1;
+    el.appendChild(h(`<section class="card"><b>${esc(x.t)}</b><p class="sub" style="margin-top:6px">${esc(x.pt)}</p></section>`));
+    el.appendChild(vozPlayer(o, vozAud, {plain:true}));
+    el.appendChild(h(`<p class="sub" style="font-size:11.5px;text-align:center">Áudio: LibriVox, “The Aesop for Children” (domínio público). Texto completo no Project Gutenberg, livro 19994.</p>`));
+  }
+  return el;
+}
+/* ---------- Forca ---------- */
+function startForca(){
+  const pool = allVocab().filter(v => /^[a-zA-Z]{4,10}$/.test(v.t.trim()));
+  if(!pool.length){ toast("Faça algumas lições para liberar a forca."); return; }
+  const done = Object.keys(L().done), mine = pool.filter(v => done.includes(v.unitId)), base = mine.length >= 8 ? mine : pool;
+  open({type:"forca", words:shuffle(base).slice(0, 5), i:0, got:{}, miss:0, wins:0, end:false});
+}
+function viewForca(){
+  const o = overlay, el = h(`<div class="screen"></div>`);
+  if(o.i >= o.words.length){
+    if(!o.fin){ o.fin = true; ensureDay().game = true; addXp(5 + o.wins*3); persist(); if(o.wins >= 4) setTimeout(() => { confetti(); sfx.win(); }, 80); }
+    el.appendChild(h(`<section class="soft" style="text-align:center"><div class="eyebrow">Forca concluída</div><h1 class="headline" style="margin-top:8px">${o.wins} de ${o.words.length} palavras</h1><p class="sub" style="margin-top:4px">+${5 + o.wins*3} XP</p></section>`));
+    const r = h(`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button class="btn btn-line">Fechar</button><button class="btn btn-dark">Jogar de novo</button></div>`);
+    const [c, a] = r.querySelectorAll("button"); c.addEventListener("click", close); a.addEventListener("click", startForca); el.appendChild(r);
+    return el;
+  }
+  const w = o.words[o.i], word = w.t.trim().toLowerCase(), MAX = 6;
+  const won = [...word].every(ch => o.got[ch]), lost = o.miss >= MAX;
+  el.appendChild(runHead(o.words.length, o.i, `Forca · palavra ${o.i+1} de ${o.words.length}`));
+  el.appendChild(h(`<section class="card" style="text-align:center"><div class="eyebrow">Dica em português</div><p style="font-size:20px;font-weight:700;margin-top:6px">${esc(w.pt.replace(/\s*\([^)]*\)/g,""))}</p><p class="sub" style="margin-top:4px">${esc(w.unit)}</p></section>`));
+  const lives = MAX - o.miss;
+  el.appendChild(h(`<div style="text-align:center;font-size:22px;letter-spacing:4px">${"❤️".repeat(Math.max(0,lives))}${"🤍".repeat(Math.min(MAX, o.miss))}</div>`));
+  el.appendChild(h(`<div class="fc-word">${[...word].map(ch => `<span class="${o.got[ch] || lost ? "on" : ""} ${lost && !o.got[ch] ? "lost" : ""}">${o.got[ch] || lost ? ch.toUpperCase() : ""}</span>`).join("")}</div>`));
+  if(won || lost){
+    if(!o.end){ o.end = true; if(won){ o.wins++; try{ sfx.right(); }catch(e){} } else { try{ sfx.wrong(); }catch(e){} } try{ speak(w.t); }catch(e){} }
+    const nb = h(`<section class="card" style="text-align:center"><b>${won ? "Acertou!" : "Era esta:"} ${esc(w.t)}</b>${w.ex ? `<p class="sub" style="margin-top:6px">${esc(w.ex.t)}</p>` : ""}<button class="speak" style="margin:8px auto 0" aria-label="Ouvir">${ICON.speak}</button></section>`);
+    $(".speak",nb).addEventListener("click", () => speak(w.ex ? w.ex.t : w.t)); el.appendChild(nb);
+    const nx = h(`<button class="btn btn-dark btn-block">Próxima <span class="arr">→</span></button>`); nx.addEventListener("click", () => { o.i++; o.got = {}; o.miss = 0; o.end = false; render(); }); el.appendChild(nx);
+    return el;
+  }
+  const kb = h(`<div class="fc-kb"></div>`);
+  "qwertyuiopasdfghjklzxcvbnm".split("").forEach(ch => {
+    const used = o.got[ch] || (o.tried||{})[ch];
+    const b = h(`<button class="${o.got[ch] ? "ok" : used ? "no" : ""}" ${used ? "disabled" : ""}>${ch.toUpperCase()}</button>`);
+    b.addEventListener("click", () => { o.tried = o.tried || {}; o.tried[ch] = 1; if(word.includes(ch)){ o.got[ch] = 1; try{ sfx.tap && sfx.tap(); }catch(e){} } else o.miss++; render(); });
+    kb.appendChild(b);
+  });
+  el.appendChild(kb);
+  return el;
 }
 function viewSong(){
   const o = overlay, sg = o.sg, el = h(`<div class="screen"></div>`);
@@ -5326,7 +5537,7 @@ function viewSong(){
   $("button",head).addEventListener("click", () => { stopAudio(); seqToken++; tab="news"; close(); });
   el.appendChild(head);
   el.appendChild(h(`<div><h1 class="headline">${sg.icon||"🎵"} ${esc(sg.title)}</h1><p class="sub" style="margin-top:4px">Canção original para estudo. Ouça, depois leia em voz alta junto.</p></div>`));
-  { const kb = h(`<button class="btn btn-dark btn-block">🎤 Cantar em modo karaokê</button>`); kb.addEventListener("click", () => { stopAudio(); seqToken++; open({type:"kara", sg, bpm:90}); }); el.appendChild(kb); }
+  { const kb = h(`<button class="btn btn-dark btn-block">🎤 Cantar em modo karaokê</button>`); kb.addEventListener("click", () => { stopAudio(); seqToken++; open({type:"kara", sg, bpm:90, from:"song"}); }); el.appendChild(kb); }
   const ctr = h(`<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px"></div>`);
   const all = h(`<button class="btn btn-line">▶ Ouvir tudo</button>`); all.addEventListener("click", () => speakSeq(sg.lines.map(l=>l.t)));
   const tr = h(`<button class="btn btn-line">${o.showTr?"Ocultar":"Mostrar"} tradução</button>`); tr.addEventListener("click", () => { o.showTr=!o.showTr; render(); });
@@ -5397,7 +5608,7 @@ function soundFocus(words, lang){
   return out;
 }
 function askTips(o, it){
-  if(!aiAvail()){ o.tips = "Cole a chave gratuita do Gemini em Meu relatório de pronúncia para ver as dicas da IA."; render(); return; }
+  if(!aiAvail()){ o.tips = "Cole a chave gratuita do Gemini em Você › Ajustes para ver as dicas da IA."; render(); return; }
   o.tips = "…"; render();
   aiSampleGet().then(sample => {
     if(!sample){ o.tips = "Dicas indisponíveis agora."; render(); return; }
@@ -5426,7 +5637,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v80";
+const APP_VER = "v81";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5713,7 +5924,7 @@ async function azAssess(url, ref){
 }
 function azErrMsg(e){
   const m = e && e.message;
-  return m==="key" ? "A chave do Azure foi recusada. Confira a chave e a região em Meu relatório de pronúncia." : m==="quota" ? "Você passou do limite gratuito do Azure neste mês." : m==="nomatch" ? "O Azure não reconheceu fala neste áudio. Fale mais perto do microfone e tente de novo." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="nocfg" ? "Configure a chave do Azure em Meu relatório de pronúncia." : "Não consegui falar com o Azure ("+(m||"erro")+"). Confira a conexão.";
+  return m==="key" ? "A chave do Azure foi recusada. Confira a chave e a região em Você › Ajustes." : m==="quota" ? "Você passou do limite gratuito do Azure neste mês." : m==="nomatch" ? "O Azure não reconheceu fala neste áudio. Fale mais perto do microfone e tente de novo." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="nocfg" ? "Configure a chave do Azure em Você › Ajustes." : "Não consegui falar com o Azure ("+(m||"erro")+"). Confira a conexão.";
 }
 function azCard(r){
   const cl = a => a>=80 ? "ok" : a>=60 ? "" : "miss";
@@ -5725,6 +5936,20 @@ function azCard(r){
     <p class="sub" style="font-size:11.5px">Nota do serviço Azure Speech. Mede os sons, mas é referência, não veredicto sobre o seu sotaque.</p>`;
 }
 /* ---- IA que escuta (Gemini, faixa gratuita; chave do próprio usuário) ---- */
+function gmKeyCard(after){
+  const gk = gmKey();
+  const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Inteligência artificial (Gemini, gratuito)</div>
+    <p class="sub" style="font-size:12.5px">${gk ? "Ativada neste aparelho: tutor de conversa, exercícios novos, entrevista e avaliação da sua fala." : "Para usar o tutor de IA, crie uma chave grátis em aistudio.google.com (botão “Get API key”), copie e cole aqui."}</p>
+    ${gk ? "" : `<input class="in" data-k type="password" placeholder="Cole a chave do Gemini" autocomplete="off"><a class="link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:13px">Abrir o Google AI Studio ↗</a>`}
+    <button class="btn ${gk?"btn-line":"btn-dark"}">${gk ? "Remover chave" : "Salvar chave"}</button>
+    <p class="sub" style="font-size:11.5px">A chave fica só neste aparelho. No plano gratuito, o Google pode usar o conteúdo enviado para melhorar os produtos dele.</p></section>`);
+  $("button",c).addEventListener("click", () => {
+    if(gk){ try{ localStorage.removeItem("nb-gm"); }catch(e){} toast("Chave removida."); render(); return; }
+    const k = $("[data-k]",c).value.trim(); if(!k){ toast("Cole a chave."); return; }
+    try{ localStorage.setItem("nb-gm", k); }catch(e){} toast("Chave salva. A IA está ativa."); if(after) after(); else render();
+  });
+  return c;
+}
 function gmKey(){ try{ return localStorage.getItem("nb-gm") || ""; }catch(e){ return ""; } }
 const GM_MODELS = ["gemini-flash-latest","gemini-3.8-flash","gemini-3.6-flash","gemini-flash-lite-latest","gemini-3.5-flash-lite"];
 /* IA unificada: usa o Claude quando o app está aberto nele; no site usa o Gemini (chave gratuita) */
@@ -5806,7 +6031,7 @@ function coachCard(c){
 }
 function gmErrMsg(e){
   const m = e && e.message;
-  return m==="busy" ? "Os servidores do Gemini estão sobrecarregados agora (erro temporário do Google). Tente de novo em alguns minutos." : m==="key" ? "A chave do Gemini foi recusada. Confira em Meu relatório de pronúncia." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="nokey" ? "Cole a chave do Gemini em Meu relatório de pronúncia." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.";
+  return m==="busy" ? "Os servidores do Gemini estão sobrecarregados agora (erro temporário do Google). Tente de novo em alguns minutos." : m==="key" ? "A chave do Gemini foi recusada. Confira em Você › Ajustes." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="nokey" ? "Cole a chave do Gemini em Você › Ajustes." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.";
 }
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
@@ -6141,6 +6366,7 @@ function viewYou(){
   $("#retest",set).addEventListener("click", () => open({type:"placement", idx:0, answers:[]}));
   el.appendChild(set);
   { const ap = accentPicker(false); if(ap) el.appendChild(ap); }
+  if(!window.claude) el.appendChild(gmKeyCard());
 
   const sc = h(`<section class="card"><div class="sec-head"><h2>Notas por aula</h2><span class="sub">${LANGS[state.lang].name}</span></div><div style="margin-top:6px"></div></section>`);
   const box = $("div:last-child",sc);
