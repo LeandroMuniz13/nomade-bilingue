@@ -3187,7 +3187,7 @@ function viewMissionTrail(){
     if(m.id !== curId){
       const row = h(`<button class="card chap-row ${inf.stamped?"ok":""}"><span class="m-ic">${m.icon}</span><span style="min-width:0;text-align:left"><div class="eyebrow">Capítulo ${i+1}${inf.stamped?" · 🏅 carimbo":nextM===m?" · agora":""}</div><div class="m-title" style="font-size:15.5px">${esc(m.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${inf.done}/${inf.us.length} ${inf.us.length===1?"lição":"lições"} · ${lvs.join("–")}</div></span><span class="tl-chev">›</span></button>`);
       row.addEventListener("click", () => { openChap = m.id; render(); row.scrollIntoView && setTimeout(() => { const x = document.querySelector(".mission.open"); if(x) x.scrollIntoView({block:"start"}); }, 30); });
-      phApply($(".m-ic", row), phUrl(m.icon)); el.appendChild(row); return;
+      el.appendChild(row); return;
     }
     const sec = h(`<section class="card mission open ${inf.stamped?"stamped":""}">
       <div class="m-photo" id="mph"></div>
@@ -4694,7 +4694,7 @@ function viewChat(){
     const sec = h(`<section class="card"><div class="eyebrow">${c.name}</div><div style="margin-top:4px"></div></section>`);
     list.forEach(s => {
       const b = h(`<button class="scn"><span class="ic">${s.icon}</span><span><div style="font-weight:700;font-size:14.5px">${esc(s.title)}</div><div class="sub" style="font-size:var(--fs-cap)">${esc(s.desc)}</div></span></button>`);
-      b.addEventListener("click", () => startScene(s)); phApply($(".ic", b), phUrl(s.icon));
+      b.addEventListener("click", () => startScene(s));
       $("div:last-child",sec).appendChild(b);
     });
     el.appendChild(sec);
@@ -6147,7 +6147,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v110";
+const APP_VER = "v111";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
