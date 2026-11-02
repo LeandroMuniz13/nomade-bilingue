@@ -347,6 +347,14 @@ body.focus main{padding-bottom:32px}
 .fv-row3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px}
 .fv-c{min-height:52px; border-radius:16px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center; gap:7px; font-weight:700; font-size:13.5px; cursor:pointer; padding:6px}
 .fv-c svg{width:20px; height:20px; flex:none; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.tp{border-radius:22px; overflow:hidden; border:1px solid var(--line); background:var(--surface)}
+.tp-h{display:flex; align-items:center; gap:10px; padding:14px 16px; background:color-mix(in srgb, var(--gold) 38%, var(--surface)); font-size:19px; color:var(--ink)}
+.tp-h svg{width:28px; height:28px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.tp-bar{height:6px; background:var(--line)} .tp-bar i{display:block; height:100%; background:var(--ink); transition:width .3s}
+.tp-b{padding:18px 16px 16px; display:flex; flex-direction:column; gap:14px; text-align:center}
+.tp-pt{font-size:21px; font-weight:600; line-height:1.3; color:var(--ink)}
+.tp-en{font-size:24px; font-weight:800; line-height:1.35; color:var(--ok)} .tp-bl{white-space:nowrap}
+.tp-ans{font-size:15px; line-height:1.4} .tp-ans.ok{color:var(--ok)} .tp-ans.bad{color:var(--bad)} .tp-ans u{text-underline-offset:4px; color:var(--ink); font-weight:700}
 .cp-q{display:flex; flex-direction:column; gap:8px}
 .cp-o{text-align:left; padding:13px 14px; border-radius:16px; border:1.5px solid var(--line); background:var(--surface); font-size:15px; line-height:1.35; cursor:pointer; color:var(--ink)}
 .cp-o.ok{border-color:var(--ok); background:color-mix(in srgb, var(--ok) 14%, var(--surface))} .cp-o.bad{border-color:var(--bad); background:color-mix(in srgb, var(--bad) 12%, var(--surface))}
@@ -2771,14 +2779,14 @@ function capiSaveLine(t, pt){
 }
 function filmCapi(box, id, name, getAB){
   const lang = LANGS[state.lang].name, lvl = userLevel();
-  const S = {tr:"", ph:"idle", data:null, qi:0, pick:null, score:0, essay:"", fb:null, busy:false, err:""};
+  const S = {pi:0, ptyped:"", pchk:null, pdone:[], tr:"", ph:"idle", data:null, qi:0, pick:null, score:0, essay:"", fb:null, busy:false, err:""};
   const key = () => { const [A, B] = getAB(); return id + "|" + A + "|" + B + "|" + S.tr.length; };
   const src = () => S.tr ? "a transcrição que vem abaixo (você não vê o vídeo)" : "o vídeo";
   const note = m => `<p class="sub" style="font-size:12.5px">${m}</p>`;
   const head = txt => `<div style="display:flex;gap:12px;align-items:center"><div style="flex:none" aria-hidden="true">${capi("hi", 64)}</div><div><div class="eyebrow">Aula com o Capi</div><div style="font-weight:700;margin-top:2px">${txt}</div></div></div>`;
   async function start(){
     const [A, B] = getAB(), k = key();
-    if(capiCache[k]){ S.data = capiCache[k]; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; draw(); return; }
+    if(capiCache[k]){ S.data = capiCache[k]; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; S.pi = 0; S.pchk = null; S.pdone = []; draw(); return; }
     S.ph = "loading"; S.err = ""; draw();
     const prompt = `Você é o Capi, uma capivara que é professor de ${lang} de um brasileiro (nível ${lvl}). Use ${src()}${name ? " (cena: " + name + ")" : ""} e dê uma AULA sobre a cena. Use só o que realmente está nela; se algo não estiver claro, não invente.
 Responda SOMENTE um JSON neste formato:
@@ -2789,7 +2797,7 @@ Regras: 5 a 7 itens em lines (as falas mais úteis, em ordem); exatamente 4 ques
       const lines = (d.lines || []).filter(x => x && x.t).slice(0, 8), qs = (d.questions || []).filter(q => q && q.q && Array.isArray(q.opts) && q.opts.length >= 2 && Number.isInteger(q.a) && q.a >= 0 && q.a < q.opts.length).slice(0, 5);
       if(!lines.length || !qs.length) throw new Error("shape");
       S.data = {context:String(d.context || ""), lines, questions:qs, expressions:(d.expressions || []).filter(x => x && x.t).slice(0, 4), tip:String(d.tip || "")};
-      capiCache[k] = S.data; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = "";
+      capiCache[k] = S.data; S.ph = "ready"; S.qi = 0; S.pick = null; S.score = 0; S.fb = null; S.essay = ""; S.pi = 0; S.pchk = null; S.pdone = [];
     }catch(e){ S.ph = "err"; S.err = e && e.message === "shape" ? "O Capi não conseguiu montar a aula com este vídeo. Tente outro trecho ou outra cena." : (e && (e.message === "http400" || e.message === "http403") ? "O Gemini não aceitou abrir este vídeo (ele só lê vídeos públicos e pode recusar alguns). Tente outra cena." : gmErrMsg(e)); }
     draw();
   }
@@ -2802,6 +2810,17 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     try{ const d = await capiAsk(id, A, B, prompt, 1500, S.tr); S.fb = {score:Math.max(0, Math.min(100, +d.score || 0)), right:(d.right || []).slice(0, 4), missed:(d.missed || []).slice(0, 4), fixes:(d.fixes || []).filter(x => x && x.better).slice(0, 4), next:String(d.next || "")}; addXp(3); }
     catch(e){ S.err = gmErrMsg(e); }
     S.busy = false; draw();
+  }
+  const blankOf = t => { const w = t.split(/\s+/), n = w.length >= 5 ? 2 : 1, ans = w.slice(-n).join(" "); return {shown:w.slice(0, -n).join(" "), ans, n}; };
+  function practiceHtml(){
+    const L = S.data.lines.filter(l => l.pt), total = L.length;
+    if(!total) return "";
+    if(S.pi >= total){ const ok = S.pdone.filter(Boolean).length; return `<div class="feedback good"><b>Traduza isso: ${ok} de ${total}</b><div class="tips">${ok === total ? "Todas certas. Muito bem!" : "As que você errou já estão salvas no Anki para revisar."}</div></div>`; }
+    const l = L[S.pi], b = blankOf(l.t), pct = Math.round(S.pi / total * 100);
+    return `<div class="tp"><div class="tp-h"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><b>Traduza isso…</b></div><div class="tp-bar"><i style="width:${pct}%"></i></div>
+      <div class="tp-b"><div class="tp-pt">${esc(l.pt)}</div><div class="tp-en">${esc(b.shown)} <span class="tp-bl">${S.pchk ? esc(b.ans) : "___ ".repeat(b.n).trim()}</span></div>
+      ${S.pchk ? `<div class="tp-ans ${S.pchk.ok ? "ok" : "bad"}">${S.pchk.ok ? "Certo!" : "Quase. O certo é:"} <u>${esc(l.t)}</u></div>${l.note ? `<div class="sub" style="font-size:12.5px">💡 ${esc(l.note)}</div>` : ""}<button class="btn btn-dark btn-block" id="tpNext">${S.pi + 1 >= total ? "Ver resultado" : "Próxima"}</button>` :
+      `<input id="tpIn" class="in" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Complete a frase" value="${esc(S.ptyped)}" style="width:100%"><div style="display:flex;gap:8px"><button class="btn btn-line" id="tpPl" aria-label="Ouvir a frase">🔊 Ouvir</button><button class="btn btn-dark" id="tpGo" style="flex:1">Verificar</button></div><button class="link" id="tpSh">Mostrar a resposta</button>`}</div></div>`;
   }
   function draw(){
     let h2 = "";
@@ -2826,6 +2845,7 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
           (S.pick !== null ? `<div class="feedback ${S.pick === q.a ? "good" : "bad"}"><b>${S.pick === q.a ? "Acertou!" : "Quase."}</b><div class="tips">${esc(q.why || "")}</div></div><button class="btn btn-dark btn-block" id="cpNext">${S.qi + 1 < d.questions.length ? "Próxima pergunta" : "Ver o resultado"}</button>` : "") + `</div>`;
       }else{
         h2 += `<div class="feedback good"><b>Você acertou ${S.score} de ${d.questions.length}</b><div class="tips">${S.score === d.questions.length ? "Perfeito: você pegou tudo." : S.score >= d.questions.length / 2 ? "Bom. Reveja as falas abaixo e assista de novo sem legenda." : "Sem problema: leia as falas abaixo, assista de novo e tente outra vez."}</div></div>
+          ${practiceHtml()}
           <div><div class="eyebrow">Falas-chave</div>${d.lines.map((l, i) => `<div class="cp-line"><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(l.t)}</b><div class="sub" style="font-size:13px">${esc(l.pt || "")}</div>${l.note ? `<div class="sub" style="font-size:12.5px;margin-top:2px">💡 ${esc(l.note)}</div>` : ""}</div><button class="btn btn-line" data-sl="${i}" style="padding:8px 12px;font-size:12.5px" aria-label="Salvar frase">Salvar</button></div>`).join("")}</div>` +
           (d.expressions.length ? `<div><div class="eyebrow">Expressões</div>${d.expressions.map((x, i) => `<div class="cp-line"><div style="flex:1"><b>${esc(x.t)}</b><div class="sub" style="font-size:13px">${esc(x.pt || "")}</div></div><button class="btn btn-line" data-se="${i}" style="padding:8px 12px;font-size:12.5px">Salvar</button></div>`).join("")}</div>` : "") +
           `<div class="eyebrow">Agora é você</div><p class="sub" style="font-size:13.5px">Sem olhar as falas: conte com suas palavras o que aconteceu e o que foi dito (em ${esc(lang)} se conseguir, ou em português). O Capi compara com o vídeo e corrige.</p>
@@ -2842,6 +2862,12 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     const nx = $("#cpNext", box); if(nx) nx.addEventListener("click", () => { S.qi++; S.pick = null; if(S.qi >= S.data.questions.length) addXp(2); draw(); try{ box.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){} });
     $$("[data-sl]", box).forEach(b => b.addEventListener("click", () => { const l = S.data.lines[+b.dataset.sl]; toast(capiSaveLine(l.t, l.pt) ? "Frase salva no Anki" : "Já estava salva"); }));
     $$("[data-se]", box).forEach(b => b.addEventListener("click", () => { const x = S.data.expressions[+b.dataset.se]; toast(capiSaveLine(x.t, x.pt) ? "Expressão salva no Anki" : "Já estava salva"); }));
+    const L2 = S.data ? S.data.lines.filter(l => l.pt) : [];
+    const tpi = $("#tpIn", box); if(tpi) tpi.addEventListener("input", () => { S.ptyped = tpi.value; });
+    const tpg = $("#tpGo", box); if(tpg) tpg.addEventListener("click", () => { const l = L2[S.pi], b = blankOf(l.t), v = (tpi.value || "").trim(); if(!v) return; const r = scoreSpeech(b.ans, v), ok = r.pct >= 85; S.pchk = {ok}; S.pdone[S.pi] = ok; if(!ok) capiSaveLine(l.t, l.pt); ok ? sfx.right() : sfx.wrong(); draw(); });
+    const tps = $("#tpSh", box); if(tps) tps.addEventListener("click", () => { const l = L2[S.pi]; S.pchk = {ok:false}; S.pdone[S.pi] = false; capiSaveLine(l.t, l.pt); draw(); });
+    const tpp = $("#tpPl", box); if(tpp) tpp.addEventListener("click", () => { const l = L2[S.pi]; try{ playOne(l.t, 0.9).catch(() => {}); }catch(e){} });
+    const tpn = $("#tpNext", box); if(tpn) tpn.addEventListener("click", () => { S.pi++; S.pchk = null; S.ptyped = ""; if(S.pi >= L2.length) addXp(2); draw(); });
     const es = $("#cpEs", box); if(es) es.addEventListener("input", () => { S.essay = es.value; });
     const fb = $("#cpFb", box); if(fb) fb.addEventListener("click", () => { S.essay = $("#cpEs", box).value.trim(); if(S.essay.length < 8){ toast("Escreva um pouco mais para o Capi corrigir."); return; } correct(); });
   }
@@ -5884,7 +5910,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v93";
+const APP_VER = "v94";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
