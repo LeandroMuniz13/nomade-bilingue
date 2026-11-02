@@ -1045,6 +1045,12 @@ function addXp(n){
   persist();
 }
 function userLevel(){ return (L().placement && L().placement.level) || "A1"; }
+function typedDiff(target, v){
+  const nz = x => String(x||"").toLowerCase().replace(/[^\p{L}\p{N}'\s]/gu,"").split(/\s+/).filter(Boolean);
+  const tw = nz(target), vw = nz(v), tset = new Set(tw), vset = new Set(vw);
+  const raw = String(v||"").trim().split(/\s+/).filter(Boolean);
+  return `<div><div class="eyebrow">Você escreveu</div><div class="words">${raw.length ? raw.map(w => { const k = nz(w)[0]; return `<span class="${k && tset.has(k) ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ") : `<span class="miss">(nada)</span>`}</div></div><div><div class="eyebrow">Esperado</div><div class="words">${String(target||"").trim().split(/\s+/).filter(Boolean).map(w => { const k = nz(w)[0]; return `<span class="${k && vset.has(k) ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ")}</div></div>`;
+}
 function recommendedUnit(){
   const lv = LEVEL_ORDER[userLevel()];
   const us = units();
@@ -2025,12 +2031,12 @@ function viewCheckpoint(){
     $("#cP", card).addEventListener("click", () => { seqToken++; playOne(it.t, 1.0).catch(()=>{}); });
     $("#cS", card).addEventListener("click", () => { seqToken++; playOne(it.t, 0.7).catch(()=>{}); });
     el.appendChild(card);
-    const f = h(`<section class="card dict"><div class="eyebrow">Escreva o que você ouviu</div><textarea id="cIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea><button class="btn btn-dark" id="cGo">Confirmar</button></section>`);
+    const f = h(`<section class="card dict"><div class="eyebrow">Escreva o que você ouviu</div><textarea id="cIn" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea><button class="btn btn-dark" id="cGo">Confirmar</button></section>`);
     $("#cGo", f).addEventListener("click", () => { const v = $("#cIn", f).value.trim(); if(!v) return; const pct = scoreSpeech(it.t, v).pct; next(pct>=85 ? 1 : pct>=60 ? 0.5 : 0); });
     el.appendChild(f);
   } else if(it.kind==="typed"){
     el.appendChild(h(`<div class="word-card"><div class="word-pt" style="font-size:22px">${esc(it.pt)}</div><div class="sub" style="margin-top:6px">Como se diz em ${LANGS[state.lang].name}?</div></div>`));
-    const f = h(`<section class="card dict"><textarea id="cIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea><button class="btn btn-dark" id="cGo">Confirmar</button></section>`);
+    const f = h(`<section class="card dict"><textarea id="cIn" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea><button class="btn btn-dark" id="cGo">Confirmar</button></section>`);
     $("#cGo", f).addEventListener("click", () => { const v = $("#cIn", f).value.trim(); if(!v) return; const pct = scoreSpeech(it.t, v).pct; next(pct>=90 ? 1 : pct>=70 ? 0.5 : 0); });
     el.appendChild(f);
   } else {
@@ -2073,7 +2079,7 @@ function viewDict(){
   $("#dS", card).addEventListener("click", () => { o.plays++; seqToken++; playOne(q.t, 0.7).catch(()=>{}); });
   el.appendChild(card);
   if(!o.r){
-    const f = h(`<section class="card dict"><div class="eyebrow">Escreva o que você ouviu</div><textarea id="dIn" placeholder="Digite a frase em ${LANGS[state.lang].name}…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea><button class="btn btn-dark" id="dGo">Verificar</button></section>`);
+    const f = h(`<section class="card dict"><div class="eyebrow">Escreva o que você ouviu</div><textarea id="dIn" placeholder="Digite a frase em ${LANGS[state.lang].name}…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea><button class="btn btn-dark" id="dGo">Verificar</button></section>`);
     $("#dGo", f).addEventListener("click", () => {
       const v = $("#dIn", f).value.trim(); if(!v) return;
       const r = scoreSpeech(q.t, v); o.r = r;
@@ -2124,7 +2130,7 @@ function viewTyped(){
   el.appendChild(h(`<div class="stage-label">Traduza e escreva · ${o.i+1} de ${o.qs.length}</div>`));
   el.appendChild(h(`<div class="word-card"><div class="word-pt" style="font-size:22px">${esc(q.pt)}</div><div class="sub" style="margin-top:6px">${q.sent ? "Escreva a frase em "+LANGS[state.lang].name : "Como se diz em "+LANGS[state.lang].name+"?"}</div></div>`));
   if(!o.r){
-    const f = h(`<section class="card dict"><textarea id="tIn" placeholder="Escreva em ${LANGS[state.lang].name}…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+    const f = h(`<section class="card dict"><textarea id="tIn" placeholder="Escreva em ${LANGS[state.lang].name}…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea>
       <p class="sub" style="font-size:var(--fs-cap)">Dica: troque o teclado para <b>${LANGS[state.lang].native}</b> e use o 🎤 do teclado para <b>falar</b> em vez de digitar. O que ele entender aparece aqui.</p>
       <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px"><button class="btn btn-line" id="tH">💡 Dica</button><button class="btn btn-dark" id="tGo">Verificar</button></div></section>`);
     $("#tH", f).addEventListener("click", () => { o.hint = true; const w = q.t.split(/\s+/); $("#tH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
@@ -2256,7 +2262,7 @@ function viewLadder(){
     el.appendChild(h(`<div class="word-card"><div class="sub" style="margin-bottom:6px">${esc(q.sc||"")}${q.ai ? " · 🤖 criado por IA, confira" : ""}</div><div class="word-pt" style="font-size:22px;line-height:1.4">${shown}</div>${showPt ? `<div class="sub" style="margin-top:8px">${esc(q.pt)}</div>` : ""}<div class="sub" style="margin-top:8px">Escreva a parte que falta${q.rung===5 && !o.reveal && !o.r ? " (sem tradução)" : ""}.</div></div>`));
   }
   if(!o.r){
-    const f = h(`<section class="card dict"><textarea id="lIn" placeholder="Escreva em ${lgn}…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+    const f = h(`<section class="card dict"><textarea id="lIn" placeholder="Escreva em ${lgn}…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea>
       <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px"><button class="btn btn-line" id="lH">💡 Dica</button><button class="btn btn-dark" id="lGo">Verificar</button></div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">${q.mode==="cloze" && q.rung===5 && !o.reveal ? `<button class="link" id="lT">Ver a tradução (vale como dica)</button>` : ""}${q.mode==="cloze" ? `<button class="link" id="lA">${o.busy ? "Criando…" : "🤖 Outro contexto com o Capi"}</button>` : ""}</div></section>`);
     $("#lH", f).addEventListener("click", () => { q.hint = true; const ans = q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, w = ans.split(/\s+/); $("#lH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
@@ -2266,13 +2272,13 @@ function viewLadder(){
       const v = $("#lIn", f).value.trim(); if(!v) return;
       const pct = q.mode==="recall" ? ladBest(q.ans, v) : scoreSpeech(q.k, v).pct;
       let sc = pct >= 90 ? 1 : pct >= 70 ? 0.5 : 0; if(q.hint) sc = Math.min(sc, 0.5);
-      o.eh = errScan(v); const r = ladApply(q, sc); o.r = {pct, sc, was:r.was, now:r.now}; o.res.push({v:q.v.t, sc, was:r.was, now:r.now});
+      o.eh = errScan(v); const r = ladApply(q, sc); o.r = {pct, sc, was:r.was, now:r.now, v}; o.res.push({v:q.v.t, sc, was:r.was, now:r.now});
       sc >= 1 ? sfx.right() : sfx.wrong(); render();
     });
     el.appendChild(f);
   } else {
     const r = o.r, full = q.mode==="recall" ? q.ans : q.t;
-    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?(r.now>r.was?"Subiu para "+LAD[r.now-1].n+"!":"Isso aí!"):r.sc>0?"Quase. Tente de novo amanhã":"Não foi dessa vez. Volta um degrau"}</span></div><div style="font-size:16px">${q.mode==="recall" ? "Certo: <b>"+esc(q.ans)+"</b>" : esc(q.t).replace(esc(q.k), "<b>"+esc(q.k)+"</b>")}</div>${q.mode==="cloze" ? `<p class="sub">${esc(q.pt)}</p>` : ""}<button class="link" id="lS">🔊 Ouvir</button></section>`));
+    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?(r.now>r.was?"Subiu para "+LAD[r.now-1].n+"!":"Isso aí!"):r.sc>0?"Quase. Tente de novo amanhã":"Não foi dessa vez. Volta um degrau"}</span></div>${r.v!=null ? typedDiff(q.mode==="recall" ? q.ans : q.k, r.v) : ""}<div style="font-size:16px">${q.mode==="recall" ? "Certo: <b>"+esc(q.ans)+"</b>" : esc(q.t).replace(esc(q.k), "<b>"+esc(q.k)+"</b>")}</div>${q.mode==="cloze" ? `<p class="sub">${esc(q.pt)}</p>` : ""}<button class="link" id="lS">🔊 Ouvir</button></section>`));
     $("#lS", el).addEventListener("click", () => speak(full));
     { const n = errNotice(o); if(n) el.appendChild(n); }
     const nx = h(`<button class="btn btn-dark btn-block">${o.i+1>=o.qs.length?"Ver resultado":"Próxima"} <span class="arr">→</span></button>`);
@@ -2381,7 +2387,7 @@ function viewErrLab(){
   if(it.k === "fix"){
     el.appendChild(h(`<div class="word-card"><div class="sub" style="margin-bottom:6px">Reescreva a frase corrigindo o erro</div><div class="word-pt" style="font-size:22px;line-height:1.4">${esc(it.q)}</div></div>`));
     if(!o.r){
-      const f = h(`<section class="card dict"><textarea id="eIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">${esc(it.q)}</textarea><button class="btn btn-dark" id="eGo">Verificar</button></section>`);
+      const f = h(`<section class="card dict"><textarea id="eIn" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true">${esc(it.q)}</textarea><button class="btn btn-dark" id="eGo">Verificar</button></section>`);
       $("#eGo", f).addEventListener("click", () => {
         const v = $("#eIn", f).value.trim(); if(!v) return;
         const pct = scoreSpeech(it.a, v).pct, rx = errRx(p), still = !!(rx && rx.test(v)), ok = pct >= 90 && !still;
@@ -2890,7 +2896,7 @@ Seja justo e específico, cite falas do vídeo. Se o aluno escreveu em portuguê
     return `<div class="tp"><div class="tp-h"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><b>Traduza isso…</b></div><div class="tp-bar"><i style="width:${pct}%"></i></div>
       <div class="tp-b"><div class="tp-pt">${esc(l.pt)}</div><div class="tp-en">${esc(b.shown)} <span class="tp-bl">${S.pchk ? esc(b.ans) : "___ ".repeat(b.n).trim()}</span></div>
       ${S.pchk ? `<div class="tp-ans ${S.pchk.ok ? "ok" : "bad"}">${S.pchk.ok ? "Certo!" : "Quase. O certo é:"} <u>${esc(l.t)}</u></div>${l.note ? `<div class="sub" style="font-size:var(--fs-cap)">💡 ${esc(l.note)}</div>` : ""}<button class="btn btn-dark btn-block" id="tpNext">${S.pi + 1 >= total ? "Ver resultado" : "Próxima"}</button>` :
-      `<input id="tpIn" class="in" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Complete a frase" value="${esc(S.ptyped)}" style="width:100%"><div style="display:flex;gap:8px"><button class="btn btn-line" id="tpPl" aria-label="Ouvir a frase">🔊 Ouvir</button><button class="btn btn-dark" id="tpGo" style="flex:1">Verificar</button></div><button class="link" id="tpSh">Mostrar a resposta</button>`}</div></div>`;
+      `<input id="tpIn" class="in" type="text" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true" placeholder="Complete a frase" value="${esc(S.ptyped)}" style="width:100%"><div style="display:flex;gap:8px"><button class="btn btn-line" id="tpPl" aria-label="Ouvir a frase">🔊 Ouvir</button><button class="btn btn-dark" id="tpGo" style="flex:1">Verificar</button></div><button class="link" id="tpSh">Mostrar a resposta</button>`}</div></div>`;
   }
   function draw(){
     let h2 = "";
@@ -3623,7 +3629,7 @@ function viewLesson(){
       el.appendChild(h(`<div class="word-card"><div class="sub" style="margin-bottom:6px">De memória, sem olhar</div>${cloze ? `<div class="word-pt" style="font-size:22px;line-height:1.4">${blank}</div><div class="sub" style="margin-top:8px">${esc(v.ex.pt)}</div>` : `<div class="word-pt" style="font-size:24px">${esc(v.pt)}</div>`}<div class="sub" style="margin-top:8px">${cloze ? "Escreva a parte que falta." : "Escreva em "+lgn+"."}</div></div>`));
       { const hn = hintOnce("write", "Agora a expressão some e você escreve de memória. Errar aqui é bom: é assim que ela fica na cabeça."); if(hn && !o.wr) el.appendChild(hn); }
       if(!o.wr){
-        const f = h(`<section class="card dict"><textarea id="wIn" placeholder="Escreva em ${lgn}…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+        const f = h(`<section class="card dict"><textarea id="wIn" placeholder="Escreva em ${lgn}…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea>
           <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px"><button class="btn btn-line" id="wH">💡 Dica</button><button class="btn btn-dark" id="wGo">Verificar</button></div>
           <button class="link" id="wB" style="align-self:center">Ver a expressão de novo</button></section>`);
         $("#wH", f).addEventListener("click", () => { o.whint = true; const w = ladAlts(ans)[0].split(/\s+/); $("#wH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
@@ -6028,7 +6034,7 @@ function viewVozIt(){
   $("#vP", card).addEventListener("click", () => { o.plays++; itPlay(o, idx, 1); }); $("#vS", card).addEventListener("click", () => { o.plays++; itPlay(o, idx, 0.7); });
   el.appendChild(card);
   if(!o.r){
-    const f = h(`<section class="card dict"><div class="eyebrow">Escreva o que você ouviu</div><textarea id="vIn" placeholder="Digite a frase em italiano…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea><button class="btn btn-dark btn-block" id="vGo">Verificar</button></section>`);
+    const f = h(`<section class="card dict"><div class="eyebrow">Escreva o que você ouviu</div><textarea id="vIn" placeholder="Digite a frase em italiano…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea><button class="btn btn-dark btn-block" id="vGo">Verificar</button></section>`);
     $("#vGo", f).addEventListener("click", () => { const t = $("#vIn", f).value.trim(); if(!t) return; const r = scoreSpeech(v[1], t); o.r = r; o.res.push({v, pct:r.pct}); r.pct >= 85 ? sfx.right() : sfx.wrong(); render(); });
     el.appendChild(f);
     setTimeout(() => { if(overlay === o && !o.r && !o.plays){ o.plays++; itPlay(o, idx, 1); } }, 250);
@@ -6234,7 +6240,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v121";
+const APP_VER = "v122";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
