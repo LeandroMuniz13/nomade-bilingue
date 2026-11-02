@@ -5910,7 +5910,22 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v95";
+const APP_VER = "v96";
+/* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
+(function(){
+  if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
+  let busy = false;
+  const chk = () => {
+    if(busy || document.visibilityState !== "visible" || !navigator.onLine) return; busy = true;
+    fetch("index.html?v=" + Date.now(), {cache:"no-store"}).then(r => r.ok ? r.text() : "").then(t => {
+      const m = t.match(/APP_VER = "(v\d+)"/); if(!m || m[1] === APP_VER) return;
+      let n = 0; try{ n = +(sessionStorage.getItem("nb-upd-" + m[1]) || 0); sessionStorage.setItem("nb-upd-" + m[1], n + 1); }catch(e){}
+      if(n >= 2) return;
+      navigator.serviceWorker.getRegistration().then(g => g && g.update()).catch(() => {}).then(() => location.reload());
+    }).catch(() => {}).then(() => { busy = false; });
+  };
+  document.addEventListener("visibilitychange", chk); window.addEventListener("focus", chk); setTimeout(chk, 4000);
+})();
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
