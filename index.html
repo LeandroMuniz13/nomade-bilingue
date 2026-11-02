@@ -2702,6 +2702,22 @@ const FILM_PICKS = [
  {l:"en",f:"Friends",t:"Pivot!",id:"ylaCmXw0fBQ",lv:"B1"},
  {l:"en",f:"Friends",t:"Smelly Cat",id:"ukiD7YyCK9g",lv:"B1"},
  {l:"en",f:"Friends",t:"Acordados a noite toda",id:"YzohP2AhiNw",lv:"B2"},
+ {l:"en",f:"Matrix",t:"Pílula azul ou vermelha",id:"zE7PKRjrid4",lv:"B1"},
+ {l:"en",f:"Matrix",t:"O Agente Smith interroga Neo",id:"cH99In5ZP0M",lv:"B1"},
+ {l:"en",f:"Matrix",t:"Não existe colher",id:"XO0pcWxcROI",lv:"B1"},
+ {l:"en",f:"Shameless (EUA)",t:"Meet the parents",id:"fInTs2iHTis",lv:"B1"},
+ {l:"en",f:"Shameless (EUA)",t:"Um dia frio no inferno",id:"rM2I0RQ6Bvk",lv:"B2"},
+ {l:"en",f:"Shameless (EUA)",t:"O monólogo da Fiona",id:"5qt2wJ6MLtk",lv:"B2"},
+ {l:"en",f:"Shameless (EUA)",t:"Não quero acabar como o Frank",id:"b5LQRZTFqeY",lv:"B2"},
+ {l:"en",f:"Sherlock (BBC)",t:"Sherlock e John se conhecem",id:"VaT7IYQgyqo",lv:"B2"},
+ {l:"en",f:"Sherlock (BBC)",t:"John conhece Mycroft",id:"1cMvdOr9QEg",lv:"B2"},
+ {l:"en",f:"Sherlock (BBC)",t:"Qual frasco?",id:"huOwYyK5EHk",lv:"B2"},
+ {l:"en",f:"The Office (UK)",t:"A entrevista mais constrangedora",id:"rPu_d4SSOPk",lv:"B2"},
+ {l:"en",f:"The Office (UK)",t:"David Brent palestrante",id:"mXytRC0k-K8",lv:"B2"},
+ {l:"en",f:"Peaky Blinders (BBC)",t:"Tommy Shelby, deputado",id:"VvxG5VMA4hg",lv:"B2"},
+ {l:"en",f:"Peaky Blinders (BBC)",t:"Há Deus e há os Peaky Blinders",id:"nKN-VK0B-18",lv:"B2"},
+ {l:"en",f:"Fawlty Towers (BBC)",t:"Aula de idioma para o Manuel",id:"H-oH-TELcLE",lv:"B1"},
+ {l:"en",f:"Fawlty Towers (BBC)",t:"Basil ataca o carro",id:"78b67l_yxUc",lv:"B1"},
  {l:"it",f:"Shrek (dublado)",t:"Início do filme",id:"OQAWf799308",lv:"A2"},
  {l:"it",f:"Shrek 2 (dublado)",t:"Cerco un eroe",id:"kM5v0Msb11Q",lv:"B1"},
  {l:"it",f:"Shrek Terzo (dublado)",t:"Primeiro dia como rei",id:"vHB0q_yY53g",lv:"B1"},
@@ -5655,7 +5671,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v89";
+const APP_VER = "v90";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
