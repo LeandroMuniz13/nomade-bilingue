@@ -6233,7 +6233,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v119";
+const APP_VER = "v120";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6342,7 +6342,22 @@ async function micBegin(done0){
 }
 async function micKeep(on){
   if(!on){ if(micS.keep){ micS.keep.getTracks().forEach(t=>t.stop()); micS.keep = null; } return true; }
-  try{ micS.keep = await navigator.mediaDevices.getUserMedia({audio:true}); return true; }catch(e){ micS.keep = null; micS.err = e; return false; }
+  if(micS.keep){ try{ micS.keep.getTracks().forEach(t => t.stop()); }catch(e){} micS.keep = null; }
+  /* iPhone: logo depois de a voz do Capi tocar, a sessão de áudio ainda está em "playback" e o iOS recusa o microfone (InvalidStateError). Muda a sessão e tenta de novo com pausas. */
+  let lastE = null;
+  for(let att = 0; att < 4; att++){
+    try{
+      try{ document.querySelectorAll("audio").forEach(a => { try{ a.pause(); }catch(e){} }); if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+      audSess(att===3 ? "auto" : "play-and-record");
+      if(att > 0) await new Promise(r => setTimeout(r, att===1 ? 350 : 800));
+      micS.keep = await navigator.mediaDevices.getUserMedia({audio:true});
+      const tr = micS.keep.getAudioTracks()[0];
+      if(tr && tr.muted) await new Promise(r => { let d = false; const f = () => { if(!d){ d = true; r(); } }; tr.addEventListener("unmute", f, {once:true}); setTimeout(f, 1200); });
+      return true;
+    }catch(e){ lastE = e; micS.keep = null; if(e && (e.name==="NotAllowedError" || e.name==="NotFoundError" || e.name==="SecurityError")) break; }
+  }
+  if(lastE && !lastE.micStage) lastE.micStage = "keep" + (lastE.name ? "" : "");
+  micS.err = lastE; return false;
 }
 function micErrMsg(e){
   const n = (e && e.name) || "", st = e && e.micStage;
