@@ -372,6 +372,16 @@ body.focus main{padding-bottom:32px}
 .chip-b{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:var(--fs-sub);min-height:40px;display:inline-flex;flex-direction:column;align-items:flex-start;gap:0;line-height:1.15}
 .chip-b small{font-size:11px;color:var(--ink-faint)}
 .chip-b.on{border-color:var(--gold-ui);background:var(--surface-2);font-weight:700}
+.cv-stat{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);font-size:var(--fs-sub);flex-wrap:wrap}
+.cv-dot{width:12px;height:12px;border-radius:50%;background:var(--ink-faint);flex:none}
+.cv-stat.listen .cv-dot{background:var(--ok);animation:cvp 1s ease-in-out infinite}
+.cv-stat.talk .cv-dot{background:var(--gold-ui);animation:cvp .8s ease-in-out infinite}
+.cv-stat.tx .cv-dot,.cv-stat.think .cv-dot{background:var(--gold-ui)}
+@keyframes cvp{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}
+@media (prefers-reduced-motion:reduce){.cv-dot{animation:none!important}}
+.cv-t{flex:1;min-width:120px;font-weight:600}
+.cv-lv{width:72px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;flex:none}
+.cv-lv i{display:block;height:100%;width:0;background:var(--ok);transition:width .08s}
 form.compose .iconbtn.vmic{flex:none;background:var(--surface);border:1.5px solid var(--gold-ui);color:var(--ink)}
 form.compose .iconbtn.vmic .nbi svg{width:22px;height:22px}
 form.compose .iconbtn.vmic.on{background:var(--bad);color:#fff;border-color:var(--bad)}
@@ -4745,11 +4755,14 @@ function askAI(){
         if(lastMe && !lastMe.score && (sc.n>0 || sc.ok>0 || sc.err>0)) lastMe.score = sc;
       }
       o.msgs.push({role:"them", text:txt}); o.busy=false; render();
-      if(state.capiVoice !== false){ const fl = txt.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim())); if(fl){ capiSpeak(fl, {onState:v => { const el = document.getElementById("capiAv"); if(el) el.classList.toggle("talk", !!v); }}); } }
+      { const fl = txt.split("\n").find(x => x.trim() && !/^(🇧🇷|✏️|💬|💡)/.test(x.trim()));
+        const after = () => { if(o.conv && overlay===o){ audSess("play-and-record"); convListen(o); } };
+        if(fl && (state.capiVoice !== false || o.conv)){ o.cs = "talk"; const av0 = document.getElementById("capiAv"); if(av0) av0.classList.add("talk"); audSess("playback"); capiSpeak(fl, {wait:!!o.conv, onState:v => { const el = document.getElementById("capiAv"); if(el) el.classList.toggle("talk", !!v); }}).then(after, after); }
+        else after(); }
     });
   }).catch(err => {
     if(overlay!==o) return;
-    o.busy=false; o.msgs.push({role:"sys", text: err && err.code==="rate_limited" ? "Muitas mensagens seguidas — espere um pouquinho." : (err && ["key","quota","busy"].includes(err.message)) ? gmErrMsg(err) : "Não consegui responder agora. Tente de novo."}); render();
+    o.busy=false; if(o.conv){ try{ convStop(o, ""); }catch(e){} } o.msgs.push({role:"sys", text: err && err.code==="rate_limited" ? "Muitas mensagens seguidas — espere um pouquinho." : (err && ["key","quota","busy"].includes(err.message)) ? gmErrMsg(err) : "Não consegui responder agora. Tente de novo."}); render();
   });
 }
 
@@ -4798,7 +4811,7 @@ async function gmTtsFetch(text, style, voice){
 async function capiSpeak(text, opt){
   opt = opt || {}; text = String(text||"").replace(/^["“]|["”]$/g,"").trim(); if(!text) return false;
   try{ stopAudio(); seqToken++; }catch(e){}
-  if(!gmKey() || !navigator.onLine){ speak(text); return false; }
+  if(!gmKey() || !navigator.onLine){ try{ const p = speak(text); if(opt.wait && p && p.then) await p.catch(() => {}); }catch(e){} return false; }
   const tone = state.capiTone==null ? 1 : state.capiTone;
   const style = opt.style || (tone===0 ? "warm, patient and encouraging, natural conversational pace" : tone===2 ? "sassy, dramatic and teasing like a witty friend, with a smile in the voice, natural pace" : "playful, warm and a little teasing like a witty friend, natural conversational pace");
   const voice = opt.voice || capiVoiceName(), ck = voice+"|"+style+"|"+text;
@@ -4807,13 +4820,82 @@ async function capiSpeak(text, opt){
     capiTtsErr = ""; if(opt.onState) opt.onState(true);
     const a = new Audio(URL.createObjectURL(blob)); curStop = () => { try{ a.pause(); }catch(e){} if(opt.onState) opt.onState(false); };
     a.onended = () => { if(opt.onState) opt.onState(false); };
+    if(opt.wait){ await new Promise((res, rej) => { a.onended = () => { if(opt.onState) opt.onState(false); res(); }; a.onerror = () => rej(new Error("play")); a.play().catch(rej); }); return true; }
     await a.play(); return true;
   }catch(e){
     capiTtsErr = (e && (e.detail || e.message)) || "erro";
     if(opt.onState) opt.onState(false);
-    if(!opt.silent) speak(text);
+    if(!opt.silent){ try{ const p = speak(text); if(opt.wait && p && p.then) await p.catch(() => {}); }catch(e2){} }
     return false;
   }
+}
+/* ---- conversa por voz (mãos livres): ouve, detecta o fim da fala, envia, o Capi responde falando e volta a ouvir ---- */
+let vadCtx = null;
+function vadMeter(stream){
+  const C = window.AudioContext || window.webkitAudioContext; if(!C) return null;
+  try{
+    if(!vadCtx || vadCtx.state==="closed") vadCtx = new C();
+    if(vadCtx.state==="suspended") vadCtx.resume().catch(() => {});
+    const src = vadCtx.createMediaStreamSource(stream), an = vadCtx.createAnalyser(); an.fftSize = 1024; src.connect(an);
+    const buf = new Float32Array(an.fftSize);
+    return {read(){ an.getFloatTimeDomainData(buf); let t = 0; for(let i=0;i<buf.length;i++) t += buf[i]*buf[i]; return Math.sqrt(t/buf.length); }, close(){ try{ src.disconnect(); }catch(e){} }};
+  }catch(e){ return null; }
+}
+async function convStart(o){
+  if(o.conv) return;
+  try{ stopAudio(); seqToken++; }catch(e){}
+  o.vmsg = "";
+  if(!(await micKeep(true))){ o.vmsg = micErrMsg(micS.err); render(); return; }
+  o.conv = true; o.empty = 0; o.cs = "listen"; convListen(o);
+}
+function convStop(o, msg){
+  o.conv = false; o.cs = ""; o._now = false; if(msg) o.vmsg = msg;
+  try{ micStop(); }catch(e){} try{ micKeep(false); }catch(e){} try{ stopAudio(); }catch(e){}
+  const av = document.getElementById("capiAv"); if(av) av.classList.remove("talk");
+  if(overlay===o) render();
+}
+async function convListen(o){
+  if(!o.conv || overlay!==o){ if(!o.conv) return; convStop(o, ""); return; }
+  if(o.busy){ return; }
+  o.cs = "listen"; o._now = false; o._sp = false; render();
+  let lv = null, iv = null;
+  const fin = () => { if(iv){ clearInterval(iv); iv = null; } if(lv){ lv.close(); lv = null; } };
+  try{
+    await micBegin(async (url, heard) => {
+      fin();
+      if(!o.conv || overlay!==o) return;
+      if(!o._sp && !o._now){
+        o.empty++;
+        if(o.empty >= 2){ convStop(o, "Não ouvi nada. Pausei a conversa. Toque no microfone para continuar."); return; }
+        return convListen(o);
+      }
+      o.empty = 0; o.cs = "tx"; render();
+      try{
+        const t = await voiceToText(url, heard);
+        if(!o.conv || overlay!==o) return;
+        o.cs = "think"; sceneSend(o, t);
+      }catch(err){
+        const m = err.message==="nokey" ? "Para o Capi entender sua voz, cole a chave do Gemini no cartão de chave desta tela. Sem chave, use o 🎤 do teclado." : err.message==="empty" ? "" : (err.code||err.message||"").toString().match(/key|quota|busy|http|model/) ? gmErrMsg(err) : "Não consegui entender agora.";
+        if(err.message==="empty"){ o.empty++; if(o.empty < 2) return convListen(o); }
+        convStop(o, m || "Não ouvi nada. Pausei a conversa.");
+      }
+    });
+  }catch(e){ fin(); convStop(o, micErrMsg(e)); return; }
+  lv = micS.stream ? vadMeter(micS.stream) : null;
+  const t0 = Date.now(); let n = 0, noise = 0, thr = 0.03, voiced = 0, last = 0;
+  iv = setInterval(() => {
+    if(!o.conv || overlay!==o || o.cs!=="listen"){ fin(); return; }
+    const now = Date.now();
+    if(!lv){ if(now - t0 > 7000){ o._sp = true; micStop(); } return; }   /* sem medidor: grava 7 s */
+    const r = lv.read(); n++;
+    if(n <= 5){ noise += r/5; if(n===5) thr = Math.max(0.022, noise*3.2); }
+    else {
+      if(r > thr){ voiced++; last = now; if(voiced >= 2) o._sp = true; } else voiced = 0;
+      const bar = document.getElementById("cvLvl"); if(bar) bar.style.width = Math.min(100, Math.round(r/Math.max(thr*3,0.06)*100)) + "%";
+      if(o._sp && now - last > 1250){ fin(); micStop(); }
+      else if(!o._sp && now - t0 > 9000){ fin(); micStop(); }
+    }
+  }, 80);
 }
 async function voiceToText(url, heard){
   if(heard && heard.trim()) return heard.trim();
@@ -4951,25 +5033,20 @@ function viewScene(){
   }
   const canMic = micOK();
   if(o.vmsg) el.appendChild(h(`<p class="sub" style="font-size:var(--fs-sub)">${esc(o.vmsg)}</p>`));
-  const form = h(`<form class="compose">${canMic?`<button type="button" class="iconbtn vmic ${o.rec?"on":""}" id="vMic" aria-label="${o.rec?"Parar e enviar":"Falar com o Capi"}" ${o.busy||o.tx?"disabled":""}>${o.rec?"⏹":o.tx?"…":"🎙️"}</button>`:""}<input id="msgIn" autocomplete="off" placeholder="${o.rec?"Ouvindo… toque ⏹":o.tx?"Transcrevendo…":"Escreva ou fale em "+LANGS[state.lang].name.toLowerCase()+"…"}" ${o.busy||o.rec||o.tx?"disabled":""}><button class="iconbtn" aria-label="Enviar" ${o.busy?"disabled":""}>➤</button></form>`);
+  if(o.conv){
+    const stT = {listen:"Ouvindo você… pode falar", tx:"Entendendo o que você disse…", think:"Capi está pensando…", talk:"Capi está falando…"}[o.cs] || "Conversa ligada";
+    const cv = h(`<div class="cv-stat ${o.cs||""}" role="status"><span class="cv-dot"></span><span class="cv-t">${stT}</span><span class="cv-lv"><i id="cvLvl"></i></span>${o.cs==="listen"?`<button type="button" class="link" id="cvSend">Enviar agora</button>`:""}</div>`);
+    const sn = $("#cvSend", cv); if(sn) sn.addEventListener("click", () => { o._now = true; micStop(); });
+    el.appendChild(cv);
+  }
+  const form = h(`<form class="compose">${canMic?`<button type="button" class="iconbtn vmic ${o.conv?"on":""}" id="vMic" aria-label="${o.conv?"Encerrar a conversa por voz":"Conversar por voz"}">${o.conv?"⏹":"🎙️"}</button>`:""}<input id="msgIn" autocomplete="off" placeholder="${o.conv?"Conversa por voz ligada":"Escreva ou fale em "+LANGS[state.lang].name.toLowerCase()+"…"}" ${o.busy||o.conv?"disabled":""}><button class="iconbtn" aria-label="Enviar" ${o.busy||o.conv?"disabled":""}>➤</button></form>`);
   form.addEventListener("submit", e => { e.preventDefault(); sceneSend(o, $("#msgIn").value); });
   const vm = $("#vMic", form);
-  if(vm) vm.addEventListener("click", async () => {
-    if(o.rec){ micStop(); return; }
-    o.vmsg = ""; try{ stopAudio(); seqToken++; }catch(e){}
-    try{
-      await micBegin(async (url, heard) => {
-        o.rec = false; o.tx = true; if(overlay===o) render();
-        try{ const t = await voiceToText(url, heard); o.tx = false; if(overlay===o) sceneSend(o, t); }
-        catch(err){ o.tx = false; o.vmsg = err.message==="nokey" ? "Para o Capi entender sua voz aqui, cole uma chave grátis do Gemini em Você › Ajustes. Sem chave, use o microfone 🎤 do teclado do iPhone, no campo de texto." : err.message==="empty" ? "Não ouvi nada. Chegue mais perto do microfone e tente de novo." : (err.code||err.message||"").toString().match(/key|quota|busy|http|model/) ? gmErrMsg(err) : "Não consegui transcrever agora. Tente de novo ou escreva."; if(overlay===o) render(); }
-      });
-      o.rec = true; render();
-    }catch(e){ o.rec = false; o.vmsg = micErrMsg(e); render(); }
-  });
+  if(vm) vm.addEventListener("click", () => { if(o.conv) convStop(o, ""); else convStart(o); });
   el.appendChild(capiPanel(o));
   { const vb = h(`<button class="link" style="align-self:flex-start">${state.capiVoice===false?"🔇 Capi em silêncio":"🔊 Capi fala as respostas"} · tocar para ${state.capiVoice===false?"ligar":"desligar"}</button>`); vb.addEventListener("click", () => { state.capiVoice = state.capiVoice===false; if(state.capiVoice===false){ try{ stopAudio(); }catch(e){} } persist(); render(); }); el.appendChild(vb); }
   el.appendChild(form);
-  setTimeout(()=>{ const i=$("#msgIn"); if(i && !o.busy) i.focus({preventScroll:true}); window.scrollTo(0, document.body.scrollHeight); }, 30);
+  setTimeout(()=>{ const i=$("#msgIn"); if(i && !o.busy && !o.conv && !IS_IOS) i.focus({preventScroll:true}); window.scrollTo(0, document.body.scrollHeight); }, 30);
   return el;
 }
 
@@ -6147,7 +6224,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v111";
+const APP_VER = "v112";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
