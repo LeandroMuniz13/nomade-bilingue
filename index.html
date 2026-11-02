@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Nômade">
 <title>Nômade Bilíngue</title>
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest"><link rel="preconnect" href="https://generativelanguage.googleapis.com" crossorigin>
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <style>html{-webkit-text-size-adjust:100%}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);background:#F7F5F0}</style>
@@ -4743,9 +4743,9 @@ function askAI(){
   aiSampleGet().then(sample => {
     if(!sample){ o.busy=false; o.msgs.push({role:"sys", text:"Conversa indisponível agora."}); render(); return; }
     const input = [{role:"user", content:systemPrompt(o.s)}];
-    o.msgs.forEach(m => { if(m.role==="me") input.push({role:"user", content:m.text}); else if(m.role==="them") input.push({role:"assistant", content:m.text}); });
+    o.msgs.slice(-10).forEach(m => { if(m.role==="me") input.push({role:"user", content:m.text}); else if(m.role==="them") input.push({role:"assistant", content:m.text}); });
     if(input[input.length-1].role!=="user") input.push({role:"user", content:"(continue)"});
-    return sample(input, {cache:false}).then(r => {
+    return sample(input, {cache:false, maxTokens:450}).then(r => {
       if(overlay!==o) return;
       let txt = (r && r.text) || "…";
       const mm = txt.match(/^\s*\**\s*NOTA\s*:?\**\s*(\d+(?:[.,]\d+)?)\s*(?:\/\s*10)?\s*\|\s*ACERTOS\s*:?\s*(\d+)\s*\|\s*ERROS\s*:?\s*(\d+)[^\n]*\n*/i);
@@ -6229,7 +6229,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v114";
+const APP_VER = "v115";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6731,7 +6731,7 @@ async function gmCall(parts, maxTok, json, fast){
   const key = gmKey(); if(!key) throw new Error("nokey");
   let last = null;
   const order = (fast ? ["gemini-flash-lite-latest","gemini-3.5-flash-lite","gemini-flash-latest"] : GM_MODELS).concat(GM_MODELS);
-  const models = [...new Set([gmPref()].concat(order).filter(Boolean))];
+  const models = [...new Set((fast ? [] : [gmPref()]).concat(order).filter(Boolean))];
   const contents = (parts && parts.contents) ? parts.contents : [{role:"user", parts}], stream = !!(parts && parts.stream);
   for(const m of models){
     for(let att = 0; att < 2; att++){
@@ -6750,7 +6750,7 @@ async function gmCall(parts, maxTok, json, fast){
         txt = txt.trim();
       } else { const j = await res.json(), c = ((j.candidates||[])[0]||{}).content; txt = ((c && c.parts) || []).map(x => x.text || "").join("").trim(); }
       if(!txt) throw new Error("empty");
-      try{ localStorage.setItem("nb-gm-model", m); }catch(e){}
+      if(!fast){ try{ localStorage.setItem("nb-gm-model", m); }catch(e){} }
       return txt;
     }
   }
@@ -6764,7 +6764,7 @@ async function gmCoach(url, ref, az){
 Responda SOMENTE com JSON válido, em português do Brasil, neste formato exato:
 {"heard":"o que você ouviu, literal","level":"otimo|bom|treinar","words":[{"w":"palavra da frase de referência","s":"ok|meh|bad","tip":"dica curta (até 10 palavras) só se s não for ok, senão vazio"}],"good":"uma frase curta sobre o que ficou bom","drill":"um exercício de 1 minuto, uma frase"}
 Regras: "words" deve seguir a frase de referência palavra por palavra, na ordem. Marque "bad" só quando a palavra soou claramente errada ou faltou; "meh" quando soou fraca ou com sotaque forte. Dicas: erro típico de brasileiros e como corrigir (ex.: não coloque i no final, th com a língua entre os dentes). Seja honesto e cauteloso: você não mede sotaque com exatidão. Se o áudio estiver curto, ruidoso ou sem fala, use level "treinar", words todas "meh" e explique em "good". Sem markdown, sem nota numérica.`;
-  const raw = await gmCall([{text:prompt}, {inlineData:{mimeType:"audio/wav", data:b64}}], 2500, true);
+  const raw = await gmCall([{text:prompt}, {inlineData:{mimeType:"audio/wav", data:b64}}], 1400, true, true);
   let out; try{ out = JSON.parse(raw.replace(/^```json\s*|```$/g,"").trim()); if(!out || !Array.isArray(out.words)) throw 0; }catch(e){ out = {raw: raw.replace(/\*\*/g,"").replace(/#+\s*/g,"")}; }
   const lgg = L(); (lgg.coachLog = lgg.coachLog || []).push({t:ref, ts:Date.now(), x:coachText(out)}); if(lgg.coachLog.length > 30) lgg.coachLog.splice(0, lgg.coachLog.length-30);
   addXp(2); persist(); return out;
