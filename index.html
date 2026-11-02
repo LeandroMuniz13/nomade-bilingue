@@ -5612,7 +5612,7 @@ function sixWays(){
     {k:"film", ic:"🎬", bg:"var(--tint-1)", t:"Filmes e séries", s:"Cenas com legenda · 3–5 min · escuta", act:() => { newsSub = "videos"; go("news"); }},
     {k:"books", ic:"📚", bg:"var(--tint-2)", t:"Livros", s:"Leitura · 3–5 min · toque nas palavras", act:() => { newsSub = books().length ? "books" : "stories"; go("news"); }},
     {k:"vocab", ic:"🗂️", bg:"var(--tint-3)", t:"Vocabulário", s:sst.due ? "Revise hoje: "+sst.due+" cartões" : "Palavras · 3 min · cartões e revisão", act:() => open({type:"hub", k:"vocab"})},
-    {k:"tutor", ic:"🤖", bg:"var(--tint-4)", t:"Capi, tutor de IA", s:"Conversa · 5 min · escrita e leitura", act:() => go("chat")},
+    {k:"tutor", ic:capi("hi", 46), bg:"var(--tint-4)", t:"Capi, tutor de IA", s:"Conversa · 5 min · escrita e leitura", act:() => go("chat")},
     {k:"audio", ic:"🎧", bg:"var(--tint-2)", t:"Audiolivros e áudio", s:"Escuta · 3–10 min · vozes reais e livros", act:() => open({type:"hub", k:"audio"})},
     {k:"games", ic:"🎮", bg:"var(--tint-1)", t:"Jogos", s:"Palavras · 2–3 min · rápido, sem internet", act:() => open({type:"hub", k:"games"})}
   ];
@@ -5910,7 +5910,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v94";
+const APP_VER = "v95";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
