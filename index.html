@@ -5651,7 +5651,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v85";
+const APP_VER = "v86";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5987,7 +5987,7 @@ function learnCard(){
   return c;
 }
 /* ---------- IA SEM CHAVE (testada em 02/11/2026 a partir do site): OVHcloud AI Endpoints + Pollinations legado ---------- */
-const OVH = {base:"https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", prefer:["Meta-Llama-3_3-70B-Instruct","Qwen3.6-27B","Qwen3.8-27B","Mistral-Small-3.2-24B-Instruct-2506","Qwen3.5-9B","gpt-oss-120b"], cool:{}, list:null};
+const OVH = {base:"https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", prefer:["Mistral-Small-3.2-24B-Instruct-2506","Meta-Llama-3_3-70B-Instruct","gpt-oss-120b","Mistral-Nemo-Instruct-2407"], cool:{}, list:null};
 const keylessOn = () => { try{ return localStorage.getItem("nb-keyless") !== "0"; }catch(e){ return true; } };
 async function ovhModels(){
   if(OVH.list) return OVH.list;
@@ -6002,14 +6002,15 @@ async function ovhCall(inp, maxTok, json){
   for(const model of order.slice(0, 5)){
     try{
       const body = {model, messages:toChat(inp), max_tokens:maxTok||900, temperature:0.4}; if(json) body.response_format = {type:"json_object"};
-      let res = await fetch(OVH.base+"/chat/completions", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
-      if(res.status===400 && json){ delete body.response_format; body.messages = toChat(inp).concat([{role:"user", content:"Responda somente com JSON válido."}]); res = await fetch(OVH.base+"/chat/completions", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}); }
+      const post = () => { const c = new AbortController(), tm = setTimeout(() => c.abort(), 25000); return fetch(OVH.base+"/chat/completions", {method:"POST", signal:c.signal, headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}).finally(() => clearTimeout(tm)); };
+      let res = await post();
+      if(res.status===400 && json){ delete body.response_format; body.messages = toChat(inp).concat([{role:"user", content:"Responda somente com JSON válido."}]); res = await post(); }
       if(res.status===429){ OVH.cool[model] = Date.now()+40000; last = new Error("quota"); continue; }
       if(!res.ok){ OVH.cool[model] = Date.now()+120000; last = new Error("busy"); continue; }
       const j = await res.json(), txt = (((j.choices||[])[0]||{}).message||{}).content;
       if(txt && String(txt).trim()) return String(txt).replace(/<think>[\s\S]*?<\/think>/g,"").trim();
       last = new Error("empty");
-    }catch(e){ last = e; }
+    }catch(e){ last = e; if(e && e.name==="AbortError"){ OVH.cool[model] = Date.now()+60000; last = new Error("busy"); } }
   }
   throw last || new Error("busy");
 }
