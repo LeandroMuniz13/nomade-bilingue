@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com https://upload.wikimedia.org; media-src 'self' blob: data: https: https://accent.gmu.edu https://archive.org https://*.archive.org https://tatoeba.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://podcasts.files.bbci.co.uk https://feeds.megaphone.fm https://esl.culips.com https://rss.buzzsprout.com https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com https://upload.wikimedia.org; media-src 'self' blob: data: https: https://accent.gmu.edu https://archive.org https://*.archive.org https://tatoeba.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://podcasts.files.bbci.co.uk https://feeds.megaphone.fm https://esl.culips.com https://rss.buzzsprout.com https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://*.workers.dev https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#D9DDF7">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
@@ -4801,9 +4801,9 @@ async function gmTtsFetch(text, style, voice){
   for(const md of modes){
     let res;
     try{
-      if(md==="int") res = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {method:"POST", headers:{"x-goog-api-key":key,"Content-Type":"application/json"},
+      if(md==="int") res = await fetch(gmHost()+"/v1beta/interactions", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, gmHdr(key)),
         body:JSON.stringify({model:"gemini-3.8-flash-tts", input:[{type:"user_input", content:[{type:"text", text, annotations:[{type:"speech_metadata", style}]}]}], response_format:{type:"audio"}, generation_config:{speech_config:[{voice}]}})});
-      else res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent", {method:"POST", headers:{"x-goog-api-key":key,"Content-Type":"application/json"},
+      else res = await fetch(gmHost()+"/v1beta/models/gemini-3.1-flash-tts-preview:generateContent", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, gmHdr(key)),
         body:JSON.stringify({contents:[{parts:[{text:style+": "+text}]}], generationConfig:{responseModalities:["AUDIO"], speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}})});
     }catch(e){ lastE = new Error("net"); continue; }
     if(res.status===429){ throw new Error("quota"); }
@@ -6240,7 +6240,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v122";
+const APP_VER = "v123";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6621,17 +6621,22 @@ function azCard(r){
 function gmKeyCard(after){
   const gk = gmKey();
   const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Inteligência artificial (Gemini, gratuito)</div>
-    <p class="sub" style="font-size:var(--fs-cap)">${gk ? "Ativada neste aparelho: Capi (tutor de conversa), exercícios novos, entrevista e avaliação da sua fala." : "Para usar o Capi (tutor de IA), crie uma chave grátis em aistudio.google.com (botão “Get API key”), copie e cole aqui."}</p>
-    ${gk ? "" : `<input class="in" data-k type="password" placeholder="Cole a chave do Gemini" autocomplete="off"><a class="link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:var(--fs-sub)">Abrir o Google AI Studio ↗</a>`}
-    <button class="btn ${gk?"btn-line":"btn-dark"}">${gk ? "Remover chave" : "Salvar chave"}</button>
-    <p class="sub" style="font-size:var(--fs-cap)">A chave fica só neste aparelho. No plano gratuito, o Google pode usar o conteúdo enviado para melhorar os produtos dele.</p></section>`);
+    <p class="sub" style="font-size:var(--fs-cap)">${gk ? "Ativada neste aparelho: Capi (tutor de conversa), exercícios novos, entrevista e avaliação da sua fala." : "Tem um código de convite (começa com NB-)? Cole abaixo. Ou crie uma chave grátis em aistudio.google.com (botão “Get API key”) e cole aqui."}</p>
+    ${gk ? "" : `<input class="in" data-k type="password" placeholder="Código de convite ou chave do Gemini" autocomplete="off" autocapitalize="characters"><a class="link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:var(--fs-sub)">Abrir o Google AI Studio ↗</a>`}
+    <button class="btn ${gk?"btn-line":"btn-dark"}">${gk ? "Remover chave" : "Salvar"}</button>
+    <p class="sub" style="font-size:var(--fs-cap)">${isInvite(gk) ? "Com convite, seus pedidos de IA passam pelo servidor do projeto, que guarda a chave. Há um limite diário por convite." : "A chave fica só neste aparelho."} No plano gratuito, o Google pode usar o conteúdo enviado para melhorar os produtos dele.</p></section>`);
   $("button",c).addEventListener("click", () => {
     if(gk){ try{ localStorage.removeItem("nb-gm"); }catch(e){} toast("Chave removida."); render(); return; }
-    const k = $("[data-k]",c).value.trim(); if(!k){ toast("Cole a chave."); return; }
-    try{ localStorage.setItem("nb-gm", k); }catch(e){} toast("Chave salva. A IA está ativa."); if(after) after(); else render();
+    const k = $("[data-k]",c).value.trim(); if(!k){ toast("Cole o código ou a chave."); return; }
+    if(isInvite(k) && !NB_PROXY){ toast("Os convites ainda não estão ativos. Use uma chave do Gemini por enquanto."); return; }
+    try{ localStorage.setItem("nb-gm", isInvite(k) ? k.toUpperCase() : k); }catch(e){} toast(isInvite(k) ? "Convite salvo. A IA está ativa." : "Chave salva. A IA está ativa."); if(after) after(); else render();
   });
   return c;
 }
+const NB_PROXY = "";   /* endereço do servidor de convites (Cloudflare Worker); preenchido na publicação */
+const isInvite = k => /^nb-/i.test(String(k||""));
+const gmHost = () => isInvite(gmKey()) ? NB_PROXY : "https://generativelanguage.googleapis.com";
+const gmHdr = k => isInvite(k) ? {"x-nb-code": String(k).toUpperCase()} : {"x-goog-api-key": k};
 function gmKey(){ try{ return localStorage.getItem("nb-gm") || ""; }catch(e){ return ""; } }
 const GM_MODELS = ["gemini-flash-latest","gemini-3.8-flash","gemini-3.6-flash","gemini-flash-lite-latest","gemini-3.5-flash-lite"];
 /* IA unificada: usa o Claude quando o app está aberto nele; no site usa o Gemini (chave gratuita) */
@@ -6780,12 +6785,12 @@ async function gmCall(parts, maxTok, json, fast){
   for(const m of models){
     for(let att = 0; att < 2; att++){
       const gen = Object.assign({maxOutputTokens:maxTok||900}, json ? {responseMimeType:"application/json"} : {}, gmNoThinkBy[m] ? {} : {thinkingConfig:gmThink(m)});
-      let res; try{ res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:${stream ? "streamGenerateContent?alt=sse" : "generateContent"}`, {method:"POST", headers:{"x-goog-api-key":key, "Content-Type":"application/json"}, body:JSON.stringify({contents, generationConfig:gen})}); }catch(ne){ if(att === 0){ await new Promise(r => setTimeout(r, 1500)); continue; } throw ne; }
+      let res; try{ res = await fetch(`${gmHost()}/v1beta/models/${m}:${stream ? "streamGenerateContent?alt=sse" : "generateContent"}`, {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, gmHdr(key)), body:JSON.stringify({contents, generationConfig:gen})}); }catch(ne){ if(att === 0){ await new Promise(r => setTimeout(r, 1500)); continue; } throw ne; }
       if(res.status===400){ const t = await res.text(); const isKey = /API key|API_KEY/i.test(t); if(!isKey && !gmNoThinkBy[m]){ gmNoThinkBy[m] = true; continue; } const er = new Error(isKey ? "key" : "http400"); er.detail = t.replace(/\s+/g," ").slice(0,220); if(isKey) throw er; last = er; break; }
       if(res.status===404){ last = new Error("model"); break; }
       if(res.status===500 || res.status===502 || res.status===503 || res.status===504){ last = new Error("busy"); break; }
-      if(res.status===403){ const t = await res.text(); const er = new Error(/API key|API_KEY/i.test(t) ? "key" : "http403"); er.detail = t.replace(/\s+/g," ").slice(0,220); throw er; }
-      if(res.status===429){ last = new Error("quota"); break; }
+      if(res.status===403){ const t = await res.text(); const er = new Error(/convite/i.test(t) ? "invite" : /API key|API_KEY/i.test(t) ? "key" : "http403"); er.detail = t.replace(/\s+/g," ").slice(0,220); throw er; }
+      if(res.status===429){ let t429 = ""; try{ t429 = await res.text(); }catch(e){} if(/convite/i.test(t429)) throw new Error("invitelimit"); last = new Error("quota"); break; }
       if(!res.ok){ const er = new Error("http"+res.status); try{ er.detail = (await res.text()).replace(/\s+/g," ").slice(0,220); }catch(e2){} throw er; }
       let txt = "";
       if(stream){
@@ -6837,7 +6842,7 @@ function coachCard(c){
 }
 function gmErrMsg(e){
   const m = e && e.message;
-  return m==="busy" ? "Os servidores do Gemini estão sobrecarregados agora (erro temporário do Google). Tente de novo em alguns minutos." : m==="key" ? "A chave do Gemini foi recusada. Confira em Você › Ajustes." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="nokey" ? "Cole a chave do Gemini em Você › Ajustes." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : (m==="http400" && e.detail ? "O Gemini recusou o pedido ("+String(e.detail).slice(0,90)+")." : (m==="Failed to fetch" || m==="net") ? "Sem conexão com o Gemini agora. Confira a internet." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.");
+  return m==="busy" ? "Os servidores do Gemini estão sobrecarregados agora (erro temporário do Google). Tente de novo em alguns minutos." : m==="key" ? "A chave do Gemini foi recusada. Confira em Você › Ajustes." : m==="quota" ? "Limite gratuito do Gemini atingido por agora. Tente de novo mais tarde." : m==="invite" ? "Seu código de convite é inválido ou foi cancelado. Confira com quem convidou você." : m==="invitelimit" ? "Você usou todo o limite de IA de hoje no seu convite. Volta amanhã." : m==="nokey" ? "Cole a chave do Gemini em Você › Ajustes." : m==="model" ? "Nenhum modelo gratuito do Gemini respondeu. Tente mais tarde." : m==="long" ? "Gravação longa demais (máximo de 29 s). Grave uma frase por vez." : m==="empty" ? "O Gemini não devolveu resposta. Tente de novo." : (m==="http400" && e.detail ? "O Gemini recusou o pedido ("+String(e.detail).slice(0,90)+")." : (m==="Failed to fetch" || m==="net") ? "Sem conexão com o Gemini agora. Confira a internet." : "Não consegui falar com o Gemini ("+(m||"erro")+"). Confira a conexão.");
 }
 function viewPronRep(){
   const o = overlay, el = h(`<div class="screen"></div>`), st = pronStats();
