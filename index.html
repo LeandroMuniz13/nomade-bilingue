@@ -1797,7 +1797,7 @@ function planCandidates(){
   if(cpDue()) out.check = {key:"check", ic:"🧪", t:"Checkpoint de habilidades", s:"Frases novas, sem dica: confirma o que ficou", min:8, p:94, act:startCheckpoint};
   if(aiAvail()){
     const scs = SCENES[state.lang] || [], sc = scs.length ? scs[(L().chatTotal||0) % scs.length] : null;
-    if(sc) out.chat = {key:"chat", ic:"💬", t:"Conversar: "+sc.title, s:"Conversa com a IA, correção no final", min:7, p:P("prod")-4, act:() => startScene(sc)};
+    if(sc) out.chat = {key:"chat", ic:"💬", t:"Conversar: "+sc.title, s:"Conversa com o Capi, correção no final", min:7, p:P("prod")-4, act:() => startScene(sc)};
   }
   { const sg = nextSong(); if(sg) out.sing = {key:"sing", ic:"🎤", t:"Karaokê: "+sg.title, s:"Cante junto com a base · 4 min", min:4, p:P("listen")-6, act:() => startKara(sg)}; }
   if(state.lang==="en"){ const da = dailyAccent(); out.voz = {key:"voz", ic:"🌍", t:"Sotaque do dia: "+VOICE_ACC[da].n, s:"Pessoa real falando · texto e ditado", min:3, p:P("listen")-4, act:() => startVozes(da)}; }
@@ -4161,7 +4161,7 @@ function viewPlay(){
 
   const nbs = revStats(), sst = srsStats();
   const games = [
-    {ic:"💬", bg:"var(--accent-soft)", title:"Conversar com a IA", sub:"Cenas reais: ela responde no seu nível e corrige", act:()=>go("chat")},
+    {ic:"💬", bg:"var(--accent-soft)", title:"Conversar com o Capi", sub:"Cenas reais: ele responde no seu nível e corrige", act:()=>go("chat")},
     {ic:"🗂", bg:"var(--accent-soft)", title:"Revisão do dia (Anki)", sub:`${sst.due} a revisar · ${sst.newToday} novos hoje`, act:startSrs},
     {ic:"📒", bg:"var(--ok-soft)", title:"Meu caderno de erros", sub:nbs.all?`${nbs.due} para revisar hoje · ${nbs.mastered} dominadas`:"O que você errar aparece aqui sozinho", act:()=>open({type:"notebook", f:"all"})},
     {ic:"⚡", bg:"var(--gold-soft)", title:"Desafio relâmpago", sub:"60 segundos: acerte o máximo de traduções", act:startBlitz},
@@ -4438,10 +4438,10 @@ function startOrderGame(){
    ========================================================= */
 function viewChat(){
   const el = h(`<div class="screen">
-    <div><p class="hello">Conversar · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Pratique <span class="script" style="font-size:32px">de verdade</span></h1>
-    <p class="sub" style="margin-top:6px">Uma pessoa da cena responde no seu nível, traduz e corrige seus erros. Escreva no idioma — ou em português, que ela te mostra como dizer.</p></div>
+    <div style="display:flex;align-items:center;gap:12px"><div style="flex:0 0 auto" aria-hidden="true">${capi("hi",64)}</div><div style="min-width:0"><p class="hello">Capi · ${LANGS[state.lang].name}</p><h1 class="headline" style="margin-top:2px">Pratique <span class="script" style="font-size:32px">de verdade</span></h1>
+    <p class="sub" style="margin-top:6px">O Capi, seu tutor de IA, monta a cena: uma pessoa responde no seu nível, traduz e corrige seus erros. Escreva no idioma — ou em português, que ela te mostra como dizer.</p></div></div>
   </div>`);
-  if(!aiAvail()){ if(!navigator.onLine) el.appendChild(h(`<section class="card"><b>Sem internet</b><p class="sub" style="margin-top:4px">O tutor de IA precisa de conexão. Quando voltar o sinal, ligue a IA sem chave em Você › Ajustes ou use uma chave sua.</p></section>`)); else { el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); } }
+  if(!aiAvail()){ if(!navigator.onLine) el.appendChild(h(`<section class="card"><b>Sem internet</b><p class="sub" style="margin-top:4px">O Capi precisa de conexão. Quando voltar o sinal, ligue a IA sem chave em Você › Ajustes ou use uma chave sua.</p></section>`)); else { el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); } }
   CATS.filter(c=>c.id!=="base").forEach(c => {
     const list = SCENES[state.lang].filter(s=>s.cat===c.id);
     if(!list.length) return;
@@ -4805,7 +4805,7 @@ function searchFeatures(){
     ["📄","Colar meu texto","ler meu texto colar", () => startOwnText()],
     ["📰","Notícias","notícias semana", () => { newsSub="news"; go("news"); }],
     ["🎵","Música","músicas letras canções", () => { newsSub="music"; go("news"); }],
-    ["💬","Tutor de IA · conversar","chat conversa cena tutor ia", () => go("chat")],
+    ["💬","Capi · tutor de IA · conversar","chat conversa cena tutor ia capi capivara", () => go("chat")],
     ["🎬","Filmes, séries e cenas de cinema","filme filmes série séries cinema cena vídeo video legenda", () => { newsSub="videos"; go("news"); }],
     ["🎙️","Podcasts","podcast podcasts ouvir episódio", () => { newsSub="pods"; go("news"); }],
     ["🌍","Vozes reais · sotaques","vozes sotaque sotaques accent pessoas reais ditado", () => startVozes(dailyAccent())],
@@ -5432,7 +5432,7 @@ function sixWays(){
     {k:"film", ic:"🎬", bg:"var(--tint-1)", t:"Filmes e séries", s:"Cenas com legenda · 3–5 min · escuta", act:() => { newsSub = "videos"; go("news"); }},
     {k:"books", ic:"📚", bg:"var(--tint-2)", t:"Livros", s:"Leitura · 3–5 min · toque nas palavras", act:() => { newsSub = books().length ? "books" : "stories"; go("news"); }},
     {k:"vocab", ic:"🗂️", bg:"var(--tint-3)", t:"Vocabulário", s:sst.due ? "Revise hoje: "+sst.due+" cartões" : "Palavras · 3 min · cartões e revisão", act:() => open({type:"hub", k:"vocab"})},
-    {k:"tutor", ic:"🤖", bg:"var(--tint-4)", t:"Tutor de IA", s:"Conversa · 5 min · escrita e leitura", act:() => go("chat")},
+    {k:"tutor", ic:"🤖", bg:"var(--tint-4)", t:"Capi, tutor de IA", s:"Conversa · 5 min · escrita e leitura", act:() => go("chat")},
     {k:"audio", ic:"🎧", bg:"var(--tint-2)", t:"Audiolivros e áudio", s:"Escuta · 3–10 min · vozes reais e livros", act:() => open({type:"hub", k:"audio"})},
     {k:"games", ic:"🎮", bg:"var(--tint-1)", t:"Jogos", s:"Palavras · 2–3 min · rápido, sem internet", act:() => open({type:"hub", k:"games"})}
   ];
@@ -5655,7 +5655,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v88";
+const APP_VER = "v89";
 const IN_APP = /Claude\//.test(navigator.userAgent) || /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(navigator.userAgent) || (window.top !== window);
 /* gravação por Web Audio (PCM → WAV): não usa MediaRecorder; plano principal no iPhone */
 function pcmRecorder(stream, done){
@@ -5958,7 +5958,7 @@ function azCard(r){
 function gmKeyCard(after){
   const gk = gmKey();
   const c = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Inteligência artificial (Gemini, gratuito)</div>
-    <p class="sub" style="font-size:12.5px">${gk ? "Ativada neste aparelho: tutor de conversa, exercícios novos, entrevista e avaliação da sua fala." : "Para usar o tutor de IA, crie uma chave grátis em aistudio.google.com (botão “Get API key”), copie e cole aqui."}</p>
+    <p class="sub" style="font-size:12.5px">${gk ? "Ativada neste aparelho: Capi (tutor de conversa), exercícios novos, entrevista e avaliação da sua fala." : "Para usar o Capi (tutor de IA), crie uma chave grátis em aistudio.google.com (botão “Get API key”), copie e cole aqui."}</p>
     ${gk ? "" : `<input class="in" data-k type="password" placeholder="Cole a chave do Gemini" autocomplete="off"><a class="link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:13px">Abrir o Google AI Studio ↗</a>`}
     <button class="btn ${gk?"btn-line":"btn-dark"}">${gk ? "Remover chave" : "Salvar chave"}</button>
     <p class="sub" style="font-size:11.5px">A chave fica só neste aparelho. No plano gratuito, o Google pode usar o conteúdo enviado para melhorar os produtos dele.</p></section>`);
@@ -6153,7 +6153,7 @@ function coachText(c){
 }
 function coachCard(c){
   if(typeof c === "string") c = {raw:c.replace(/\*\*/g,"")};
-  if(c.raw) return `<div class="feedback good"><b>Treinador de IA</b><div class="tips" style="white-space:pre-wrap">${esc(c.raw)}</div></div>`;
+  if(c.raw) return `<div class="feedback good"><b>Capi, treinador de pronúncia</b><div class="tips" style="white-space:pre-wrap">${esc(c.raw)}</div></div>`;
   const lv = {otimo:["Muito bom","var(--ok)"], bom:["Bom, quase lá","var(--gold,#b8892b)"], treinar:["Vale treinar mais","var(--bad)"]}[c.level] || ["Resultado","var(--ink-2,#555)"];
   const col = {ok:"var(--ok)", meh:"var(--gold,#b8892b)", bad:"var(--bad)"};
   const words = (c.words||[]).map(w => `<span style="color:${col[w.s]||col.ok};${w.s==="bad"?"text-decoration:underline wavy;text-underline-offset:5px;":w.s==="meh"?"text-decoration:underline dotted;text-underline-offset:5px;":""}">${esc(w.w)}</span>`).join(" ");
@@ -6161,7 +6161,7 @@ function coachCard(c){
   return `<div class="card" style="background:var(--paper-2,#f4f1ea);display:flex;flex-direction:column;gap:10px">
     <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:${lv[1]}"></span><b>${lv[0]}</b></div>
     <div style="font-size:20px;line-height:1.5;font-weight:600">${words}</div>
-    ${c.heard ? `<div class="sub" style="font-size:12.5px">A IA ouviu: “${esc(c.heard)}”</div>` : ""}
+    ${c.heard ? `<div class="sub" style="font-size:12.5px">O Capi ouviu: “${esc(c.heard)}”</div>` : ""}
     ${c.good ? `<div style="font-size:14px">👍 ${esc(c.good)}</div>` : ""}
     ${tips ? `<div style="display:flex;flex-direction:column;gap:6px">${tips}</div>` : ""}
     ${c.drill ? `<div class="sub" style="font-size:13px">🎯 ${esc(c.drill)}</div>` : ""}
