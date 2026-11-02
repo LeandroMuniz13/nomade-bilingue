@@ -6229,7 +6229,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v113";
+const APP_VER = "v114";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -6394,7 +6394,9 @@ function micMini(target, st, key, onNext){
     ${r?`<div class="words">${r.words.map((w,k)=>`<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><p class="sub" style="font-size:var(--fs-cap)">${r.pct}% das palavras reconhecidas${m.heard?` · entendi: “${esc(m.heard)}”`:""}</p>`:""}
     ${m.url && azCfg() ? `<button class="btn btn-line" id="mmAz">${m.azBusy?"Avaliando…":"📊 Nota por som (Azure)"}</button>` : ""}
     ${m.az ? `<div style="display:flex;flex-direction:column;gap:6px">${azCard(m.az)}</div>` : ""}
-    ${m.url && gmKey() ? `<button class="btn btn-line" id="mmGm">${m.gmBusy?"A IA está ouvindo…":"🤖 Avaliação da IA que ouve você"}</button>` : ""}
+    ${m.on ? `<p class="sub" style="text-align:center;font-size:var(--fs-sub)"><b>Estou ouvindo.</b> Fale agora; paro sozinho quando você terminar.</p>` : ""}
+    ${m.url && gmKey() && m.gmBusy ? `<p class="sub" style="text-align:center;font-size:var(--fs-sub)">A IA está avaliando sua pronúncia…</p>` : ""}
+    ${m.url && gmKey() && !m.gmBusy && !m.coach ? `<button class="btn btn-line" id="mmGm">🤖 Avaliar com a IA</button>` : ""}
     ${m.coach ? coachCard(m.coach) : ""}
     ${m.msg?`<p class="sub" style="font-size:var(--fs-cap)">${esc(m.msg)}</p>`:""}
     ${m.url && !r && !m.az && !m.coach ? (m.self ? `<p class="sub" style="font-size:var(--fs-sub)"><b>${m.self==="3"?"Ótimo!":m.self==="2"?"Quase lá.":"Tudo bem."}</b> ${m.self==="3"?"Registrei como acerto.":"Ouça de novo o modelo, depois sua voz, e tente mais uma vez. Foque no ritmo e nas vogais."}</p>` : `<div class="eyebrow" style="margin-top:2px">Como foi? (autoavaliação)</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button class="btn btn-line" data-self="1">😕 Travei</button><button class="btn btn-line" data-self="2">🙂 Quase</button><button class="btn btn-line" data-self="3">😀 Soou bem</button></div>`) + (!azCfg() && !gmKey() ? `<button class="link" id="mmKeys" style="align-self:flex-start">Quer nota automática? Ative a avaliação por IA</button>` : "") : ""}
@@ -6411,20 +6413,49 @@ function micMini(target, st, key, onNext){
   if(gmb) gmb.addEventListener("click", async () => { if(m.gmBusy) return; m.gmBusy = true; m.msg = ""; render(); try{ m.coach = await gmCoach(m.url, target, m.az); }catch(e){ m.msg = gmErrMsg(e); } m.gmBusy = false; render(); });
   const az = $("#mmAz",box);
   if(az) az.addEventListener("click", async () => { if(m.azBusy) return; m.azBusy = true; m.msg = ""; render(); try{ m.az = await azAssess(m.url, target); }catch(e){ m.msg = azErrMsg(e); } m.azBusy = false; render(); });
-  $("#mmGo",box).addEventListener("click", async () => {
+  const runCoach = async () => { if(!m.url || !gmKey() || m.gmBusy || m.coach) return; m.gmBusy = true; m.msg = ""; render(); try{ m.coach = await gmCoach(m.url, target, m.az); }catch(e){ m.msg = gmErrMsg(e); } m.gmBusy = false; render(); };
+  const startRec = async (auto) => {
     if(m.on){ micStop(); return; }
-    m.msg = ""; stopAudio();
+    m.msg = ""; if(!auto) stopAudio();
+    let lv = null, iv = null;
+    const fin = () => { if(iv){ clearInterval(iv); iv = null; } if(lv){ lv.close(); lv = null; } };
     try{
       await micBegin((url, heard) => {
-        m.on = false; m.az = null; m.coach = null; if(m.url) URL.revokeObjectURL(m.url); m.url = url; m.heard = heard;
+        fin(); m.on = false; m.az = null; m.coach = null; if(m.url) URL.revokeObjectURL(m.url); m.url = url; m.heard = heard;
         if(heard){ m.result = scoreSpeech(target, heard); addXp(m.result.pct>=80?2:1); m.result.pct>=80 ? sfx.right() : sfx.wrong();
           const lg = L(); (lg.pronLog = lg.pronLog || []).push({t:target, h:heard, p:m.result.pct, m:m.result.missed, ts:Date.now()}); if(lg.pronLog.length>300) lg.pronLog.splice(0, lg.pronLog.length-300); }
         else m.msg = SR_OK() ? "Gravado, mas o reconhecimento não captou palavras. Ouça e tente de novo." : "Gravado. Ouça e compare com o modelo.";
-        render();
+        render(); runCoach();
       });
       m.on = true; render();
-    }catch(e){ m.msg = micErrMsg(e); render(); }
-  });
+      /* para sozinho: silêncio depois da fala, ou 9 s sem falar */
+      lv = micS.stream ? vadMeter(micS.stream) : null;
+      const t0 = Date.now(); let n = 0, noise = 0, thr = 0.03, voiced = 0, last = 0, sp = false;
+      iv = setInterval(() => {
+        if(!m.on){ fin(); return; }
+        const now = Date.now();
+        if(!lv){ if(now - t0 > 7000){ fin(); micStop(); } return; }
+        const r = lv.read(); n++;
+        if(n <= 5){ noise += r/5; if(n===5) thr = Math.max(0.022, noise*3.2); return; }
+        if(r > thr){ voiced++; last = now; if(voiced >= 2) sp = true; } else voiced = 0;
+        if(sp && now - last > 1300){ fin(); micStop(); }
+        else if(!sp && now - t0 > 9000){ fin(); micStop(); }
+      }, 80);
+    }catch(e){ fin(); m.on = false; m.msg = micErrMsg(e); render(); }
+  };
+  $("#mmGo",box).addEventListener("click", () => startRec(false));
+  /* abre o microfone sozinho quando o cartão aparece (uma vez por frase), depois que a voz do modelo termina */
+  if(!m.url && !m.auto && !m.on){
+    m.auto = true; let tries = 0;
+    const kick = () => {
+      if(!document.getElementById("mmGo")){ if(tries++ < 6) return setTimeout(kick, 300); return; }
+      let busy = false; try{ busy = !!curStop || (window.speechSynthesis && speechSynthesis.speaking); }catch(e){}
+      if(busy && tries < 24){ tries++; return setTimeout(kick, 300); }
+      if(m.url || m.on) return;
+      startRec(true);
+    };
+    setTimeout(kick, 900);
+  }
   $("#mmCmp",box).addEventListener("click", () => {
     if(!m.url) return; speak(target);
     setTimeout(() => { const a = new Audio(m.url); a.play().catch(()=>{}); }, 900 + target.split(/\s+/).length*450);
