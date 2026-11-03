@@ -472,6 +472,11 @@ form.compose .iconbtn.vmic.on{background:var(--bad);color:#fff;border-color:var(
 .speak{width:54px; height:54px; border-radius:50%; border:none; background:var(--accent-soft); color:var(--accent-ink); display:flex; align-items:center; justify-content:center}
 .speak svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
 .speak.sm{width:34px; height:34px}
+.slow-bar{display:flex; gap:8px; justify-content:center; margin-top:10px}
+.more{display:flex; flex-direction:column; gap:10px; align-items:stretch}
+.more>.link{align-self:center}
+.more-c{display:flex; flex-direction:column; gap:10px}
+.more-c[hidden]{display:none}
 .speak.sm svg{width:16px; height:16px}
 .word-t{font-size:28px; font-weight:600; letter-spacing:-.01em; line-height:1.2}
 .word-pt{font-size:15px; color:var(--ink-dim)}
@@ -1320,7 +1325,7 @@ function ttsSpeak(text, accLang, rate){
       const say = (retry) => {
         if(gen !== ttsGen) return res();
         const t0 = Date.now(), u = new SpeechSynthesisUtterance(text);
-        u.lang = v ? v.lang : lc; if(v) u.voice = v; u.rate = rate ? 0.62 : 0.92;
+        u.lang = v ? v.lang : lc; if(v) u.voice = v; u.rate = rate ? Math.max(0.4, Math.min(1, 0.92 * rate)) : 0.92;
         let started = false, fin = false;
         u.onstart = () => { started = true; };
         u.onend = () => { fin = true; res(); };
@@ -1404,7 +1409,7 @@ function playOne(text, rate){
   if(!m) return ttsSpeak(text);
   return loadUrl(m[0]).then(url => new Promise((res, rej) => {
     const a = aEl || (aEl = new Audio());
-    try{ a.playbackRate = rate || 1; }catch(e){}
+    try{ a.preservesPitch = true; a.webkitPreservesPitch = true; a.playbackRate = Math.max(0.5, rate || 1); }catch(e){}
     let done = false, iv = null;
     const end = m[1] + m[2];
     const fin = () => { if(done) return; done = true; clearInterval(iv); try{ a.pause(); }catch(e){} res(); };
@@ -1422,7 +1427,7 @@ function playOne(text, rate){
       };
       if(Math.abs(a.currentTime - lead) < 0.02){ start(); }
       else { a.addEventListener("seeked", start, {once:true}); try{ a.currentTime = lead; }catch(e){ start(); } setTimeout(start, 450); }
-      setTimeout(fin, (m[2] + 3) * 1000);
+      setTimeout(fin, (m[2] / Math.max(0.5, rate || 1) + 3) * 1000);
     };
     if(a.src !== url){ a.addEventListener("loadedmetadata", go, {once:true}); a.onerror = () => { if(!done){ done = true; clearInterval(iv); rej(new Error("decode")); } }; a.src = url; a.load(); }
     else go();
@@ -2238,7 +2243,7 @@ function ladSeed(){
   return lad;
 }
 const ladAlts = t => String(t).split(/\s+\/\s+/).map(x => x.replace(/[?!.…]+$/,"").trim()).filter(Boolean);
-const ladBest = (t, heard) => Math.max.apply(null, ladAlts(t).map(a => scoreSpeech(a, heard).pct));
+const ladBest = (t, heard) => Math.max.apply(null, ladAlts(t).concat(storedAlts(t)).map(a => scoreTyped(a, heard).pct));
 function ladDue(){
   const lad = ladSeed(), td = today(), vs = {}; allVocab().forEach(v => vs[v.id] = v);
   return shuffle(Object.keys(lad).map(id => ({v:vs[id], e:lad[id]}))).filter(x => x.v && x.e.s<5 && (!x.e.nx || x.e.nx<=td))
@@ -2333,18 +2338,21 @@ function viewLadder(){
     $("#lH", f).addEventListener("click", () => { q.hint = true; const ans = q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, w = ans.split(/\s+/); $("#lH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
     const tb = $("#lT", f); if(tb) tb.addEventListener("click", () => { q.hint = true; o.reveal = true; render(); });
     const ab = $("#lA", f); if(ab) ab.addEventListener("click", () => { if(!o.busy) ladAskAI(o); });
-    $("#lGo", f).addEventListener("click", () => {
+    $("#lGo", f).addEventListener("click", async () => {
       const v = $("#lIn", f).value.trim(); if(!v) return;
-      const pct = q.mode==="recall" ? ladBest(q.ans, v) : scoreSpeech(q.k, v).pct;
+      let pct = q.mode==="recall" ? ladBest(q.ans, v) : Math.max(scoreTyped(q.k, v).pct, ladBest(q.k, v));
+      const jd = await judgeAlt($("#lGo", f), q.mode==="recall" ? {target:ladAlts(q.ans)[0], v, pt:q.pt} : {target:q.k, v, full:q.t}, pct); if(jd) pct = jd.pct;
+      if(overlay !== o || o.r) return;
       let sc = pct >= 90 ? 1 : pct >= 70 ? 0.5 : 0; if(q.hint) sc = Math.min(sc, 0.5);
-      o.eh = errScan(v); const r = ladApply(q, sc); o.r = {pct, sc, was:r.was, now:r.now, v}; o.res.push({v:q.v.t, sc, was:r.was, now:r.now});
+      o.eh = errScan(v); const r = ladApply(q, sc); o.r = {pct, sc, was:r.was, now:r.now, v, why:jd && jd.why, alt:jd && jd.alt}; o.res.push({v:q.v.t, sc, was:r.was, now:r.now});
       sc >= 1 ? sfx.right() : sfx.wrong(); render();
     });
     el.appendChild(f);
   } else {
     const r = o.r, full = q.mode==="recall" ? q.ans : q.t;
-    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?(r.now>r.was?"Subiu para "+LAD[r.now-1].n+"!":"Isso aí!"):r.sc>0?"Quase. Tente de novo amanhã":"Não foi dessa vez. Volta um degrau"}</span></div>${r.v!=null ? typedDiff(q.mode==="recall" ? q.ans : q.k, r.v) : ""}<div style="font-size:16px">${q.mode==="recall" ? "Certo: <b>"+esc(q.ans)+"</b>" : esc(q.t).replace(esc(q.k), "<b>"+esc(q.k)+"</b>")}</div>${q.mode==="cloze" ? `<p class="sub">${esc(q.pt)}</p>` : ""}<button class="link" id="lS">🔊 Ouvir</button></section>`));
+    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?(r.now>r.was?"Subiu para "+LAD[r.now-1].n+"!":"Isso aí!"):r.sc>0?"Quase. Tente de novo amanhã":"Não foi dessa vez. Volta um degrau"}</span></div>${r.v!=null ? typedDiff(q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, r.v) : ""}${r.why ? `<p class="sub" style="color:var(--ink)">${r.alt ? "✓ " : ""}${esc(r.why)}</p>` : ""}<div style="font-size:16px">${q.mode==="recall" ? "Certo: <b>"+esc(q.ans)+"</b>" : esc(q.t).replace(esc(q.k), "<b>"+esc(q.k)+"</b>")}</div>${q.mode==="cloze" ? `<p class="sub">${esc(q.pt)}</p>` : ""}<button class="link" id="lS">🔊 Ouvir</button></section>`));
     $("#lS", el).addEventListener("click", () => speak(full));
+    el.appendChild(slowBar(full)); el.appendChild(moreBlock(q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, q.pt));
     { const n = errNotice(o); if(n) el.appendChild(n); }
     const nx = h(`<button class="btn btn-dark btn-block">${o.i+1>=o.qs.length?"Ver resultado":"Próxima"} <span class="arr">→</span></button>`);
     nx.addEventListener("click", () => { stopAudio(); seqToken++; o.i++; o.r = null; o.reveal = false; render(); scrollTo(0,0); });
@@ -3670,12 +3678,14 @@ function viewLesson(){
         ${v.note?`<div class="note">${esc(v.note)}</div>`:""}
       </div>`);
       $(".speak",card).addEventListener("click", () => speak(v.t));
+      card.appendChild(slowBar(v.t));
       el.appendChild(card);
       if(v.ex){
         const cx = h(`<div><div class="eyebrow" style="margin-bottom:8px">Em contexto</div><div class="ctx"><p>${hlText(v.ex)}<span class="tr">${esc(v.ex.pt)}</span></p><button class="speak sm" aria-label="Ouvir a frase">${ICON.speak}</button></div></div>`);
         $(".speak",cx).addEventListener("click", () => speak(v.ex.t));
         el.appendChild(cx);
       }
+      el.appendChild(moreBlock(v.t, v.pt));
       if(o.spk!==vid){ o.spk = vid; setTimeout(()=>speak(v.t), 150); }
       { const mm = micMini(v.t, o, "mm"+o.vi, () => { stopAudio(); seqToken++; o.vw = true; render(); scrollTo(0,0); }); if(mm) el.appendChild(mm); }
       const row = h(`<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px"></div>`);
@@ -3699,17 +3709,20 @@ function viewLesson(){
           <button class="link" id="wB" style="align-self:center">Ver a expressão de novo</button></section>`);
         $("#wH", f).addEventListener("click", () => { o.whint = true; const w = ladAlts(ans)[0].split(/\s+/); $("#wH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
         $("#wB", f).addEventListener("click", () => { o.vw = false; render(); });
-        $("#wGo", f).addEventListener("click", () => {
+        $("#wGo", f).addEventListener("click", async () => {
           const val = $("#wIn", f).value.trim(); if(!val) return;
-          const pct = ladBest(ans, val); let sc = pct >= 90 ? 1 : pct >= 70 ? 0.5 : 0; if(o.whint) sc = Math.min(sc, 0.5);
-          o.wr = {pct, sc, val}; o.whint = false;
+          let pct = ladBest(ans, val);
+          const jd = await judgeAlt($("#wGo", f), cloze ? {target:ans, v:val, full:v.ex.t} : {target:ans, v:val, pt:v.pt}, pct); if(jd) pct = jd.pct;
+          if(overlay !== o || o.wr) return;
+          let sc = pct >= 90 ? 1 : pct >= 70 ? 0.5 : 0; if(o.whint) sc = Math.min(sc, 0.5);
+          o.wr = {pct, sc, val, why:jd && jd.why, alt:jd && jd.alt}; o.whint = false;
           if(u.id !== "_custom"){ skillLog("prod", sc, {id:"w:"+vid, ch:0, lvl:u.level}); noteVocab({id:vid, t:v.t, pt:v.pt, lvl:u.level, ex:v.ex||null, unit:u.title}, sc>=1, "none"); }
           sc>=1 ? sfx.right() : sfx.wrong(); render();
         });
         el.appendChild(f);
       } else {
         const r = o.wr;
-        el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?"Isso aí!":r.sc>0?"Quase":"Ainda não fixou. Veja e tente de novo"}</span></div><div style="font-size:16px">${cloze ? esc(v.ex.t).replace(esc(hl), "<b>"+esc(hl)+"</b>") : "Certo: <b>"+esc(v.t)+"</b>"}</div><button class="link" id="wS">🔊 Ouvir</button></section>`));
+        el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?"Isso aí!":r.sc>0?"Quase":"Ainda não fixou. Veja e tente de novo"}</span></div><div style="font-size:16px">${cloze ? esc(v.ex.t).replace(esc(hl), "<b>"+esc(hl)+"</b>") : "Certo: <b>"+esc(v.t)+"</b>"}</div>${r.why ? `<p class="sub" style="color:var(--ink)">${r.alt ? "✓ " : ""}${esc(r.why)}</p>` : ""}<button class="link" id="wS">🔊 Ouvir</button></section>`));
         $("#wS", el).addEventListener("click", () => speak(cloze ? v.ex.t : v.t));
         const row = h(`<div style="display:grid;grid-template-columns:${r.sc>=1 ? "minmax(0,1fr)" : "minmax(0,1fr) minmax(0,1fr)"};gap:10px"></div>`);
         if(r.sc<1){ const again = h(`<button class="btn btn-line">Tentar de novo</button>`); again.addEventListener("click", () => { o.wr = null; render(); }); row.appendChild(again); }
@@ -6276,6 +6289,90 @@ function scoreSpeech(target, heard){
   const pct = a.length ? Math.max(0, Math.round((dp[0][0] - extra*0.25) / a.length * 100)) : 0;
   return {words:a, hit, pct, missed:a.filter((w,k)=>!hit[k])};
 }
+function lev(a, b){
+  const m = a.length, n = b.length, d = Array.from({length:m+1}, (_, i) => [i].concat(new Array(n).fill(0)));
+  for(let j=1;j<=n;j++) d[0][j] = j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){ d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1)); if(i>1 && j>1 && a[i-1]===b[j-2] && a[i-2]===b[j-1]) d[i][j] = Math.min(d[i][j], d[i-2][j-2]+1); }
+  return d[m][n];
+}
+/* escrita: aceita pequenos erros de digitação (0 erros até 3 letras, 1 de 4 a 8, 2 a partir de 9) */
+function scoreTyped(target, heard){
+  const a = normWords(target), b = normWords(heard), aset = new Set(a); let typo = 0;
+  const b2 = b.map(w => { if(aset.has(w)) return w; const n = w.length, lim = n <= 3 ? 0 : n <= 8 ? 1 : 2; if(!lim) return w;
+    const c = a.find(x => x[0] === w[0] && Math.abs(x.length-n) <= lim && lev(x, w) <= lim); if(c){ typo++; return c; } return w; });
+  const r = scoreSpeech(a.join(" "), b2.join(" ")); r.typo = typo; return r;
+}
+const altKey = t => normWords(ladAlts(t)[0] || t).join(" ");
+const storedAlts = t => { try{ return ((L().alts || {})[altKey(t)]) || []; }catch(e){ return []; } };
+function saveAlt(t, v){ try{ const al = L().alts = L().alts || {}, k = altKey(t), x = al[k] = al[k] || []; const nv = String(v).trim(); if(nv && !x.includes(nv)){ x.push(nv); if(x.length > 8) x.shift(); persist(); } }catch(e){} }
+/* a IA confere se a resposta do aluno também serve (só quando a comparação local não bastou) */
+async function aiJudge(info){
+  const key = altKey(info.target) + "|" + normWords(info.v).join(" "), jv = L().jv = L().jv || {};
+  if(jv[key]) return jv[key];
+  if(!aiAvail() || !navigator.onLine) return null;
+  const lg = LANGS[state.lang].name;
+  const ctx = info.full ? `Frase completa: “${info.full}”. Faltava a parte “${info.target}”, e o aluno escreveu “${info.v}”.` : `Em português: “${info.pt}”. Resposta esperada: “${info.target}”. O aluno escreveu: “${info.v}”.`;
+  const prompt = `Você corrige exercícios de ${lg} para um brasileiro. ${ctx}
+A resposta do aluno é uma forma natural e correta de dizer o mesmo, mesmo sendo diferente da esperada?
+Responda só com JSON: {"v":"equivalent","why":"uma frase curta em português do Brasil","fix":""}
+Valores de "v": "equivalent" (mesmo sentido e tom, gramática certa), "minor" (ideia certa com erro pequeno de grafia ou gramática; ponha a forma correta em "fix"), "wrong" (outro sentido ou errada).`;
+  const j = gmJson(await Promise.race([aiTextAny(prompt, 300, true), new Promise((_, rej) => setTimeout(() => rej(new Error("slow")), 7000))]));
+  if(!j || !/^(equivalent|minor|wrong)$/.test(j.v)) return null;
+  const out = {v:j.v, why:String(j.why||"").slice(0, 160), fix:String(j.fix||"").slice(0, 120)};
+  jv[key] = out; persist(); return out;
+}
+async function judgeAlt(btn, info, pct){
+  if(pct >= 90) return null;
+  const label = btn ? btn.textContent : ""; if(btn){ btn.disabled = true; btn.textContent = "Conferindo…"; }
+  try{
+    const j = await aiJudge(info);
+    if(!j) return null;
+    if(j.v === "equivalent"){ saveAlt(info.target, info.v); return {pct:100, alt:true, why:(j.why || "Sua resposta também serve.") }; }
+    if(j.v === "minor") return {pct:Math.max(pct, 85), why:(j.why || "Quase: ideia certa.") + (j.fix ? " Melhor: "+j.fix : "")};
+    return {pct, why:j.why || ""};
+  }catch(e){ return null; }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = label; } }
+}
+/* velocidade lenta (0,75x e 0,5x) */
+function slowBar(text){
+  const d = h(`<div class="slow-bar"><button class="filter" data-r="0.75">0,75×</button><button class="filter" data-r="0.5">Devagar 0,5×</button></div>`);
+  d.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { seqToken++; playOne(text, +b.dataset.r).catch(() => {}); }));
+  return d;
+}
+/* mais exemplos de uso, com vídeos reais */
+function videoLinks(text){
+  const q = String(text).replace(/[?!.…,]+$/, "").trim(), it = state.lang === "it";
+  return `<div class="links"><a href="https://youglish.com/pronounce/${encodeURIComponent(q)}/${it ? "italian" : "english"}" target="_blank" rel="noopener">Ouvir em vídeos reais</a><a href="https://www.youtube.com/results?search_query=${encodeURIComponent('"'+q+'" '+(it ? "scena film" : "movie scene"))}" target="_blank" rel="noopener">Cenas de filmes</a></div>`;
+}
+function moreBlock(text, pt){
+  text = ladAlts(text)[0] || text;
+  const w = h(`<div class="more"><button class="link more-b">Mais exemplos de uso ▾</button><div class="more-c" hidden></div></div>`), box = $(".more-c", w), btn = $(".more-b", w);
+  const clean = String(text).replace(/[?!.…,]+$/, "").trim().toLowerCase();
+  const draw = list => { box.innerHTML = ""; list.forEach(x => { const c = h(`<div class="ctx"><p>${esc(x.t)}<span class="tr">${esc(x.pt||"")}</span></p><button class="speak sm" aria-label="Ouvir">${ICON.speak}</button></div>`); $(".speak", c).addEventListener("click", () => speak(x.t)); box.appendChild(c); });
+    if(!list.length) box.appendChild(h(`<p class="sub">Ainda não há exemplos guardados para esta expressão.</p>`));
+    if(aiAvail()){ const g = h(`<button class="btn btn-line">${list.some(x => x.ai) ? "Gerar outros exemplos com o Capi" : "Gerar exemplos com o Capi"}</button>`);
+      g.addEventListener("click", async () => {
+        if(!navigator.onLine){ toast("Sem internet agora. Os exemplos já guardados continuam aqui."); return; }
+        g.disabled = true; g.textContent = "Criando…";
+        try{
+          const have = list.map(x => x.t).join(" | "), lg = LANGS[state.lang].name;
+          const j = gmJson(await aiTextAny(`Escreva 3 frases curtas e naturais em ${lg} (nível ${userLevel()}, 5 a 12 palavras) que usem a expressão “${text}” em situações diferentes. Não repita estas: ${have || "nenhuma"}.\nResponda só com JSON: {"ex":[{"t":"frase","pt":"tradução em português do Brasil"}]}`, 700, true));
+          const add = (j.ex || []).filter(x => x && x.t && x.pt).slice(0, 3).map(x => ({t:String(x.t), pt:String(x.pt), ai:1}));
+          if(!add.length) throw new Error("bad");
+          const mm = L().more = L().more || {}; mm[clean] = (mm[clean] || []).concat(add).slice(-9); persist(); draw(local().concat(mm[clean]));
+        }catch(e){ g.disabled = false; g.textContent = "Tentar de novo"; toast("Não consegui criar agora."); }
+      });
+      box.appendChild(g); }
+    box.appendChild(h(videoLinks(text)));
+    box.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">Os links abrem no navegador e precisam de internet. Frases marcadas pela IA ficam salvas para ver sem sinal.</p>`));
+  };
+  const rx = new RegExp("(^|[^\\p{L}])" + clean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^\\p{L}]|$)", "iu");
+  const local = () => { const seen = new Set(), out = [];
+    allVocab().forEach(v => { if(v.ex && v.ex.t && v.t.toLowerCase().replace(/[?!.…,]+$/, "") !== clean && rx.test(v.ex.t) && !seen.has(v.ex.t)){ seen.add(v.ex.t); out.push({t:v.ex.t, pt:v.ex.pt}); } });
+    return out.slice(0, 3); };
+  btn.addEventListener("click", () => { const open = box.hidden; box.hidden = !open; btn.textContent = open ? "Esconder exemplos ▴" : "Mais exemplos de uso ▾"; if(open && !box.children.length){ const mm = (L().more || {})[clean] || []; draw(local().concat(mm)); } });
+  return w;
+}
 const SOUND_TIPS = {
   en: [
     {re:/th/i, s:"th (think / this)", tip:"Ponha a ponta da língua entre os dentes e sopre (think) ou vibre (this). Não troque por \"t\" ou \"d\"."},
@@ -6330,7 +6427,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v126";
+const APP_VER = "v127";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
