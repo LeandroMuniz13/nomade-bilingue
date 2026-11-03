@@ -1069,10 +1069,12 @@ function addXp(n){
 }
 function userLevel(){ return (L().placement && L().placement.level) || "A1"; }
 function typedDiff(target, v){
-  const nz = x => String(x||"").toLowerCase().replace(/[^\p{L}\p{N}'\s]/gu,"").split(/\s+/).filter(Boolean);
-  const tw = nz(target), vw = nz(v), tset = new Set(tw), vset = new Set(vw);
-  const raw = String(v||"").trim().split(/\s+/).filter(Boolean);
-  return `<div><div class="eyebrow">Você escreveu</div><div class="words">${raw.length ? raw.map(w => { const k = nz(w)[0]; return `<span class="${k && tset.has(k) ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ") : `<span class="miss">(nada)</span>`}</div></div><div><div class="eyebrow">Esperado</div><div class="words">${String(target||"").trim().split(/\s+/).filter(Boolean).map(w => { const k = nz(w)[0]; return `<span class="${k && vset.has(k) ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ")}</div></div>`;
+  /* compara palavra a palavra com a mesma normalização da nota: aceita apóstrofo curvo (’), maiúsculas, acentos e erro de digitação pequeno */
+  const tset = new Set(normWords(target)), vset = new Set(normWords(v));
+  const near = (w, set) => { if(set.has(w)) return true; const n = w.length, lim = n <= 3 ? 0 : n <= 8 ? 1 : 2; if(!lim) return false; for(const x of set) if(x[0] === w[0] && Math.abs(x.length-n) <= lim && lev(x, w) <= lim) return true; return false; };
+  const mark = (txt, set) => String(txt||"").trim().split(/\s+/).filter(Boolean).map(w => { const k = normWords(w); return `<span class="${!k.length || k.every(t => near(t, set)) ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ");
+  const mine = mark(v, tset);
+  return `<div><div class="eyebrow">Você escreveu</div><div class="words">${mine || `<span class="miss">(nada)</span>`}</div></div><div><div class="eyebrow">Esperado</div><div class="words">${mark(target, vset)}</div></div>`;
 }
 /* ---- nível, conquistas e tela de progresso (gamificação) ---- */
 const XP_LV = x => Math.floor(Math.sqrt(Math.max(0, x)/25)) + 1;
@@ -6435,7 +6437,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v129";
+const APP_VER = "v130";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
