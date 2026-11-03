@@ -472,6 +472,8 @@ form.compose .iconbtn.vmic.on{background:var(--bad);color:#fff;border-color:var(
 .speak{width:54px; height:54px; border-radius:50%; border:none; background:var(--accent-soft); color:var(--accent-ink); display:flex; align-items:center; justify-content:center}
 .speak svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
 .speak.sm{width:34px; height:34px}
+.hint-line{font-size:15px; color:var(--ink); line-height:1.8; margin:2px 0 0}
+.hint-gap{display:inline-block; width:26px; height:0; border-bottom:2px solid var(--ink-faint,#aaa); vertical-align:baseline; margin:0 2px}
 .slow-bar{display:flex; gap:8px; justify-content:center; margin-top:6px}
 .more{display:flex; flex-direction:column; gap:10px; align-items:stretch}
 .more>.link{align-self:center}
@@ -2263,6 +2265,12 @@ function ladItem(v, e){
   if(exOk){ const k = v.ex.hl.replace(/[?!.…]+$/,""); return Object.assign(base, {mode:"cloze", t:v.ex.t, k, pt:v.ex.pt, sc:"na lição", rung:s + 1}); }
   return Object.assign(base, {mode:"recall", pt:v.pt, ans:v.t, rung:2});
 }
+/* dica: mostra as 2 primeiras palavras e um traço para cada palavra que falta, numa linha só dela */
+function hintShow(btn, ans){
+  const w = String(ans).trim().split(/\s+/), k = Math.min(2, w.length), rest = w.length - k;
+  const p = h(`<p class="hint-line">Começa com: <b>${esc(w.slice(0, k).join(" "))}</b>${rest > 0 ? " " + new Array(rest).fill('<span class="hint-gap"></span>').join(" ") : ""}</p>`);
+  btn.parentElement.parentElement.insertBefore(p, btn.parentElement); btn.disabled = true; btn.style.opacity = ".5";
+}
 function ladApply(q, sc){
   const lad = ladAll(), e = lad[q.id] || (lad[q.id] = {s:1, nx:"", f:0}), was = e.s;
   if(sc >= 1){ e.s = Math.min(5, e.s+1); e.f = 0; e.nx = e.s < 5 ? addDays(LAD_GAP[e.s]) : ""; if(e.s === 5) e.m = today(); }
@@ -2335,7 +2343,7 @@ function viewLadder(){
     const f = h(`<section class="card dict"><textarea id="lIn" placeholder="Escreva em ${lgn}…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea>
       <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px"><button class="btn btn-line" id="lH">💡 Dica</button><button class="btn btn-dark" id="lGo">Verificar</button></div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">${q.mode==="cloze" && q.rung===5 && !o.reveal ? `<button class="link" id="lT">Ver a tradução (vale como dica)</button>` : ""}${q.mode==="cloze" ? `<button class="link" id="lA">${o.busy ? "Criando…" : "🤖 Outro contexto com o Capi"}</button>` : ""}</div></section>`);
-    $("#lH", f).addEventListener("click", () => { q.hint = true; const ans = q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, w = ans.split(/\s+/); $("#lH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
+    $("#lH", f).addEventListener("click", () => { q.hint = true; hintShow($("#lH", f), q.mode==="recall" ? ladAlts(q.ans)[0] : q.k); });
     const tb = $("#lT", f); if(tb) tb.addEventListener("click", () => { q.hint = true; o.reveal = true; render(); });
     const ab = $("#lA", f); if(ab) ab.addEventListener("click", () => { if(!o.busy) ladAskAI(o); });
     $("#lGo", f).addEventListener("click", async () => {
@@ -3707,7 +3715,7 @@ function viewLesson(){
         const f = h(`<section class="card dict"><textarea id="wIn" placeholder="Escreva em ${lgn}…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea>
           <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px"><button class="btn btn-line" id="wH">💡 Dica</button><button class="btn btn-dark" id="wGo">Verificar</button></div>
           <button class="link" id="wB" style="align-self:center">Ver a expressão de novo</button></section>`);
-        $("#wH", f).addEventListener("click", () => { o.whint = true; const w = ladAlts(ans)[0].split(/\s+/); $("#wH", f).replaceWith(h(`<span class="sub" style="align-self:center">Começa com: <b>${esc(w.slice(0, Math.min(2, w.length)).join(" "))}…</b></span>`)); });
+        $("#wH", f).addEventListener("click", () => { o.whint = true; hintShow($("#wH", f), ladAlts(ans)[0]); });
         $("#wB", f).addEventListener("click", () => { o.vw = false; render(); });
         $("#wGo", f).addEventListener("click", async () => {
           const val = $("#wIn", f).value.trim(); if(!val) return;
@@ -6427,7 +6435,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v128";
+const APP_VER = "v129";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
