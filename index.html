@@ -4864,7 +4864,8 @@ function askAI(){
 }
 
 /* ---- voz do Capi: Gemini TTS (nuvem) com reserva na voz do aparelho ---- */
-const CAPI_VOICES = [["Aoede","Leve e simpática"],["Leda","Jovem e animada"],["Kore","Firme e clara"],["Puck","Brincalhão"],["Zephyr","Brilhante"],["Sulafat","Calorosa"],["Achird","Amigável"],["Charon","Grave e calma"]];
+/* [nome técnico da voz no Gemini, descrição, nome mostrado] */
+const CAPI_VOICES = [["Aoede","Leve e simpática","Júlia"],["Leda","Jovem e animada","Mayra"],["Kore","Firme e clara","Lorena"],["Zephyr","Brilhante","Stella"],["Sulafat","Calorosa","Daniela"],["Puck","Brincalhão","Juan"],["Achird","Amigável","Davi"],["Charon","Grave e calma","Idvaldo"]];
 const capiVoiceName = () => state.capiVoiceName || "Aoede";
 const capiTtsCache = new Map(); let capiTtsMode = ""; let capiTtsErr = "";
 try{ capiTtsMode = localStorage.getItem("nb-tts-mode") || ""; }catch(e){}
@@ -5098,7 +5099,7 @@ function viewSceneSummary(o){
 }
 function capiPanel(o){
   { const tones = [[0,"Gentil"],[1,"Zoeiro"],[2,"Sem dó"]], tn = state.capiTone==null ? 1 : state.capiTone;
-    const pn = h(`<details class="card capi-set"><summary>⚙️ Voz e jeito do Capi</summary><div class="cs-body"><div class="eyebrow">Jeito</div><div class="cs-row">${tones.map(([k,n]) => `<button type="button" class="chip-b ${tn===k?"on":""}" data-tone="${k}">${n}</button>`).join("")}</div><div class="eyebrow">Voz</div><div class="cs-row">${CAPI_VOICES.map(([k,n]) => `<button type="button" class="chip-b ${capiVoiceName()===k?"on":""}" data-voice="${k}">${k}<small>${n}</small></button>`).join("")}</div><button type="button" class="btn btn-line" id="csTest">▶ Ouvir uma amostra</button><p class="sub cs-msg" id="csMsg" style="font-size:var(--fs-cap)">${gmKey() ? "A voz usa o Gemini (nuvem). Sem internet, o Capi usa a voz do aparelho." : "Cole a chave do Gemini em Você › Ajustes para ouvir a voz natural do Capi."}</p></div></details>`);
+    const pn = h(`<details class="card capi-set"><summary>⚙️ Voz e jeito do Capi</summary><div class="cs-body"><div class="eyebrow">Jeito</div><div class="cs-row">${tones.map(([k,n]) => `<button type="button" class="chip-b ${tn===k?"on":""}" data-tone="${k}">${n}</button>`).join("")}</div><div class="eyebrow">Voz</div><div class="cs-row">${CAPI_VOICES.map(([k,n,d]) => `<button type="button" class="chip-b ${capiVoiceName()===k?"on":""}" data-voice="${k}">${d}<small>${n}</small></button>`).join("")}</div><button type="button" class="btn btn-line" id="csTest">▶ Ouvir uma amostra</button><p class="sub cs-msg" id="csMsg" style="font-size:var(--fs-cap)">${gmKey() ? "A voz usa o Gemini (nuvem). Sem internet, o Capi usa a voz do aparelho." : "Cole a chave do Gemini em Você › Ajustes para ouvir a voz natural do Capi."}</p></div></details>`);
     pn.open = !!o.setOpen; pn.addEventListener("toggle", () => { o.setOpen = pn.open; });
     pn.querySelectorAll("[data-tone]").forEach(b => b.addEventListener("click", () => { state.capiTone = +b.dataset.tone; persist(); render(); }));
     pn.querySelectorAll("[data-voice]").forEach(b => b.addEventListener("click", () => { state.capiVoiceName = b.dataset.voice; persist(); o.setOpen = true; render(); }));
@@ -6437,7 +6438,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v131";
+const APP_VER = "v132";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
