@@ -472,7 +472,7 @@ form.compose .iconbtn.vmic.on{background:var(--bad);color:#fff;border-color:var(
 .speak{width:54px; height:54px; border-radius:50%; border:none; background:var(--accent-soft); color:var(--accent-ink); display:flex; align-items:center; justify-content:center}
 .speak svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
 .speak.sm{width:34px; height:34px}
-.slow-bar{display:flex; gap:8px; justify-content:center; margin-top:10px}
+.slow-bar{display:flex; gap:8px; justify-content:center; margin-top:6px}
 .more{display:flex; flex-direction:column; gap:10px; align-items:stretch}
 .more>.link{align-self:center}
 .more-c{display:flex; flex-direction:column; gap:10px}
@@ -2351,12 +2351,12 @@ function viewLadder(){
   } else {
     const r = o.r, full = q.mode==="recall" ? q.ans : q.t;
     el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?(r.now>r.was?"Subiu para "+LAD[r.now-1].n+"!":"Isso aí!"):r.sc>0?"Quase. Tente de novo amanhã":"Não foi dessa vez. Volta um degrau"}</span></div>${r.v!=null ? typedDiff(q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, r.v) : ""}${r.why ? `<p class="sub" style="color:var(--ink)">${r.alt ? "✓ " : ""}${esc(r.why)}</p>` : ""}<div style="font-size:16px">${q.mode==="recall" ? "Certo: <b>"+esc(q.ans)+"</b>" : esc(q.t).replace(esc(q.k), "<b>"+esc(q.k)+"</b>")}</div>${q.mode==="cloze" ? `<p class="sub">${esc(q.pt)}</p>` : ""}<button class="link" id="lS">🔊 Ouvir</button></section>`));
-    $("#lS", el).addEventListener("click", () => speak(full));
-    el.appendChild(slowBar(full)); el.appendChild(moreBlock(q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, q.pt));
+    $("#lS", el).addEventListener("click", () => speak(full)); $("#lS", el).after(slowBar(full));
     { const n = errNotice(o); if(n) el.appendChild(n); }
     const nx = h(`<button class="btn btn-dark btn-block">${o.i+1>=o.qs.length?"Ver resultado":"Próxima"} <span class="arr">→</span></button>`);
     nx.addEventListener("click", () => { stopAudio(); seqToken++; o.i++; o.r = null; o.reveal = false; render(); scrollTo(0,0); });
     el.appendChild(nx);
+    el.appendChild(moreBlock(q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, q.pt));
     setTimeout(() => speak(full), 200);
   }
   return el;
@@ -6314,7 +6314,7 @@ async function aiJudge(info){
   const ctx = info.full ? `Frase completa: “${info.full}”. Faltava a parte “${info.target}”, e o aluno escreveu “${info.v}”.` : `Em português: “${info.pt}”. Resposta esperada: “${info.target}”. O aluno escreveu: “${info.v}”.`;
   const prompt = `Você corrige exercícios de ${lg} para um brasileiro. ${ctx}
 A resposta do aluno é uma forma natural e correta de dizer o mesmo, mesmo sendo diferente da esperada?
-Responda só com JSON: {"v":"equivalent","why":"uma frase curta em português do Brasil","fix":""}
+Responda só com JSON: {"v":"equivalent","why":"uma frase curta (até 15 palavras) em português do Brasil, falando direto com o aluno (você)","fix":""}
 Valores de "v": "equivalent" (mesmo sentido e tom, gramática certa), "minor" (ideia certa com erro pequeno de grafia ou gramática; ponha a forma correta em "fix"), "wrong" (outro sentido ou errada).`;
   const j = gmJson(await Promise.race([aiTextAny(prompt, 300, true), new Promise((_, rej) => setTimeout(() => rej(new Error("slow")), 7000))]));
   if(!j || !/^(equivalent|minor|wrong)$/.test(j.v)) return null;
@@ -6427,7 +6427,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v127";
+const APP_VER = "v128";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
