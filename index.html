@@ -2360,7 +2360,7 @@ function viewLadder(){
     el.appendChild(f);
   } else {
     const r = o.r, full = q.mode==="recall" ? q.ans : q.t;
-    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?(r.now>r.was?"Subiu para "+LAD[r.now-1].n+"!":"Isso aí!"):r.sc>0?"Quase. Tente de novo amanhã":"Não foi dessa vez. Volta um degrau"}</span></div>${r.v!=null ? typedDiff(q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, r.v) : ""}${r.why ? `<p class="sub" style="color:var(--ink)">${r.alt ? "✓ " : ""}${esc(r.why)}</p>` : ""}<div style="font-size:16px">${q.mode==="recall" ? "Certo: <b>"+esc(q.ans)+"</b>" : esc(q.t).replace(esc(q.k), "<b>"+esc(q.k)+"</b>")}</div>${q.mode==="cloze" ? `<p class="sub">${esc(q.pt)}</p>` : ""}<button class="link" id="lS">🔊 Ouvir</button></section>`));
+    el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?(r.now>r.was?"Subiu para "+LAD[r.now-1].n+"!":"Isso aí!"):r.pct>=90?"Certo, mas você usou a dica. Sem ela, sobe de degrau":r.sc>0?"Quase. Tente de novo amanhã":"Não foi dessa vez. Volta um degrau"}</span></div>${r.alt ? `<div><div class="eyebrow">Você escreveu</div><div class="words"><span class="ok">${esc(r.v)}</span></div></div><p class="sub" style="color:var(--ink)">✓ ${esc(r.why||"Sua resposta também serve.")}</p><div style="font-size:16px">Forma mais comum: <b>${esc(q.mode==="recall" ? ladAlts(q.ans)[0] : q.t)}</b></div>` : `${r.v!=null ? typedDiff(q.mode==="recall" ? ladAlts(q.ans)[0] : q.k, r.v)+`<p class="sub" style="font-size:var(--fs-cap)">Verde: palavra que bate com o esperado. Vermelho: palavra que não bate.</p>` : ""}${r.why ? `<p class="sub" style="color:var(--ink)">${esc(r.why)}</p>` : ""}<div style="font-size:16px">${q.mode==="recall" ? "Certo: <b>"+esc(q.ans)+"</b>" : esc(q.t).replace(esc(q.k), "<b>"+esc(q.k)+"</b>")}</div>`}${q.mode==="cloze" ? `<p class="sub">${esc(q.pt)}</p>` : ""}<button class="link" id="lS">🔊 Ouvir</button></section>`));
     $("#lS", el).addEventListener("click", () => speak(full)); $("#lS", el).after(slowBar(full));
     { const n = errNotice(o); if(n) el.appendChild(n); }
     const nx = h(`<button class="btn btn-dark btn-block">${o.i+1>=o.qs.length?"Ver resultado":"Próxima"} <span class="arr">→</span></button>`);
@@ -3732,7 +3732,7 @@ function viewLesson(){
         el.appendChild(f);
       } else {
         const r = o.wr;
-        el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?"Isso aí!":r.sc>0?"Quase":"Ainda não fixou. Veja e tente de novo"}</span></div><div style="font-size:16px">${cloze ? esc(v.ex.t).replace(esc(hl), "<b>"+esc(hl)+"</b>") : "Certo: <b>"+esc(v.t)+"</b>"}</div>${r.why ? `<p class="sub" style="color:var(--ink)">${r.alt ? "✓ " : ""}${esc(r.why)}</p>` : ""}<button class="link" id="wS">🔊 Ouvir</button></section>`));
+        el.appendChild(h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${r.sc>=1?"Isso aí!":r.pct>=90?"Certo, mas você usou a dica":r.sc>0?"Quase":"Ainda não fixou. Veja e tente de novo"}</span></div><div style="font-size:16px">${cloze ? esc(v.ex.t).replace(esc(hl), "<b>"+esc(hl)+"</b>") : "Certo: <b>"+esc(v.t)+"</b>"}</div>${r.why ? `<p class="sub" style="color:var(--ink)">${r.alt ? "✓ " : ""}${esc(r.why)}</p>` : ""}<button class="link" id="wS">🔊 Ouvir</button></section>`));
         $("#wS", el).addEventListener("click", () => speak(cloze ? v.ex.t : v.t));
         const row = h(`<div style="display:grid;grid-template-columns:${r.sc>=1 ? "minmax(0,1fr)" : "minmax(0,1fr) minmax(0,1fr)"};gap:10px"></div>`);
         if(r.sc<1){ const again = h(`<button class="btn btn-line">Tentar de novo</button>`); again.addEventListener("click", () => { o.wr = null; render(); }); row.appendChild(again); }
@@ -6437,7 +6437,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v130";
+const APP_VER = "v131";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
