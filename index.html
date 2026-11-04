@@ -2287,9 +2287,9 @@ function viewTyped(){
     return el;
   }
   const q = o.qs[o.i];
-  const top = h(`<div class="run-head"><button class="iconbtn" aria-label="Sair">✕</button><div class="steps">${o.qs.map((_,i) => `<i class="${i<o.i?"on":""}"></i>`).join("")}</div></div>`);
+  const top = h(`<div style="display:flex;flex-direction:column;gap:10px"><div class="run-head"><button class="iconbtn" aria-label="Sair">✕</button><div class="news-meta" style="flex:1;font-weight:700">Traduza e escreva</div></div><div class="steps">${o.qs.map((_,i) => `<i class="${i<o.i?"on":""}"></i>`).join("")}</div></div>`);
   $("button", top).addEventListener("click", quit); el.appendChild(top);
-  el.appendChild(h(`<div class="stage-label">Traduza e escreva · ${o.i+1} de ${o.qs.length}</div>`));
+  el.appendChild(h(`<div class="stage-label">${o.i+1} de ${o.qs.length}</div>`));
   el.appendChild(h(`<div class="word-card"><div class="word-pt" style="font-size:22px">${esc(q.pt)}</div><div class="sub" style="margin-top:6px">${q.sent ? "Escreva a frase em "+LANGS[state.lang].name : "Como se diz em "+LANGS[state.lang].name+"?"}</div></div>`));
   if(!o.r){
     const f = h(`<section class="card dict"><textarea id="tIn" placeholder="Escreva em ${LANGS[state.lang].name}…" autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"></textarea>
@@ -2299,14 +2299,14 @@ function viewTyped(){
     $("#tGo", f).addEventListener("click", () => {
       const v = $("#tIn", f).value.trim(); if(!v) return;
       const r = scoreSpeech(q.t, v); let sc = r.pct>=90 ? 1 : r.pct>=70 ? 0.5 : 0; if(o.hint) sc = Math.min(sc, 0.5);
-      o.r = r; o.sc = sc; o.res.push({q, sc}); o.eh = errScan(v);
+      o.r = r; o.typed = v; o.sc = sc; o.res.push({q, sc}); o.eh = errScan(v);
       skillLog("prod", sc, {id:"t:"+hashStr(q.t), lvl:q.v.lvl, hint:o.hint}); noteVocab(q.v, sc>=1, "none");
       sc>=1 ? sfx.right() : sfx.wrong(); o.hint = false; render();
     });
     el.appendChild(f);
   } else {
     const r = o.r, sc = o.sc;
-    const res = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${sc>=1?"Isso aí!":sc>0?"Quase. Veja o que faltou":"Não foi dessa vez"}</span></div><div class="words">${r.words.map((w,k) => `<span class="${r.hit[k]?"ok":"miss"}">${esc(w)}</span>`).join(" ")}</div><div class="feedback"><b>${esc(q.t)}</b><button class="speak sm" id="tS" aria-label="Ouvir" style="margin-left:8px">${ICON.speak}</button></div></section>`);
+    const res = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="score-big"><b>${r.pct}%</b><span class="sub">${sc>=1?"Isso aí!":sc>0?"Quase. Veja o que faltou":"Não foi dessa vez"}</span></div><div><div class="eyebrow" style="margin-bottom:4px">O que você escreveu</div><div class="words">${typedMarks(q.t, o.typed || "").map(m => `<span class="${m.ok?"ok":"miss"}">${esc(m.raw)}</span>`).join(" ")}</div>${r.missed.length ? `<p class="sub" style="margin-top:6px;font-size:var(--fs-cap)">Faltou ou estava diferente: <b>${r.missed.map(esc).join(", ")}</b></p>` : ""}</div><div class="eyebrow" style="margin-bottom:-4px">Como se escreve</div><div class="feedback"><b>${esc(q.t)}</b><button class="speak sm" id="tS" aria-label="Ouvir" style="margin-left:8px">${ICON.speak}</button></div></section>`);
     $("#tS", res).addEventListener("click", () => speak(q.t));
     el.appendChild(res);
     { const n = errNotice(o); if(n) el.appendChild(n); }
@@ -6603,6 +6603,14 @@ function normWords(t){
   else x = x.replace(/'/g,"");
   return x.split(/\s+/).filter(Boolean).map(w => /^\d+$/.test(w) && NUMW[state.lang][+w] ? NUMW[state.lang][+w] : w);
 }
+function typedMarks(target, typed){
+  const raw = String(typed).split(/\s+/).filter(Boolean), a = normWords(target), b = raw.map(w => normWords(w)[0] || "");
+  const dp = Array.from({length:a.length+1}, () => new Array(b.length+1).fill(0));
+  for(let i=a.length-1;i>=0;i--) for(let j=b.length-1;j>=0;j--) dp[i][j] = a[i]===b[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const ok = new Array(b.length).fill(false); let i=0, j=0;
+  while(i<a.length && j<b.length){ if(a[i]===b[j]){ ok[j]=true; i++; j++; } else if(dp[i+1][j]>=dp[i][j+1]) i++; else j++; }
+  return raw.map((w,k) => ({raw:w, ok: ok[k] || b[k]===""}));
+}
 function scoreSpeech(target, heard){
   const a = normWords(target), b = normWords(heard);
   const dp = Array.from({length:a.length+1}, () => new Array(b.length+1).fill(0));
@@ -6751,7 +6759,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v148";
+const APP_VER = "v149";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
