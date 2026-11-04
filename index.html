@@ -1347,7 +1347,8 @@ function ttsSpeak(text, accLang, rate){
       loadVoices();
       const v = bestVoice(accLang), lc = accLang || ({en:"en-US", it:"it-IT"})[state.lang] || state.lang;
       /* iOS: falar logo depois de cancel() faz a nova fala ser derrubada ("canceled"); por isso espera um instante e tenta de novo uma vez */
-      const say = (retry) => {
+      let tries = 0;
+      const say = () => {
         if(gen !== ttsGen) return res();
         const t0 = Date.now(), u = new SpeechSynthesisUtterance(text);
         u.lang = v ? v.lang : lc; if(v) u.voice = v; u.rate = rate ? Math.max(0.4, Math.min(1, 0.92 * rate)) : 0.92;
@@ -1357,7 +1358,11 @@ function ttsSpeak(text, accLang, rate){
         u.onerror = e => {
           const er = (e && e.error) || "erro";
           if(fin) return; fin = true;
-          if((er === "canceled" || er === "interrupted") && !retry && gen === ttsGen && Date.now() - t0 < 1500){ fin = false; setTimeout(() => say(true), 350); return; }
+          /* "canceled"/"interrupted" no iPhone costuma ser o próprio sistema derrubando a fala (troca de áudio, outra fala começando): tenta de novo duas vezes e, se continuar, segue em silêncio, sem aviso; só erros de verdade avisam */
+          if(er === "canceled" || er === "interrupted"){
+            if(gen === ttsGen && tries < 2){ tries++; fin = false; setTimeout(() => say(), 450*tries); return; }
+            return res();
+          }
           if(gen === ttsGen) ttsFail("A voz do aparelho não respondeu ("+er+"). Toque de novo ou abra o link pelo Safari.");
           res();
         };
@@ -1366,7 +1371,7 @@ function ttsSpeak(text, accLang, rate){
         speechSynthesis.speak(u);
       };
       try{ if(speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}
-      setTimeout(() => say(false), 220);
+      setTimeout(() => say(), 220);
     }catch(e){ ttsFail("Não consegui usar a voz do aparelho."); res(); }
   });
 }
@@ -6623,7 +6628,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v140";
+const APP_VER = "v141";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
