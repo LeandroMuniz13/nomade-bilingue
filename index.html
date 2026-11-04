@@ -403,11 +403,13 @@ form.compose .iconbtn.vmic.on{background:var(--bad);color:#fff;border-color:var(
 .pp-pi{color:var(--gold-ui);font-size:12px;flex:none}
 .pp-et{flex:1;min-width:0;line-height:1.3}
 .pp-ed{color:var(--ink-faint);font-size:var(--fs-cap);flex:none}
-.pp-bar{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.pp-bar{margin:8px 0 12px;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2,var(--surface));display:flex;flex-direction:column;gap:8px;position:sticky;top:8px;z-index:5;box-shadow:var(--shadow)}
 .pp-now{font-weight:600;line-height:1.3}
-.pp-ctl{display:flex;align-items:center;justify-content:center;gap:14px}
+.pp-ctl{display:flex;align-items:center;justify-content:center;gap:10px}
+.pp-sp{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pp-sp .filter{min-height:34px;padding:4px 10px}
 .pp-ctl .iconbtn{font-size:13px;font-weight:600}
-.pp-play{width:56px;height:56px;background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:18px}
+.pp-play{width:64px;height:64px;background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:18px}
 .pp-rate{min-width:56px;padding:8px 10px}
 .pp-seek{width:100%;accent-color:var(--gold-ui);min-height:28px}
 .pp-t{display:flex;justify-content:space-between;color:var(--ink-faint);font-size:var(--fs-cap)}
@@ -5870,6 +5872,10 @@ const PODS = {
     {id:"p-aee", feed:"https://feeds.megaphone.fm/allearsenglish", n:"All Ears English", by:"Lindsay e Michelle", acc:"Americano", lv:"B1–B2", len:"15–20 min", d:"Conversa natural sobre cultura e dia a dia nos EUA, com dicas de como os nativos realmente falam.", how:"Ouça em velocidade normal e anote 3 expressões novas. Reouça um trecho curto no dia seguinte.", site:"https://www.allearsenglish.com/", q:"All Ears English podcast"},
     {id:"p-culips", feed:"https://esl.culips.com/feed/podcast/", n:"Culips ESL Podcast", by:"Culips", acc:"Vários", lv:"B1–B2", len:"15–25 min", d:"Conversas informais com expressões e gírias explicadas, com transcrição no site.", how:"Ouça sem transcrição, depois com. Foque em ligação entre palavras e gírias.", site:"https://www.culips.com/", q:"Culips ESL podcast"},
     {id:"p-eslpod", n:"ESLPod", by:"Dr. Jeff McQuillan", acc:"Americano", lv:"A2–B1", len:"10–15 min", d:"Diálogos lentos e depois naturais, com explicação do vocabulário. Bom para quem ainda se perde na fala rápida.", how:"Ouça a versão lenta e depois a natural. Compare o que muda no ritmo.", site:"https://www.eslpod.com/", q:"ESLPod"},
+    {id:"p-jre", n:"The Joe Rogan Experience", by:"Joe Rogan", acc:"Americano", lv:"B2–C1", len:"2–3 h", d:"Conversas longas e informais com gente de todo tipo: empresários, cientistas, atletas, artistas. Já recebeu o Elon Musk mais de uma vez. Linguagem bem coloquial, com gírias e palavrões.", how:"Escolha um trecho de 10 a 15 minutos no YouTube, com legenda em inglês ligada, e ouça a 0,75× na primeira vez. Anote 3 gírias.", site:"https://www.youtube.com/@joerogan", q:"Joe Rogan Experience", guests:["Elon Musk","Bill Gates","Jensen Huang","Mark Zuckerberg"]},
+    {id:"p-lex", n:"Lex Fridman Podcast", by:"Lex Fridman", acc:"Americano", lv:"B2–C1", len:"2–4 h", d:"Entrevistas profundas sobre tecnologia, ciência, negócios e história, com nomes como Elon Musk, Sam Altman e muitos outros. Fala mais pausada que a maioria.", how:"Comece por um trecho curto da conversa. Ouça sem legenda, depois com. Foque nas perguntas do Lex: são boas para copiar.", site:"https://lexfridman.com/podcast/", q:"Lex Fridman Podcast", guests:["Elon Musk","Sam Altman","Jensen Huang","Mark Zuckerberg"]},
+    {id:"p-doac", n:"The Diary Of A CEO", by:"Steven Bartlett", acc:"Britânico", lv:"B2", len:"1–2 h", d:"Entrevistas com empresários, cientistas e especialistas sobre negócios, saúde e carreira. Sotaque britânico claro e perguntas diretas.", how:"Ouça os primeiros 15 minutos e resuma em uma frase, em inglês, o que o convidado defende.", site:"https://thediaryofaceo.com/", q:"The Diary Of A CEO", guests:["Elon Musk","Bill Gates","Simon Sinek"]},
+    {id:"p-ferriss", n:"The Tim Ferriss Show", by:"Tim Ferriss", acc:"Americano", lv:"B2", len:"1–2 h", d:"Conversas com pessoas de alto desempenho sobre hábitos, decisões e aprendizado. Ritmo calmo e vocabulário rico.", how:"Ouça um trecho curto e repita em voz alta 3 frases do Tim, imitando o ritmo.", site:"https://tim.blog/podcast/", q:"The Tim Ferriss Show", guests:["Naval Ravikant","Jerry Seinfeld","Arnold Schwarzenegger"]},
     {id:"p-luke", n:"Luke's English Podcast", by:"Luke Thompson", acc:"Britânico", lv:"B2+", len:"30–60 min", d:"Histórias e conversas longas, com humor. Desafio para quem quer treinar escuta de verdade.", how:"Escolha um episódio de assunto que você gosta e ouça 10 minutos por dia, sem pausar.", site:"https://teacherluke.co.uk/", q:"Luke's English Podcast"}
   ],
   it:[
@@ -5903,15 +5909,16 @@ function podPlayer(p){
   const au = new Audio(); au.preload = "none"; let eps = [], cur = -1, listened = 0, last = 0;
   podStop(); podAu = au;
   const box = $(".pp-list", c);
-  const bar = h(`<div class="pp-bar" style="display:none"><div class="pp-now"></div><div class="pp-ctl"><button class="iconbtn" data-a="b" aria-label="Voltar 15 segundos">−15</button><button class="iconbtn pp-play" data-a="p" aria-label="Tocar">▶</button><button class="iconbtn" data-a="f" aria-label="Avançar 15 segundos">+15</button><button class="btn btn-line pp-rate" data-a="r">1×</button></div><input type="range" class="pp-seek noswipe" min="0" max="1000" value="0" aria-label="Posição"><div class="pp-t"><span class="pp-c">0:00</span><span class="pp-d">0:00</span></div><div class="pp-ok sub"></div></div>`);
-  c.appendChild(bar);
-  const play = $(".pp-play", bar), seek = $(".pp-seek", bar), rate = $(".pp-rate", bar);
-  const rates = [1,1.25,1.5,0.85]; let ri = 0;
+  const bar = h(`<div class="pp-bar"><div class="pp-now">Escolha um episódio abaixo</div><input type="range" class="pp-seek noswipe" min="0" max="1000" value="0" aria-label="Posição"><div class="pp-t"><span class="pp-c">0:00</span><span class="pp-d">0:00</span></div><div class="pp-ctl"><button class="iconbtn" data-a="pv" aria-label="Episódio anterior">⏮</button><button class="iconbtn" data-a="b" aria-label="Voltar 15 segundos">−15</button><button class="iconbtn pp-play" data-a="p" aria-label="Tocar">▶</button><button class="iconbtn" data-a="f" aria-label="Avançar 30 segundos">+30</button><button class="iconbtn" data-a="nx" aria-label="Próximo episódio">⏭</button></div><div class="pp-sp" role="group" aria-label="Velocidade">${[0.75,1,1.25,1.5,2].map(r => `<button class="filter pp-r" data-a="r" data-r="${r}">${String(r).replace(".",",")}×</button>`).join("")}</div><div class="pp-ok sub"></div></div>`);
+  c.insertBefore(bar, box);
+  const play = $(".pp-play", bar), seek = $(".pp-seek", bar);
+  let rate = state.podRate || 1;
+  const markRate = () => bar.querySelectorAll(".pp-r").forEach(x => x.classList.toggle("on", +x.dataset.r === rate)); markRate();
   const upd = () => { const d = au.duration||0; $(".pp-c",bar).textContent = podT(au.currentTime); $(".pp-d",bar).textContent = d?podT(d):"…"; if(!seeking) seek.value = d? Math.round(au.currentTime/d*1000):0; };
   let seeking = false;
-  const load = i => { cur = i; au.src = eps[i].u; au.playbackRate = rates[ri]; $(".pp-now",bar).textContent = eps[i].t; bar.style.display = ""; box.querySelectorAll(".pp-ep").forEach((b,k) => b.classList.toggle("on", k===i));
+  const load = (i, auto) => { cur = i; au.src = eps[i].u; au.defaultPlaybackRate = rate; au.playbackRate = rate; $(".pp-now",bar).textContent = eps[i].t; box.querySelectorAll(".pp-ep").forEach((b,k) => b.classList.toggle("on", k===i));
     if("mediaSession" in navigator){ try{ navigator.mediaSession.metadata = new MediaMetadata({title:eps[i].t, artist:p.by, album:p.n}); }catch(e){} }
-    au.play().catch(() => {}); };
+    if(auto !== false) au.play().catch(() => {}); };
   const err = m => { $(".pp-ok",bar).textContent = m; };
   au.addEventListener("play", () => { play.textContent = "❚❚"; play.setAttribute("aria-label","Pausar"); last = au.currentTime; err(""); });
   au.addEventListener("pause", () => { play.textContent = "▶"; play.setAttribute("aria-label","Tocar"); });
@@ -5926,12 +5933,15 @@ function podPlayer(p){
   bar.addEventListener("click", e => { const b = e.target.closest("[data-a]"); if(!b) return; const a = b.dataset.a;
     if(a==="p"){ au.paused ? au.play().catch(()=>{}) : au.pause(); }
     else if(a==="b") au.currentTime = Math.max(0, au.currentTime-15);
-    else if(a==="f") au.currentTime = Math.min(au.duration||1e9, au.currentTime+15);
-    else if(a==="r"){ ri = (ri+1)%rates.length; au.playbackRate = rates[ri]; b.textContent = String(rates[ri]).replace(".",",")+"×"; } });
+    else if(a==="f") au.currentTime = Math.min(au.duration||1e9, au.currentTime+30);
+    else if(a==="pv"){ if(au.currentTime > 5 || cur <= 0) au.currentTime = 0; else load(cur-1); }
+    else if(a==="nx"){ if(cur+1 < eps.length) load(cur+1); }
+    else if(a==="r"){ rate = +b.dataset.r; state.podRate = rate; au.playbackRate = rate; try{ au.preservesPitch = true; }catch(e){} markRate(); persist(); } });
   podEpisodes(p).then(list => { eps = list; box.innerHTML = ""; box.className = "pp-list";
     list.forEach((e,i) => { const dur = /^\d+$/.test(e.dur) ? podT(+e.dur) : e.dur.replace(/^00:/,"");
       const b = h(`<button class="pp-ep"><span class="pp-pi">▶</span><span class="pp-et">${esc(e.t)}</span><span class="pp-ed">${esc(dur)}</span></button>`);
       b.addEventListener("click", () => load(i)); box.appendChild(b); });
+    if(eps.length && cur < 0) load(0, false);
   }).catch(() => { box.innerHTML = `<span>Não consegui carregar os episódios${navigator.onLine?"":" (sem internet)"}.</span>${podLinks(p)}`; });
   return c;
 }
@@ -5943,7 +5953,8 @@ function viewPodp(){
   el.appendChild(head);
   el.appendChild(h(`<div><h1 class="headline">🎧 ${esc(p.n)}</h1><p class="sub" style="margin-top:4px">${esc(p.by)} · sotaque ${esc(p.acc.toLowerCase())} · nível ${esc(p.lv)} · ${esc(p.len)}</p></div>`));
   el.appendChild(h(`<section class="card"><p style="line-height:1.5">${esc(p.d)}</p><div class="m-goal" style="margin-top:10px">💡 Como estudar: ${esc(p.how)}</div></section>`));
-  if(p.feed) el.appendChild(podPlayer(p)); else el.appendChild(h(`<section class="card"><div class="eyebrow">Onde ouvir</div><p class="sub" style="margin:6px 0 8px">Este podcast não libera o áudio para tocar dentro do app. Abra no site ou no seu app de podcasts.</p>${podLinks(p)}</section>`));
+  if(p.feed) el.appendChild(podPlayer(p)); else el.appendChild(h(`<section class="card"><div class="eyebrow">Onde ouvir</div><p class="sub" style="margin:6px 0 8px">Este podcast não libera o áudio para tocar dentro do app. Abra no site, no Spotify ou no YouTube.</p>${podLinks(p)}</section>`));
+  if(p.guests){ const gq = g => encodeURIComponent(p.q + " " + g); el.appendChild(h(`<section class="card"><div class="eyebrow">Episódios com convidados</div><p class="sub" style="margin:6px 0 8px">Toque para buscar a conversa. Abre no YouTube ou no Spotify, onde você liga a legenda e a velocidade.</p>${p.guests.map(g => `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line)"><b style="flex:1">${esc(g)}</b><a class="filter" href="https://www.youtube.com/results?search_query=${gq(g)}" target="_blank" rel="noopener">YouTube ↗</a><a class="filter" href="https://open.spotify.com/search/${gq(g)}" target="_blank" rel="noopener">Spotify ↗</a></div>`).join("")}</section>`)); }
   const done = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Depois de ouvir</div><p class="sub" style="font-size:var(--fs-sub)">Quanto você ouviu? Conta para a missão e para o seu XP.</p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[5,10,20,30].map(m => `<button class="btn btn-line" data-m="${m}">${m} min</button>`).join("")}</div></section>`);
   done.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { const m = +b.dataset.m; const lg = L(); (lg.aud = lg.aud || []).push({id:p.id, d:today(), m}); if(lg.aud.length>200) lg.aud.splice(0,lg.aud.length-200); addXp(Math.max(3, Math.round(m/2))); persist(); toast("Registrado: "+m+" min de escuta. +"+Math.max(3, Math.round(m/2))+" XP"); close(); }));
   el.appendChild(done);
@@ -6560,7 +6571,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v137";
+const APP_VER = "v138";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
