@@ -594,6 +594,18 @@ ul.plan{margin:10px 0 0; padding-left:18px; display:flex; flex-direction:column;
 .vz-chips .filter{flex:none}
 .vz-ctl{display:flex; align-items:center; justify-content:center; gap:14px}
 .vz-ctl button{width:54px; height:54px; border-radius:50%; border:1px solid var(--line); background:var(--surface); font-size:13px; font-weight:700}
+.vz-ctl.nav{gap:10px}
+.vz-ctl.nav button{flex:none;width:46px;height:46px;border:none;background:transparent;color:var(--ink,#1B2340);display:flex;align-items:center;justify-content:center;padding:0}
+.vz-ctl.nav button:active{transform:scale(.92)}
+.vz-ctl.nav button.sm{width:40px;height:40px;opacity:.5;border-radius:50%}
+.vz-ctl.nav button.sm.on{opacity:1;color:var(--accent);background:var(--gold-soft,rgba(212,160,23,.14))}
+.vz-ctl.nav .big{flex:none;width:68px;height:68px;border-radius:50%;color:#fff;background:var(--ink,#1B2340);box-shadow:0 4px 14px rgba(27,35,64,.28)}
+.vz-ctl.nav .big svg{width:30px;height:30px}
+.vz-ctl.nav svg{fill:currentColor;stroke:none}
+.vz-ctl.nav button.sm svg{fill:none;stroke:currentColor}
+.vz-ctl.nav button svg path,.vz-ctl.nav button svg rect{fill:currentColor;stroke:none}
+.vz-ctl.nav button.sm svg path{fill:none;stroke:currentColor}
+.vz-ctl.sk button{width:auto;height:30px;padding:0 14px;border-radius:15px;font-size:12px}
 .vz-ctl .big{width:72px; height:72px; background:var(--ink,#1B2340); color:#fff; font-size:26px; border:none}
 .vz-seek{width:100%}
 .vz-row{display:flex; align-items:center; gap:10px}
@@ -5737,14 +5749,35 @@ function viewMySong(){
   }
   if(!vozAud || vozAud.__key !== sg.id){ vozStop(); const a = new Audio(o.src.url); a.preload = "metadata"; a.__key = sg.id; vozAud = a; try{ a.preservesPitch = true; }catch(e){} }
   o.speed = o.speed || 1; o.vol = o.vol || 1;
-  el.appendChild(vozPlayer(o, vozAud, {plain:true}));
+  const MP = window.__mp = window.__mp || {shuf:false, rep:"all", hist:[]};
+  const list = (music().mine || []), pos = list.findIndex(z => z.id === sg.id);
+  MP.go = d => {
+    if(d < 0 && (vozAud.currentTime || 0) > 3){ vozAud.currentTime = 0; return; }
+    let nx;
+    if(d < 0){ const pid = MP.hist.pop(); nx = list.find(z => z.id === pid) || list[(pos - 1 + list.length) % list.length]; }
+    else {
+      if(MP.shuf && list.length > 1){ do { nx = list[Math.floor(Math.random() * list.length)]; } while(nx.id === sg.id); }
+      else nx = list[(pos + 1) % list.length];
+      MP.hist.push(sg.id); if(MP.hist.length > 30) MP.hist.shift();
+    }
+    if(!nx) return; vozStop(); o.sg = nx; o.src = null; o.loading = false; o.auto = true; render(); scrollTo(0, 0);
+  };
+  el.appendChild(vozPlayer(o, vozAud, {plain:true, nav:MP, onEnd: () => {
+    if(MP.rep === "one"){ vozAud.currentTime = 0; vozAud.play().catch(() => {}); return; }
+    if(MP.rep === "off" && pos === list.length - 1 && !MP.shuf) return;
+    MP.go(1);
+  }}));
+  if(o.auto){ o.auto = false; vozAud.play().catch(() => { try{ toast("Toque em ▶ para continuar"); }catch(e){} }); }
   el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">${o.src.cached ? "Guardada no aparelho: toca também sem internet." : "Não consegui guardar no aparelho agora. Abra de novo com internet."}</p>`));
   if(sg.ly && sg.ly.length){
     const lo = L().lyoff = L().lyoff || {}; let off = lo[sg.id] || 0;
+    const fx = (L().lyfix = L().lyfix || {})[sg.id] = (L().lyfix[sg.id] || {});
+    const atOf = j => { let d = 0; for(let k = j; k >= 0; k--){ if(fx[k] !== undefined){ d = fx[k]; break; } } return (sg.ly[j].at || 0) + off + d; };
     const hasPt = sg.ly.some(x => x.pt);
     o.lyTr = o.lyTr !== undefined ? o.lyTr : hasPt; o.lyFollow = o.lyFollow !== false;
-    const ctl = h(`<section class="card"><div class="eyebrow">Letra para cantar junto</div><p class="sub" style="margin:4px 0 8px;font-size:var(--fs-cap)">${sg.nosync ? "Para esta música a letra ainda não acompanha o áudio sozinha: o som tem muito efeito e a marcação automática erraria. Leia e cante junto. Toque numa palavra para ver o significado e salvar no Anki." : "O verso atual acende com a música. Toque numa palavra para ver o significado e salvar no Anki. Toque em ▶ para pular para aquele verso."}</p><div class="vz-chips"><button class="filter ${o.lyTr?"on":""}" id="lyTr">Tradução</button>${sg.nosync ? "" : `<button class="filter ${o.lyFollow?"on":""}" id="lyFl">Seguir a letra</button>`}</div>${sg.nosync ? "" : `<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span class="sub" style="font-size:var(--fs-cap);flex:1">Letra adiantada ou atrasada? Ajuste: <b id="lyOff"></b></span><button class="filter" id="lyM">−0,5s</button><button class="filter" id="lyP">+0,5s</button></div>`}</section>`);
-    const offTxt = () => { if(sg.nosync) return; $("#lyOff", ctl).textContent = (off > 0 ? "+" : "") + off.toFixed(1).replace(".", ",") + "s"; };
+    const apx = !!sg.nosync;
+    const ctl = h(`<section class="card"><div class="eyebrow">Letra para cantar junto</div><p class="sub" style="margin:4px 0 8px;font-size:var(--fs-cap)">${apx ? "Nesta música a marcação é aproximada (o som tem muito efeito). Se um verso estiver fora do tempo, toque em Ajustar e depois toque no verso que está sendo cantado: o app corrige ele e os seguintes. " : "O verso atual acende com a música. "}Toque numa palavra para ver o significado e salvar no Anki. Toque em ▶ para pular para o verso.</p><div class="vz-chips"><button class="filter ${o.lyTr?"on":""}" id="lyTr">Tradução</button><button class="filter ${o.lyFollow?"on":""}" id="lyFl">Seguir a letra</button><button class="filter ${o.lyAdj?"on":""}" id="lyAd">🎯 Ajustar</button></div><p id="lyAdN" class="sub" style="display:${o.lyAdj?"block":"none"};font-size:var(--fs-cap);margin:8px 0 0"><b>Modo ajustar:</b> ouça e toque no verso no momento em que ele começa a ser cantado. <button class="filter" id="lyRs">Desfazer ajustes</button></p><div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span class="sub" style="font-size:var(--fs-cap);flex:1">Tudo adiantado ou atrasado? <b id="lyOff"></b></span><button class="filter" id="lyM">−0,5s</button><button class="filter" id="lyP">+0,5s</button></div></section>`);
+    const offTxt = () => { $("#lyOff", ctl).textContent = (off > 0 ? "+" : "") + off.toFixed(1).replace(".", ",") + "s"; };
     offTxt();
     const box = h(`<section class="card" id="lyBox"></section>`);
     const rows = []; let blk = null, ch = false;
@@ -5752,19 +5785,27 @@ function viewMySong(){
       if(x.h){ ch = !!x.ch; blk = h(`<div style="margin:14px 0 0;${ch ? "background:var(--gold-soft,rgba(212,160,23,.12));border-radius:14px;padding:10px 12px" : ""}"><div class="eyebrow" style="margin-bottom:4px">${esc(x.h)}</div></div>`); box.appendChild(blk); return; }
       if(!blk){ blk = h(`<div style="margin-top:6px"></div>`); box.appendChild(blk); }
       const words = x.t.replace(/\s+/g, " ").split(" ").map(w => { const k = (w.match(TOKR) || [""])[0].toLowerCase(); return k ? `<span class="ly-w" data-k="${esc(k)}">${esc(w)}</span>` : esc(w); }).join(" ");
-      const row = h(`<div class="ly-l" data-i="${i}" style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;opacity:${sg.nosync ? 1 : .55};transition:opacity .25s"><button class="ly-go" aria-label="Tocar deste verso" style="${sg.nosync ? "display:none;" : ""}flex:none;border:0;background:none;color:var(--accent);font-size:13px;padding:6px 2px;line-height:1.3">▶</button><div style="min-width:0"><p class="ly-t" style="margin:0;font-size:19px;line-height:1.4">${words}</p>${x.pt ? `<p class="ly-p" style="margin:1px 0 0;font-size:14px;color:var(--accent-ink);display:${o.lyTr?"block":"none"}">${esc(x.pt)}</p>` : ""}</div></div>`);
-      $(".ly-go", row).addEventListener("click", () => { try{ vozAud.currentTime = Math.max(0, (x.at || 0) + off - 0.2); vozAud.play(); }catch(e){} });
+      const row = h(`<div class="ly-l" data-i="${i}" style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;opacity:.55;transition:opacity .25s"><button class="ly-go" aria-label="Tocar deste verso" style="flex:none;border:0;background:none;color:var(--accent);font-size:13px;padding:6px 2px;line-height:1.3">▶</button><div style="min-width:0"><p class="ly-t" style="margin:0;font-size:19px;line-height:1.4">${words}</p>${x.pt ? `<p class="ly-p" style="margin:1px 0 0;font-size:14px;color:var(--accent-ink);display:${o.lyTr?"block":"none"}">${esc(x.pt)}</p>` : ""}</div></div>`);
+      $(".ly-go", row).addEventListener("click", () => { try{ vozAud.currentTime = Math.max(0, atOf(i) - 0.2); vozAud.play(); }catch(e){} });
       blk.appendChild(row); rows.push({row, x, i});
     });
     $("#lyTr", ctl).addEventListener("click", e => { o.lyTr = !o.lyTr; e.currentTarget.classList.toggle("on", o.lyTr); $$(".ly-p", box).forEach(p => p.style.display = o.lyTr ? "block" : "none"); });
-    if(!sg.nosync) $("#lyFl", ctl).addEventListener("click", e => { o.lyFollow = !o.lyFollow; e.currentTarget.classList.toggle("on", o.lyFollow); });
+    $("#lyFl", ctl).addEventListener("click", e => { o.lyFollow = !o.lyFollow; e.currentTarget.classList.toggle("on", o.lyFollow); });
     const nudge = d => { off = Math.round((off + d) * 10) / 10; lo[sg.id] = off; persist(); offTxt(); upd(true); };
-    if(!sg.nosync){ $("#lyM", ctl).addEventListener("click", () => nudge(-0.5)); $("#lyP", ctl).addEventListener("click", () => nudge(0.5)); }
+    $("#lyM", ctl).addEventListener("click", () => nudge(-0.5)); $("#lyP", ctl).addEventListener("click", () => nudge(0.5));
+    $("#lyAd", ctl).addEventListener("click", e => { o.lyAdj = !o.lyAdj; e.currentTarget.classList.toggle("on", o.lyAdj); $("#lyAdN", ctl).style.display = o.lyAdj ? "block" : "none"; });
+    $("#lyRs", ctl).addEventListener("click", () => { Object.keys(fx).forEach(k => delete fx[k]); persist(); upd(true); toast("Ajustes desfeitos"); });
+    box.addEventListener("click", e => {
+      if(!o.lyAdj) return; const r = e.target.closest && e.target.closest(".ly-l"); if(!r || e.target.closest(".ly-go")) return;
+      e.stopPropagation(); e.preventDefault(); const i = +r.dataset.i, t = vozAud.currentTime || 0;
+      let d = 0; fx[i] = 0; { let dd = 0; for(let k = i - 1; k >= 0; k--){ if(fx[k] !== undefined){ dd = fx[k]; break; } } d = dd; }
+      fx[i] = Math.round((t - 0.25 - ((sg.ly[i].at || 0) + off)) * 10) / 10; persist(); upd(true); toast("Verso ajustado");
+    }, true);
     let cur = -1;
     const upd = force => {
-      if(sg.nosync || overlay !== o || !el.isConnected) return;
-      const t = (vozAud.currentTime || 0) - off; let k = -1;
-      for(let j = 0; j < rows.length; j++){ if(rows[j].x.at <= t + 0.15) k = j; else break; }
+      if(overlay !== o || !el.isConnected) return;
+      const t = (vozAud.currentTime || 0); let k = -1;
+      for(let j = 0; j < rows.length; j++){ if(atOf(rows[j].i) <= t + 0.15) k = j; else break; }
       if(!(vozAud.currentTime > 0)) k = -1;
       if(k === cur && !force) return; cur = k;
       rows.forEach((r, j) => { const on = j === k; r.row.style.opacity = on ? "1" : (j < k ? ".4" : ".6"); $(".ly-t", r.row).style.fontWeight = on ? "800" : "500"; });
@@ -6109,11 +6150,21 @@ function vozAudio(acc, i){
   return vozAud;
 }
 function vozSeg(a, s, e, rate){ stopAudio(); a.currentTime = Math.max(0, s-0.25); if(rate) a.playbackRate = rate; vozSegEnd = e+0.35; a.play().catch(() => { try{ toast("Não consegui tocar. Verifique a internet e toque de novo."); }catch(x){} }); }
+const SPI = {
+  play:'<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.7-6.8c.6-.4.6-1.3 0-1.7L9.6 4.3C8.9 3.9 8 4.4 8 5.2z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="6" y="4.5" width="4.2" height="15" rx="1.2"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2"/></svg>',
+  prev:'<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 6.1v11.8c0 .8-.9 1.3-1.6.8l-8.3-5.9c-.6-.4-.6-1.2 0-1.6l8.3-5.9c.7-.5 1.6 0 1.6.8z"/></svg>',
+  next:'<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 6.1v11.8c0 .8.9 1.3 1.6.8l8.3-5.9c.6-.4.6-1.2 0-1.6L6.6 5.3C5.9 4.8 5 5.3 5 6.1z"/></svg>',
+  shuf:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.2c1.6 0 3 .8 3.9 2.1l3.8 5.8c.9 1.3 2.3 2.1 3.9 2.1H21"/><path d="M3 17h3.2c1.6 0 3-.8 3.9-2.1M13.9 9.1c.9-1.3 2.3-2.1 3.9-2.1H21"/><path d="M18.5 4.5L21 7l-2.5 2.5M18.5 14.5L21 17l-2.5 2.5"/></svg>',
+  rpt:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3l3 3-3 3"/><path d="M4 11V9.5A3.5 3.5 0 017.5 6H20"/><path d="M7 21l-3-3 3-3"/><path d="M20 13v1.5a3.5 3.5 0 01-3.5 3.5H4"/></svg>',
+  rpt1:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3l3 3-3 3"/><path d="M4 11V9.5A3.5 3.5 0 017.5 6H20"/><path d="M7 21l-3-3 3-3"/><path d="M20 13v1.5a3.5 3.5 0 01-3.5 3.5H4"/><path d="M11 10.5l1.5-1v5.5" stroke-width="1.8"/></svg>'
+};
 function vozPlayer(o, a, opts){
   opts = opts || {};
   a.playbackRate = o.speed; a.loop = !!o.loop && !opts.seg; if(!IS_IOS) a.volume = o.vol;
   const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:12px">
-    <div class="vz-ctl"><button data-a="back" aria-label="Voltar 5 segundos">−5</button><button class="big" data-a="play" aria-label="Tocar">▶</button><button data-a="fwd" aria-label="Avançar 5 segundos">+5</button></div>
+    ${opts.nav ? `<div class="vz-ctl nav"><button class="sm ${opts.nav.shuf?"on":""}" data-a="shuf" aria-label="Aleatório">${SPI.shuf}</button><button data-a="prev" aria-label="Música anterior">${SPI.prev}</button><button class="big" data-a="play" aria-label="Tocar">${SPI.play}</button><button data-a="next" aria-label="Próxima música">${SPI.next}</button><button class="sm ${opts.nav.rep!=="off"?"on":""}" data-a="rpt" aria-label="Repetir">${opts.nav.rep==="one"?SPI.rpt1:SPI.rpt}</button></div>` : ""}
+    <div class="vz-ctl${opts.nav ? " sk" : ""}" ${opts.nav ? 'style="gap:12px"' : ""}><button data-a="back" aria-label="Voltar 5 segundos">−5</button>${opts.nav ? "" : `<button class="big" data-a="play" aria-label="Tocar">▶</button>`}<button data-a="fwd" aria-label="Avançar 5 segundos">+5</button></div>
     ${opts.seg ? "" : `<div class="vz-row"><span class="vz-t" data-r="cur">0:00</span><input class="vz-seek" type="range" min="0" max="1000" value="0" data-r="seek" aria-label="Posição"><span class="vz-t" data-r="dur">--:--</span></div>`}
     <div><div class="eyebrow" style="margin-bottom:6px">Velocidade</div><div class="seg" style="width:100%">${[0.6,0.75,0.9,1,1.25].map(x => `<button data-sp="${x}" class="${o.speed===x?"on":""}">${String(x).replace(".",",")}x</button>`).join("")}</div></div>
     ${IS_IOS ? `<p class="sub" style="font-size:var(--fs-cap)">Volume: use os botões do iPhone.</p>` : `<div class="vz-row"><span style="font-size:16px">🔈</span><input type="range" min="0" max="100" value="${Math.round(o.vol*100)}" data-r="vol" aria-label="Volume"><span style="font-size:16px">🔊</span></div>`}
@@ -6123,7 +6174,7 @@ function vozPlayer(o, a, opts){
   const sync = () => {
     const d = a.duration;
     if(seek){ q('[data-r="cur"]').textContent = vzT(a.currentTime); q('[data-r="dur"]').textContent = isFinite(d) ? vzT(d) : "--:--"; if(isFinite(d) && d>0 && !seek.__drag) seek.value = Math.round(a.currentTime/d*1000); }
-    playB.textContent = a.paused ? "▶" : "⏸";
+    if(opts.nav) playB.innerHTML = a.paused ? SPI.play : SPI.pause; else playB.textContent = a.paused ? "▶" : "⏸";
   };
   a.ontimeupdate = () => { if(vozSegEnd!=null && a.currentTime >= vozSegEnd){ a.pause(); vozSegEnd = null; a.playbackRate = o.speed; } sync(); if(opts.onTime) opts.onTime(a.currentTime, a.duration); };
   ["loadedmetadata","play","pause","durationchange"].forEach(ev => a.addEventListener(ev, sync));
@@ -6135,6 +6186,12 @@ function vozPlayer(o, a, opts){
     if(opts.seg){ const sg = opts.seg(); if(sg){ vozSeg(a, sg.s, sg.e); return; } }
     stopAudio(); a.play().catch(() => { try{ toast("Não consegui tocar. Verifique a internet e toque de novo."); }catch(e){} });
   });
+  if(opts.nav){
+    const nv = opts.nav, st = (k, fn) => { const b = q('[data-a="'+k+'"]'); if(b) b.addEventListener("click", fn); };
+    st("prev", () => nv.go(-1)); st("next", () => nv.go(1));
+    st("shuf", e => { nv.shuf = !nv.shuf; e.currentTarget.classList.toggle("on", nv.shuf); });
+    st("rpt", e => { nv.rep = nv.rep==="off" ? "all" : nv.rep==="all" ? "one" : "off"; const b = e.currentTarget; b.classList.toggle("on", nv.rep!=="off"); b.innerHTML = nv.rep==="one" ? SPI.rpt1 : SPI.rpt; });
+  }
   q('[data-a="back"]').addEventListener("click", () => { a.currentTime = Math.max(0, a.currentTime-5); });
   q('[data-a="fwd"]').addEventListener("click", () => { a.currentTime = Math.min(isFinite(a.duration) ? a.duration : 1e9, a.currentTime+5); });
   if(!opts.seg){
@@ -6647,7 +6704,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v143";
+const APP_VER = "v144";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
