@@ -461,6 +461,19 @@ form.compose .iconbtn.vmic.on{background:var(--bad);color:#fff;border-color:var(
 .u-meta{display:flex; flex-direction:column; align-items:flex-end; gap:4px}
 .pill{border-radius:999px; padding:3px 9px; font-size:10.5px; font-weight:800; letter-spacing:.04em}
 .pill.lv{background:var(--surface-2); color:var(--ink-dim)}
+.cel{position:relative;min-height:calc(100vh - 40px);background:var(--night);color:var(--on-night);border-radius:26px;padding:28px 18px 22px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;overflow:hidden}
+.cel h1{margin:6px 0 0;font-size:34px;line-height:1.1;color:var(--gold);font-weight:800}
+.cel .cel-sub{font-size:17px;line-height:1.45;color:var(--on-night);max-width:340px}
+.cel .cel-capi{animation:celpop .7s cubic-bezier(.2,1.4,.4,1) both}
+.cel-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;margin-top:auto}
+.cel-st{border:2px solid var(--gold);border-radius:18px;overflow:hidden;background:var(--night-2)}
+.cel-st span{display:block;background:var(--gold);color:#1b2a21;font-size:11px;font-weight:800;letter-spacing:.05em;padding:5px 2px;text-transform:uppercase}
+.cel-st b{display:block;font-size:26px;padding:14px 2px;color:var(--on-night)}
+.cel .btn{width:100%}
+.cel-conf{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;opacity:.9;animation:celfall linear forwards}
+@keyframes celpop{0%{transform:scale(.4) rotate(-12deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes celfall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.cel .cel-capi,.cel-conf{animation:none}.cel-conf{display:none}}
 .lvl{display:flex;gap:8px;align-items:flex-start;font-size:var(--fs-cap);color:var(--ink-dim);margin-top:4px;line-height:1.35}
 .lvl .pill{flex:none;margin-top:1px}
 .lvg{margin:0 0 10px;font-size:var(--fs-cap);color:var(--ink-dim)}
@@ -1568,6 +1581,33 @@ let trailFilter = "all";
 let hubReturn = null;
 function go(t){ try{ if(overlay && overlay.conv) convStop(overlay, ""); else micShutdown(); }catch(e){} tab=t; overlay=null; menuOpen=false; hubReturn=null; render(); scrollTo(0,0); }
 let planRun = null;
+/* tela de comemoração do dia (estilo Duolingo, com o Capi): aparece uma vez por dia, ao fechar uma atividade depois de bater a meta */
+function celebDue(){ const t = today(); return !!(state.lang && (state.daily[t]||0) >= state.goal && state.celebDay !== t); }
+function celebText(){
+  const t = today(), xp = state.daily[t]||0, r = xp/state.goal, st = streakShown(), seed = (state.xp + st) % 7;
+  const pick = a => a[seed % a.length];
+  if([7,14,30,50,100,200,365].includes(st)) return {t: st+" dias seguidos!", s: pick(["O Capi já contou para todas as capivaras do rio. Estão impressionadas.", "Isso é mais constante que muita academia em janeiro. Parabéns!", "Lá atrás você nem sabia direito por que abriu o app. Agora olha só."])};
+  if(st <= 1) return {t:"Dia 1 no placar", s: pick(["Todo mundo começa em algum lugar. O Capi começou comendo capim.", "O primeiro passo é o mais difícil. O segundo é só voltar amanhã.", "Dia 1 feito. A ofensiva nasceu e o Capi já está de babá."])};
+  if(r >= 2) return {t:"Já acabou?!", s: pick(["Você fez o dobro da meta. O Capi precisou correr para acompanhar.", "Isso foi estudo ou maratona? O Capi está cansado só de olhar.", "Meta batida com folga. Amanhã o Capi quer a sua dieta de estudo."])};
+  if(r < 1.2) return {t:"Fez! E isso é o que importa", s: pick(["Não foi a lição do século, mas pelo menos você fez. O Capi aprova.", "Capivara também não rende 100% todo dia. O importante é aparecer.", "Meta no mínimo, mas no placar conta igual. O Capi não julga (muito)."])};
+  if(st <= 3) return {t:"De novo por aqui?", s: pick(["O Capi já está achando que você gosta disso.", "Dia "+st+" seguido. Cuidado: isso vira hábito.", "A ofensiva cresce e o sofá chora. Boa!"])};
+  return {t:"Meta batida!", s: pick(["Hoje você ganhou do sofá. Amanhã ele pede revanche, e o Capi está de olho.", "Mais um dia no placar. A ofensiva agradece e o seu eu do futuro também.", "Inglês se aprende de pouquinho em pouquinho. Hoje foi um bom pouquinho."])};
+}
+function celebOpen(){ state.celebDay = today(); persist(); return {type:"celeb", msg:celebText()}; }
+function viewCeleb(){
+  const o = overlay, m = o.msg, t = today(), xp = state.daily[t]||0, el = h(`<div class="screen"><div class="cel" role="dialog" aria-label="Meta do dia concluída"></div></div>`), box = $(".cel", el);
+  const cols = ["var(--gold)","#F3F1EA","#8FD3A8","#E8A87C"];
+  for(let i = 0; i < 26; i++){ const c = h(`<span class="cel-conf" style="left:${Math.round(Math.random()*96)}%;background:${cols[i%cols.length]};animation-duration:${(2.6+Math.random()*2.2).toFixed(1)}s;animation-delay:${(Math.random()*1.2).toFixed(1)}s"></span>`); box.appendChild(c); }
+  box.appendChild(h(`<div class="cel-capi" aria-hidden="true">${capi("cheer", 190)}</div>`));
+  box.appendChild(h(`<h1>${esc(m.t)}</h1>`));
+  box.appendChild(h(`<p class="cel-sub">${esc(m.s)}</p>`));
+  box.appendChild(h(`<div class="cel-stats"><div class="cel-st"><span>XP hoje</span><b>${xp}</b></div><div class="cel-st"><span>Ofensiva</span><b>${streakShown()} ${streakShown()===1?"dia":"dias"}</b></div><div class="cel-st"><span>Meta</span><b>${Math.round(xp/state.goal*100)}%</b></div></div>`));
+  const b = h(`<button class="btn btn-gold btn-block">Continuar</button>`);
+  b.addEventListener("click", () => { sfx.tap(); close(); });
+  box.appendChild(b);
+  if(!o.snd){ o.snd = true; setTimeout(() => { try{ sfx.win(); }catch(e){} }, 250); }
+  return el;
+}
 function open(o){ overlay=o; menuOpen=false; render(); scrollTo(0,0); }
 function close(){
   try{ if(overlay && overlay.conv) convStop(overlay, ""); else { micStop(); micKeep(false); micRelease(); } }catch(e){}
@@ -1576,6 +1616,7 @@ function close(){
   let adv = null;
   if(planRun){ const r = planRun; planRun = null; if(state.xp > r.xp0){ planMark(r.key); if(r.auto) adv = true; } }
   if(hr && !adv) overlay = {type:"hub", k:hr};
+  if(!overlay && !adv && celebDue()) overlay = celebOpen();
   render(); scrollTo(0,0);
   if(adv) setTimeout(planAdvance, 350);
 }
@@ -1614,7 +1655,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {progress:viewProgress, lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks, mysong:viewMySong};
+    const map = {progress:viewProgress, lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks, mysong:viewMySong, celeb:viewCeleb};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -6582,7 +6623,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v139";
+const APP_VER = "v140";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
