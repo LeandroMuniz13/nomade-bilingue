@@ -6346,7 +6346,7 @@ function sixWays(){
     {k:"books", ic:"📚", bg:"var(--tint-2)", t:"Livros", s:"Leitura · 3–5 min · toque nas palavras", act:() => { newsSub = books().length ? "books" : "stories"; go("news"); }},
     {k:"vocab", ic:"🗂️", bg:"var(--tint-3)", t:"Vocabulário", s:sst.due ? "Revise hoje: "+sst.due+" cartões" : "Palavras · 3 min · cartões e revisão", act:() => open({type:"hub", k:"vocab"})},
     {k:"tutor", ic:capi("hi", 46), bg:"var(--tint-4)", t:"Capi, tutor de IA", s:"Conversa · 5 min · escrita e leitura", act:() => go("chat")},
-    {k:"audio", ic:"🎧", bg:"var(--tint-2)", t:"Audiolivros e áudio", s:"Escuta · 3–10 min · vozes reais e livros", act:() => open({type:"hub", k:"audio"})},
+    {k:"audio", ic:"🎧", bg:"var(--tint-2)", t:"Áudio", s:"Escuta · música, podcasts e vozes reais", act:() => open({type:"hub", k:"audio"})},
     {k:"games", ic:"🎮", bg:"var(--tint-1)", t:"Jogos", s:"Palavras · 2–3 min · rápido, sem internet", act:() => open({type:"hub", k:"games"})}
   ];
 }
@@ -6364,11 +6364,10 @@ function hubItems(k){
     {ic:"🪜", t:"Prova de domínio", s:"Só conta como sabida com prova", act:startLadder},
     {ic:"🎯", t:"Palavras difíceis", s:"As que você mais erra", act:() => startPronFocus(false)},
     {ic:"🧠", t:"Complete a frase", s:myCount() ? "Frases das suas leituras" : "A palavra certa no contexto", act:startCloze}]};
-  if(k==="audio") return {t:"Audiolivros e áudio", s:"Ouça gente de verdade e textos longos. Comece devagar e aumente a velocidade.", items:[
-    {ic:"📖", t:"Audiolivros", s:"Livros e histórias com o texto acompanhando", act:() => open({type:"abooks"})},
-    ...(en ? [{ic:"🌍", t:"Vozes reais", s:"Entenda cada sotaque, com texto", act:() => startVozes(dailyAccent())}] : state.lang==="it" ? [{ic:"🌍", t:"Vozes reais", s:"Frases com voz humana, texto e ditado", act:() => startItVozes()}] : []),
+  if(k==="audio") return {t:"Áudio", s:"Música, podcasts e vozes reais. Comece devagar e aumente a velocidade.", items:[
     ...(pods().length ? [{ic:"🎙️", t:"Podcasts", s:"Episódios para o seu nível", act:() => { newsSub = "pods"; go("news"); }}] : []),
     {ic:"🎤", t:"Música e karaokê", s:"Cante com a letra", act:() => { newsSub = "music"; go("news"); }},
+    ...(en ? [{ic:"🌍", t:"Vozes reais", s:"Entenda cada sotaque, com texto", act:() => startVozes(dailyAccent())}] : state.lang==="it" ? [{ic:"🌍", t:"Vozes reais", s:"Frases com voz humana, texto e ditado", act:() => startItVozes()}] : []),
     {ic:"👂", t:"Ouça e escolha", s:"Frases rápidas, 1 minuto", act:startEar},
     {ic:"✍️", t:"Ditado", s:"Escreva o que ouviu", act:startDict}]};
   return {t:"Jogos", s:"Rápidos, para o metrô. Tudo funciona sem internet.", items:[
@@ -6752,7 +6751,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v147";
+const APP_VER = "v148";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
