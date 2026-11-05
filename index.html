@@ -3283,6 +3283,11 @@ function viewHome(){
   if(first) el.appendChild(hero); else el.appendChild(h(`<div><p class="hello">${greeting()} · ${chapLine}</p><h1 class="headline" style="margin-top:2px">O que fazer <span class="script" style="font-size:32px">hoje</span></h1></div>`));
   /* status compacto */
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
+  if(!first){
+    { const c = lgCfg(); let sub = "Ranking semanal de XP com seus amigos";
+      if(c && c.cache && c.cache.rows){ const rows = c.cache.rows.slice().sort((a,b) => b.week_xp - a.week_xp || b.total_xp - a.total_xp), i = rows.findIndex(r => r.me); if(i >= 0) sub = "Você está em " + (i+1) + "º na semana · " + rows[i].week_xp + " XP"; } else if(c) sub = "Ver o ranking da semana";
+      const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>Liga entre amigos</b><small>${esc(sub)}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); }
+  }
   if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); el.appendChild(learnCard()); el.appendChild(sixCard()); }
   else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); el.appendChild(sixCard()); }
   /* atalhos: no máximo 4, só depois da 1ª lição */
@@ -6840,7 +6845,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v151";
+const APP_VER = "v152";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
