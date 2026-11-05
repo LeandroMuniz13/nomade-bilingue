@@ -6845,7 +6845,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v152";
+const APP_VER = "v153";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -7752,9 +7752,9 @@ function viewLeague(){
   $("button", head).addEventListener("click", () => close()); el.appendChild(head);
   if(!c){
     el.appendChild(h(`<div><h1 class="headline">Estude e <span class="script" style="font-size:34px">compita</span></h1><p class="sub" style="margin-top:6px">Ranking semanal de XP entre quem usa o Nômade. Só o seu apelido e o seu XP saem do aparelho.</p></div>`));
-    const f = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><label class="eyebrow" for="lgN">Seu apelido</label><input id="lgN" maxlength="16" autocomplete="off" placeholder="Ex.: Leandrão" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><label class="eyebrow" for="lgG">Código do grupo (opcional)</label><input id="lgG" maxlength="20" autocomplete="off" autocapitalize="off" placeholder="Combine um código com os amigos" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><p class="sub" style="font-size:var(--fs-cap)">Quem usa o mesmo código aparece no mesmo ranking. Sem código, você entra no ranking geral.</p><p id="lgM" class="sub" style="color:var(--bad);min-height:1.2em"></p><button class="btn btn-dark btn-block" id="lgGo">Entrar na liga</button></section>`);
+    const f = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><label class="eyebrow" for="lgN">Seu apelido</label><input id="lgN" maxlength="16" autocomplete="off" placeholder="Ex.: Leandrão" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><p class="sub" style="font-size:var(--fs-cap)">Todo mundo que usa o link entra no mesmo ranking. Use o nome pelo qual os amigos te conhecem.</p><p id="lgM" class="sub" style="color:var(--bad);min-height:1.2em"></p><button class="btn btn-dark btn-block" id="lgGo">Entrar na liga</button></section>`);
     $("#lgGo", f).addEventListener("click", async () => {
-      const nick = $("#lgN", f).value.trim(), grp = $("#lgG", f).value.trim(), m = $("#lgM", f);
+      const nick = $("#lgN", f).value.trim(), grp = "", m = $("#lgM", f);
       if(nick.length < 2){ m.textContent = LG_MSG.apelido_invalido; return; }
       const secret = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,"0")).join("");
       m.style.color = "var(--ink-3)"; m.textContent = "Entrando…";
@@ -7766,7 +7766,7 @@ function viewLeague(){
     });
     el.appendChild(f); return el;
   }
-  const grpTxt = c.grp ? "Grupo: " + c.grp : "Ranking geral";
+  const grpTxt = "Ranking de todos os amigos";
   el.appendChild(h(`<div><h1 class="headline">Liga <span class="script" style="font-size:34px">${esc(c.nick)}</span></h1><p class="sub" style="margin-top:4px">${esc(grpTxt)}</p></div>`));
   const tabs = h(`<div class="vz-chips"><button class="filter ${o.tabw==="week"?"on":""}" data-w="week">Esta semana</button><button class="filter ${o.tabw==="total"?"on":""}" data-w="total">Total</button></div>`);
   tabs.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", () => { o.tabw = b.dataset.w; render(); })); el.appendChild(tabs);
@@ -7780,11 +7780,11 @@ function viewLeague(){
   };
   const cache = (c.cache || {})[o.tabw];
   if(c.cache && c.cache.rows) draw(c.cache.rows, "Último ranking guardado.");
-  lgSync().then(() => lgCall("nb_board", {p_nick:c.nick, p_secret:c.secret, p_group:c.grp || "", p_week:lgMonday()})).then(r => {
+  lgSync().then(() => lgCall("nb_board", {p_nick:c.nick, p_secret:c.secret, p_group:"", p_week:lgMonday()})).then(r => {
     if(!r || !r.ok) throw new Error(r && r.err || "erro"); c.cache = {rows:r.rows}; persist(); if(overlay === o) draw(r.rows, "Atualizado agora.");
   }).catch(e => { if(overlay === o) $("#lgS", box).textContent = lgErr(e); if(overlay === o && !(c.cache && c.cache.rows)) $("#lgR", box).innerHTML = ""; });
   const act = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-line btn-block" id="lgSh">Convidar amigos</button><button class="btn btn-line btn-block" id="lgOut">Sair da liga neste aparelho</button></section>`);
-  $("#lgSh", act).addEventListener("click", () => { const t = "Venha competir comigo no Nômade Bilíngue: " + location.origin + location.pathname + (c.grp ? "\nCódigo do grupo: " + c.grp : ""); if(navigator.share) navigator.share({text:t}).catch(() => {}); else { try{ navigator.clipboard.writeText(t); toast("Convite copiado"); }catch(e){} } });
+  $("#lgSh", act).addEventListener("click", () => { const t = "Venha competir comigo no Nômade Bilíngue: " + location.origin + location.pathname; if(navigator.share) navigator.share({text:t}).catch(() => {}); else { try{ navigator.clipboard.writeText(t); toast("Convite copiado"); }catch(e){} } });
   $("#lgOut", act).addEventListener("click", () => { if(confirm("Sair da liga neste aparelho? Seu apelido continua reservado para quem tiver o código secreto deste aparelho.")){ state.league = null; persist(); render(); } });
   el.appendChild(act);
   return el;
