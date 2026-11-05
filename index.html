@@ -4,8 +4,8 @@
 <meta name="theme-color" content="#D9DDF7">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Nômade">
-<title>Nômade Bilíngue</title>
+<meta name="apple-mobile-web-app-title" content="CapiNomade">
+<title>CapiNomade</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="preconnect" href="https://generativelanguage.googleapis.com" crossorigin>
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
@@ -15,7 +15,7 @@
 
 
 
-<meta name="application-name" content="Nômade Bilíngue">
+<meta name="application-name" content="CapiNomade">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -1845,7 +1845,7 @@ function viewOnboard(){
   ];
   const el = h(`<div class="screen" style="padding-top:12px">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <span class="lang-btn" style="cursor:default"><span class="flag" style="background:var(--night);color:var(--on-night);font-weight:800;font-size:var(--fs-cap)">N</span>Nômade <span class="script" style="font-size:17px;font-weight:400">bilíngue</span></span>
+      <span class="lang-btn" style="cursor:default"><span class="flag" style="background:var(--night);color:var(--on-night);font-weight:800;font-size:var(--fs-cap)">C</span>Capi<span class="script" style="font-size:17px;font-weight:400">Nomade</span></span>
     </div>
     <section>
       <p class="hello">${greeting()} · <span class="script" style="font-size:16px">Hi! · Ciao!</span></p>
@@ -3186,7 +3186,7 @@ function viewFilm(){
   const hd = h(`<div class="run-head"><button class="iconbtn" aria-label="Fechar">✕</button><div class="news-meta" style="flex:1">Filmes e séries · ${esc(lg.name)}</div></div>`); $("button", hd).addEventListener("click", quit); el.appendChild(hd);
   el.appendChild(h(`<div><h1 class="headline">Filmes e <span class="script" style="font-size:34px">séries</span></h1><p class="sub" style="margin-top:6px">Treine escuta e shadowing com filmes, séries e podcasts, talk shows e stand-up (Joe Rogan, Jimmy Fallon, Trevor Noah e outros) no player oficial do YouTube: você escolhe o trecho, repete em loop e diminui a velocidade.</p></div>`));
   if(window.claude){
-    el.appendChild(h(`<section class="card"><div class="eyebrow">Disponível no site do Nômade</div><p style="margin-top:6px">Dentro do Claude o vídeo do YouTube é bloqueado. Esta aba funciona na versão em site (a que você instala na tela inicial pelo navegador). Aqui você tem as cenas de cinema com personagens animados.</p></section>`));
+    el.appendChild(h(`<section class="card"><div class="eyebrow">Disponível no site do CapiNomade</div><p style="margin-top:6px">Dentro do Claude o vídeo do YouTube é bloqueado. Esta aba funciona na versão em site (a que você instala na tela inicial pelo navegador). Aqui você tem as cenas de cinema com personagens animados.</p></section>`));
     const b = h(`<button class="btn btn-dark btn-block">Ir para as cenas de cinema <span class="arr">→</span></button>`); b.addEventListener("click", () => startCinema()); el.appendChild(b); return el;
   }
   const pk = FILM_PICKS.filter(x => x.l === state.lang);
@@ -3285,7 +3285,7 @@ function viewHome(){
   /* status compacto */
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
   if(!first){
-    { const c = lgCfg(); const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>Liga entre amigos</b><small id="lgHS">${esc(lgHomeSub(c))}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); setTimeout(lgUnread, 400); }
+    { const c = lgCfg(); const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>ChampionsNomade</b><small id="lgHS">${esc(lgHomeSub(c))}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); setTimeout(lgUnread, 400); }
   }
   if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); el.appendChild(learnCard()); el.appendChild(sixCard()); }
   else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); el.appendChild(sixCard()); }
@@ -3718,7 +3718,7 @@ async function intvTurn(o){
     const lg = LANGS[state.lang], nAns = o.msgs.filter(m => m.r==="me").length;
     const us = units().map(u => `${u.id}|${u.title}|${u.cat}|${u.level}`).join("\n");
     const convo = o.msgs.map(m => (m.r==="ai" ? "IA: " : "Aluno: ")+m.t).join("\n");
-    const prompt = `Você é o consultor de estudo do app Nômade Bilíngue. Entreviste um brasileiro que vai estudar ${lg.name} para personalizar o estudo dele. Faça UMA pergunta curta por vez, em português do Brasil, simpática, sem repetir o que já foi respondido. Cubra ao longo da conversa: objetivo e prazo (viagem? trabalho? prova?), situações reais de uso, assuntos que ele curte, o que sente mais difícil (ouvir, falar, pronúncia, vocabulário, gramática), tempo e rotina, jeito preferido de estudar. Se uma resposta for vaga, aprofunde. No máximo 6 perguntas; já foram respondidas ${nAns}.
+    const prompt = `Você é o consultor de estudo do app CapiNomade. Entreviste um brasileiro que vai estudar ${lg.name} para personalizar o estudo dele. Faça UMA pergunta curta por vez, em português do Brasil, simpática, sem repetir o que já foi respondido. Cubra ao longo da conversa: objetivo e prazo (viagem? trabalho? prova?), situações reais de uso, assuntos que ele curte, o que sente mais difícil (ouvir, falar, pronúncia, vocabulário, gramática), tempo e rotina, jeito preferido de estudar. Se uma resposta for vaga, aprofunde. No máximo 6 perguntas; já foram respondidas ${nAns}.
 Conversa até agora:
 ${convo || "(início)"}
 Aulas disponíveis (id|título|categoria|nível):
@@ -4411,7 +4411,7 @@ function viewSrs(){
   }
 
   // home
-  el.appendChild(head("Anki do Nômade · "+LANGS[state.lang].name));
+  el.appendChild(head("Anki do CapiNomade · "+LANGS[state.lang].name));
   el.appendChild(h(`<div><h1 class="headline">Revisão <span class="script" style="font-size:34px">espaçada</span></h1><p class="sub" style="margin-top:6px">Você vê cada cartão no momento em que estava para esquecer. Acertou fácil, ele volta daqui a dias ou meses. Errou, volta logo.</p></div>`));
   const total = st.due + st.newToday;
   el.appendChild(h(`<div class="metrics card" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="metric"><b style="color:var(--accent)">${st.newToday}</b><span>novos hoje</span></div><div class="metric"><b style="color:var(--ok)">${st.due}</b><span>a revisar</span></div><div class="metric"><b>${st.total}</b><span>no baralho</span></div></div>`));
@@ -5821,7 +5821,7 @@ async function mpStep(d){
 function mpMeta(){
   if(!("mediaSession" in navigator) || !MPS.sg) return;
   try{
-    navigator.mediaSession.metadata = new MediaMetadata({title:MPS.sg.title, artist:MPS.sg.by, album:"Nômade Bilíngue", artwork:[{src:new URL(MPS.sg.cover, location.href).href, sizes:"720x720", type:"image/webp"}]});
+    navigator.mediaSession.metadata = new MediaMetadata({title:MPS.sg.title, artist:MPS.sg.by, album:"CapiNomade", artwork:[{src:new URL(MPS.sg.cover, location.href).href, sizes:"720x720", type:"image/webp"}]});
     navigator.mediaSession.setActionHandler("play", () => { if(vozAud) vozAud.play().catch(() => {}); });
     navigator.mediaSession.setActionHandler("pause", () => { if(vozAud) vozAud.pause(); });
     navigator.mediaSession.setActionHandler("previoustrack", () => mpStep(-1));
@@ -6205,7 +6205,7 @@ function viewPodp(){
   const done = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div class="eyebrow">Depois de ouvir</div><p class="sub" style="font-size:var(--fs-sub)">Quanto você ouviu? Conta para a missão e para o seu XP.</p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[5,10,20,30].map(m => `<button class="btn btn-line" data-m="${m}">${m} min</button>`).join("")}</div></section>`);
   done.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { const m = +b.dataset.m; const lg = L(); (lg.aud = lg.aud || []).push({id:p.id, d:today(), m}); if(lg.aud.length>200) lg.aud.splice(0,lg.aud.length-200); addXp(Math.max(3, Math.round(m/2))); persist(); toast("Registrado: "+m+" min de escuta. +"+Math.max(3, Math.round(m/2))+" XP"); close(); }));
   el.appendChild(done);
-  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">Áudio direto do feed oficial do podcast. O Nômade registra o seu tempo de escuta.</p>`));
+  el.appendChild(h(`<p class="sub" style="font-size:var(--fs-cap)">Áudio direto do feed oficial do podcast. O CapiNomade registra o seu tempo de escuta.</p>`));
   return el;
 }
 function viewPodsTab(el){
@@ -6844,7 +6844,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v154";
+const APP_VER = "v155";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -7721,7 +7721,8 @@ function viewArticle(){
 /* =========================================================
    VOCÊ (progresso e ajustes)
    ========================================================= */
-/* ---- Liga entre amigos (Supabase gratuito): só apelido e XP saem do aparelho ---- */
+const LG_TROPHY = `<svg viewBox="0 0 120 120" width="104" height="104" role="img" aria-label="Troféu" style="display:block"><defs><linearGradient id="lgGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D26B"/><stop offset=".55" stop-color="#E0A526"/><stop offset="1" stop-color="#B97F12"/></linearGradient><linearGradient id="lgGold2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C98F1B"/><stop offset=".5" stop-color="#F3CB5E"/><stop offset="1" stop-color="#C98F1B"/></linearGradient></defs><ellipse cx="60" cy="109" rx="30" ry="5" fill="#1d2550" opacity=".14"/><path d="M28 30H14c0 20 8 33 24 37" fill="none" stroke="url(#lgGold)" stroke-width="7" stroke-linecap="round"/><path d="M92 30h14c0 20-8 33-24 37" fill="none" stroke="url(#lgGold)" stroke-width="7" stroke-linecap="round"/><path d="M28 14h64v22c0 24-14 40-32 40S28 60 28 36Z" fill="url(#lgGold)"/><path d="M36 20h10v20c0 14 5 26 14 31-17-2-24-17-24-35Z" fill="#fff" opacity=".28"/><path d="m60 26 4.6 9.4 10.4 1.5-7.5 7.3 1.8 10.3L60 49.6l-9.3 4.9 1.8-10.3-7.5-7.3 10.4-1.5Z" fill="#fff6d6"/><rect x="54" y="76" width="12" height="14" fill="url(#lgGold2)"/><rect x="40" y="90" width="40" height="9" rx="3" fill="#232B5A"/><rect x="34" y="98" width="52" height="9" rx="3" fill="#1d2550"/><rect x="46" y="93" width="28" height="2.4" rx="1.2" fill="#E0A526"/></svg>`;
+/* ---- ChampionsNomade, a liga entre amigos (Supabase gratuito): só apelido e XP saem do aparelho ---- */
 const LG_URL = "https://dxbvzzamznqxjudwicwt.supabase.co", LG_KEY = "sb_publishable_J-s4fHvy8GBQWE8xqrH1-A_ZllgpAPw";
 const lgCfg = () => state.league || null;
 async function lgCall(fn, body){
@@ -7766,11 +7767,11 @@ const LG_MSG = {apelido_em_uso:"Esse apelido já é de outra pessoa. Escolha out
 function startLeague(){ open({type:"league", tabw:"week"}); }
 function viewLeague(){
   const o = overlay, el = h(`<div class="screen"></div>`), c = lgCfg();
-  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1;font-weight:700">Liga entre amigos</div></div>`);
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1;font-weight:700">ChampionsNomade</div></div>`);
   $("button", head).addEventListener("click", () => close()); el.appendChild(head);
   if(!c){
-    el.appendChild(h(`<div><h1 class="headline">Estude e <span class="script" style="font-size:34px">compita</span></h1><p class="sub" style="margin-top:6px">Ranking semanal de XP entre quem usa o Nômade. Só o seu apelido e o seu XP saem do aparelho.</p></div>`));
-    const f = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><label class="eyebrow" for="lgN">Seu apelido</label><input id="lgN" maxlength="16" autocomplete="off" placeholder="Ex.: Leandrão" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><p class="sub" style="font-size:var(--fs-cap)">Todo mundo que usa o link entra no mesmo ranking. Use o nome pelo qual os amigos te conhecem.</p><p id="lgM" class="sub" style="color:var(--bad);min-height:1.2em"></p><button class="btn btn-dark btn-block" id="lgGo">Entrar na liga</button></section>`);
+    el.appendChild(h(`<div style="text-align:center"><div style="display:grid;place-items:center;margin-bottom:2px">${LG_TROPHY}</div><h1 class="headline">Champions<span class="script" style="font-size:36px">Nomade</span></h1><p class="sub" style="margin-top:6px">Ranking semanal e chat entre quem usa o CapiNomade. Seus amigos veem seu apelido, XP, nível, conquistas e tempo de uso.</p></div>`));
+    const f = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><label class="eyebrow" for="lgN">Seu apelido</label><input id="lgN" maxlength="16" autocomplete="off" placeholder="Ex.: Leandrão" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><p class="sub" style="font-size:var(--fs-cap)">Todo mundo que usa o link entra no mesmo ranking. Use o nome pelo qual os amigos te conhecem.</p><p id="lgM" class="sub" style="color:var(--bad);min-height:1.2em"></p><button class="btn btn-dark btn-block" id="lgGo">Entrar no ChampionsNomade</button></section>`);
     $("#lgGo", f).addEventListener("click", async () => {
       const nick = $("#lgN", f).value.trim(), grp = "", m = $("#lgM", f);
       if(nick.length < 2){ m.textContent = LG_MSG.apelido_invalido; return; }
@@ -7779,17 +7780,17 @@ function viewLeague(){
       try{
         const r = await lgCall("nb_join", {p_nick:nick, p_secret:secret, p_lang:state.lang || "en", p_grp:grp});
         if(!r.ok){ m.style.color = "var(--bad)"; m.textContent = LG_MSG[r.err] || "Não deu certo."; return; }
-        state.league = {nick, secret, grp}; persist(); await lgSync(); toast("Você entrou na liga"); render();
+        state.league = {nick, secret, grp}; persist(); await lgSync(); toast("Você entrou no ChampionsNomade"); render();
       }catch(e){ m.style.color = "var(--bad)"; m.textContent = lgErr(e); }
     });
     el.appendChild(f); return el;
   }
-  el.appendChild(h(`<div><h1 class="headline">Liga <span class="script" style="font-size:34px">${esc(c.nick)}</span></h1><p class="sub" style="margin-top:4px">Ranking e conversa de todos os amigos</p></div>`));
+  el.appendChild(h(`<div style="text-align:center"><div style="display:grid;place-items:center;margin-bottom:2px">${LG_TROPHY}</div><h1 class="headline">Champions<span class="script" style="font-size:36px">Nomade</span></h1><p class="sub" style="margin-top:4px">Você entrou como <b>${esc(c.nick)}</b> · ranking e conversa de todos os amigos</p></div>`));
   const tabs = h(`<div class="vz-chips"><button class="filter ${o.tabw==="week"?"on":""}" data-w="week">Esta semana</button><button class="filter ${o.tabw==="total"?"on":""}" data-w="total">Total</button><button class="filter ${o.tabw==="chat"?"on":""}" data-w="chat">Chat</button></div>`);
   tabs.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", () => { o.tabw = b.dataset.w; render(); })); el.appendChild(tabs);
-  const act = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-line btn-block" id="lgSh">Convidar amigos</button><button class="btn btn-line btn-block" id="lgOut">Sair da liga neste aparelho</button></section>`);
-  $("#lgSh", act).addEventListener("click", () => { const t = "Venha competir comigo no Nômade Bilíngue: " + location.origin + location.pathname; if(navigator.share) navigator.share({text:t}).catch(() => {}); else { try{ navigator.clipboard.writeText(t); toast("Convite copiado"); }catch(e){} } });
-  $("#lgOut", act).addEventListener("click", () => { if(confirm("Sair da liga neste aparelho? Seu apelido continua reservado para quem tiver o código secreto deste aparelho.")){ state.league = null; persist(); render(); } });
+  const act = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-line btn-block" id="lgSh">Convidar amigos</button><button class="btn btn-line btn-block" id="lgOut">Sair do ChampionsNomade neste aparelho</button></section>`);
+  $("#lgSh", act).addEventListener("click", () => { const t = "Venha competir comigo no CapiNomade: " + location.origin + location.pathname; if(navigator.share) navigator.share({text:t}).catch(() => {}); else { try{ navigator.clipboard.writeText(t); toast("Convite copiado"); }catch(e){} } });
+  $("#lgOut", act).addEventListener("click", () => { if(confirm("Sair do ChampionsNomade neste aparelho? Seu apelido continua reservado para quem tiver o código secreto deste aparelho.")){ state.league = null; persist(); render(); } });
   if(o.tabw === "chat"){ el.appendChild(lgChatBox(o, c)); el.appendChild(act); return el; }
   const box = h(`<section class="card"><div class="eyebrow">${o.tabw==="week" ? "XP da semana (segunda a domingo). Toque num amigo para ver os detalhes" : "XP total. Toque num amigo para ver os detalhes"}</div><div id="lgR" style="margin-top:6px"><p class="sub">Carregando o ranking…</p></div><p id="lgS" class="sub" style="font-size:var(--fs-cap);margin-top:8px"></p></section>`);
   el.appendChild(box);
@@ -7915,7 +7916,7 @@ function viewYou(){
     </div><p class="sub" style="margin-top:10px;font-size:var(--fs-cap)">❄️ Congelamento de sequência: <b>${frzSync().n}</b> disponível por semana. Se você pular só um dia, a sequência é mantida.</p></section>
   </div>`);
   el.appendChild(profileCard());
-  { const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>Liga entre amigos</b><small>${lgCfg() ? "Ver o ranking da semana" : "Ranking semanal de XP com seus amigos"}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); }
+  { const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>ChampionsNomade</b><small>${lgCfg() ? "Ver o ranking da semana" : "Ranking semanal de XP com seus amigos"}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); }
   el.appendChild(errCard());
   el.appendChild(weekReportCard());
   el.appendChild(evolutionCard(true));

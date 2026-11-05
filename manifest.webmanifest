@@ -1,6 +1,6 @@
 {
- "name": "Nômade Bilíngue",
- "short_name": "Nômade",
+ "name": "CapiNomade",
+ "short_name": "CapiNomade",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
