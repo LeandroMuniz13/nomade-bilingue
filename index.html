@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com https://upload.wikimedia.org; media-src 'self' blob: data: https: https://accent.gmu.edu https://archive.org https://*.archive.org https://tatoeba.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://podcasts.files.bbci.co.uk https://feeds.megaphone.fm https://esl.culips.com https://rss.buzzsprout.com https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://*.workers.dev https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com; base-uri 'self'; object-src 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://www.gutenberg.org https://i.ytimg.com https://upload.wikimedia.org; media-src 'self' blob: data: https: https://accent.gmu.edu https://archive.org https://*.archive.org https://tatoeba.org; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' blob: https://podcasts.files.bbci.co.uk https://feeds.megaphone.fm https://esl.culips.com https://rss.buzzsprout.com https://oai.endpoints.kepler.ai.cloud.ovh.net https://text.pollinations.ai https://generativelanguage.googleapis.com https://*.workers.dev https://api.groq.com https://openrouter.ai https://api.anthropic.com https://*.stt.speech.microsoft.com https://dxbvzzamznqxjudwicwt.supabase.co; base-uri 'self'; object-src 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#D9DDF7">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
@@ -1120,7 +1120,7 @@ function addXp(n){
   }
   state.best = Math.max(state.best||0, state.streak||0);
   persist();
-  xpPop(n); achCheck();
+  xpPop(n); achCheck(); try{ lgSoon(); }catch(e){}
   const lv1 = XP_LV(state.xp); if(lv1 > lv0) setTimeout(() => { try{ sfx.right(); }catch(e){} toast("⭐ Nível "+lv1+": "+lvName(lv1)+"!"); }, 900);
 }
 function userLevel(){ return (L().placement && L().placement.level) || "A1"; }
@@ -1706,7 +1706,7 @@ function render(){
   renderTop();
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
-    const map = {progress:viewProgress, lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks, mysong:viewMySong, celeb:viewCeleb};
+    const map = {league:viewLeague, progress:viewProgress, lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks, mysong:viewMySong, celeb:viewCeleb};
     view.appendChild(map[overlay.type]()); a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
@@ -6840,7 +6840,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v150";
+const APP_VER = "v151";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -7717,6 +7717,73 @@ function viewArticle(){
 /* =========================================================
    VOCÊ (progresso e ajustes)
    ========================================================= */
+/* ---- Liga entre amigos (Supabase gratuito): só apelido e XP saem do aparelho ---- */
+const LG_URL = "https://dxbvzzamznqxjudwicwt.supabase.co", LG_KEY = "sb_publishable_J-s4fHvy8GBQWE8xqrH1-A_ZllgpAPw";
+const lgCfg = () => state.league || null;
+async function lgCall(fn, body){
+  const r = await fetch(LG_URL + "/rest/v1/rpc/" + fn, {method:"POST", headers:{"apikey":LG_KEY, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+  if(r.status === 404) throw new Error("sem_banco");
+  if(!r.ok) throw new Error("http " + r.status);
+  return r.json();
+}
+function lgDays(){
+  const out = {}, d = new Date();
+  for(let i = 0; i < 9; i++){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() - i), k = x.getFullYear() + "-" + String(x.getMonth()+1).padStart(2,"0") + "-" + String(x.getDate()).padStart(2,"0"); if((state.daily||{})[k] > 0) out[k] = state.daily[k]; }
+  return out;
+}
+function lgMonday(){ const d = new Date(), w = (d.getDay() + 6) % 7, x = new Date(d.getFullYear(), d.getMonth(), d.getDate() - w); return x.getFullYear() + "-" + String(x.getMonth()+1).padStart(2,"0") + "-" + String(x.getDate()).padStart(2,"0"); }
+function lgSync(){
+  const c = lgCfg(); if(!c || !navigator.onLine) return Promise.resolve(false);
+  return lgCall("nb_report", {p_nick:c.nick, p_secret:c.secret, p_days:lgDays(), p_streak:state.streak || 0}).then(r => !!(r && r.ok)).catch(() => false);
+}
+let lgTimer = 0;
+function lgSoon(){ if(!lgCfg()) return; clearTimeout(lgTimer); lgTimer = setTimeout(lgSync, 6000); }
+const lgErr = e => { const m = String((e && e.message) || e); return m === "sem_banco" ? "O banco da liga ainda não foi configurado (falta rodar o script no Supabase)." : (!navigator.onLine || /fetch|network|Failed/i.test(m)) ? "Sem internet agora. Mostro o último ranking guardado." : "Não consegui falar com a liga agora. Tente de novo em instantes."; };
+const LG_MSG = {apelido_em_uso:"Esse apelido já é de outra pessoa. Escolha outro.", apelido_invalido:"Use de 2 a 16 letras ou números.", liga_cheia:"A liga está cheia.", nao_autorizado:"Este aparelho não é o dono desse apelido.", segredo_invalido:"Erro interno. Tente de novo."};
+function startLeague(){ open({type:"league", tabw:"week"}); }
+function viewLeague(){
+  const o = overlay, el = h(`<div class="screen"></div>`), c = lgCfg();
+  const head = h(`<div class="run-head"><button class="iconbtn" aria-label="Voltar">‹</button><div class="news-meta" style="flex:1;font-weight:700">Liga entre amigos</div></div>`);
+  $("button", head).addEventListener("click", () => close()); el.appendChild(head);
+  if(!c){
+    el.appendChild(h(`<div><h1 class="headline">Estude e <span class="script" style="font-size:34px">compita</span></h1><p class="sub" style="margin-top:6px">Ranking semanal de XP entre quem usa o Nômade. Só o seu apelido e o seu XP saem do aparelho.</p></div>`));
+    const f = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><label class="eyebrow" for="lgN">Seu apelido</label><input id="lgN" maxlength="16" autocomplete="off" placeholder="Ex.: Leandrão" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><label class="eyebrow" for="lgG">Código do grupo (opcional)</label><input id="lgG" maxlength="20" autocomplete="off" autocapitalize="off" placeholder="Combine um código com os amigos" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font:inherit"><p class="sub" style="font-size:var(--fs-cap)">Quem usa o mesmo código aparece no mesmo ranking. Sem código, você entra no ranking geral.</p><p id="lgM" class="sub" style="color:var(--bad);min-height:1.2em"></p><button class="btn btn-dark btn-block" id="lgGo">Entrar na liga</button></section>`);
+    $("#lgGo", f).addEventListener("click", async () => {
+      const nick = $("#lgN", f).value.trim(), grp = $("#lgG", f).value.trim(), m = $("#lgM", f);
+      if(nick.length < 2){ m.textContent = LG_MSG.apelido_invalido; return; }
+      const secret = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,"0")).join("");
+      m.style.color = "var(--ink-3)"; m.textContent = "Entrando…";
+      try{
+        const r = await lgCall("nb_join", {p_nick:nick, p_secret:secret, p_lang:state.lang || "en", p_grp:grp});
+        if(!r.ok){ m.style.color = "var(--bad)"; m.textContent = LG_MSG[r.err] || "Não deu certo."; return; }
+        state.league = {nick, secret, grp}; persist(); await lgSync(); toast("Você entrou na liga"); render();
+      }catch(e){ m.style.color = "var(--bad)"; m.textContent = lgErr(e); }
+    });
+    el.appendChild(f); return el;
+  }
+  const grpTxt = c.grp ? "Grupo: " + c.grp : "Ranking geral";
+  el.appendChild(h(`<div><h1 class="headline">Liga <span class="script" style="font-size:34px">${esc(c.nick)}</span></h1><p class="sub" style="margin-top:4px">${esc(grpTxt)}</p></div>`));
+  const tabs = h(`<div class="vz-chips"><button class="filter ${o.tabw==="week"?"on":""}" data-w="week">Esta semana</button><button class="filter ${o.tabw==="total"?"on":""}" data-w="total">Total</button></div>`);
+  tabs.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", () => { o.tabw = b.dataset.w; render(); })); el.appendChild(tabs);
+  const box = h(`<section class="card"><div class="eyebrow">${o.tabw==="week" ? "XP da semana (segunda a domingo)" : "XP total"}</div><div id="lgR" style="margin-top:6px"><p class="sub">Carregando o ranking…</p></div><p id="lgS" class="sub" style="font-size:var(--fs-cap);margin-top:8px"></p></section>`);
+  el.appendChild(box);
+  const draw = (rows, note) => {
+    const key = o.tabw === "week" ? "week_xp" : "total_xp";
+    const list = rows.slice().sort((a, b) => b[key] - a[key] || b.total_xp - a.total_xp);
+    $("#lgR", box).innerHTML = list.length ? list.map((r, i) => `<div class="score-row" style="${r.me ? "background:var(--gold-soft,rgba(212,160,23,.14));border-radius:12px;padding-inline:10px;" : ""}"><span><b>${i+1}º</b> &nbsp;${esc(r.nick)}${r.me ? " (você)" : ""}<small style="display:block;color:var(--ink-3)">${r.streak || 0} dias seguidos · ${esc(r.lang === "it" ? "Italiano" : "Inglês")}</small></span><span><b>${r[key]}</b> XP</span></div>`).join("") : `<p class="sub">Ninguém no ranking ainda.</p>`;
+    $("#lgS", box).textContent = note || "";
+  };
+  const cache = (c.cache || {})[o.tabw];
+  if(c.cache && c.cache.rows) draw(c.cache.rows, "Último ranking guardado.");
+  lgSync().then(() => lgCall("nb_board", {p_nick:c.nick, p_secret:c.secret, p_group:c.grp || "", p_week:lgMonday()})).then(r => {
+    if(!r || !r.ok) throw new Error(r && r.err || "erro"); c.cache = {rows:r.rows}; persist(); if(overlay === o) draw(r.rows, "Atualizado agora.");
+  }).catch(e => { if(overlay === o) $("#lgS", box).textContent = lgErr(e); if(overlay === o && !(c.cache && c.cache.rows)) $("#lgR", box).innerHTML = ""; });
+  const act = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-line btn-block" id="lgSh">Convidar amigos</button><button class="btn btn-line btn-block" id="lgOut">Sair da liga neste aparelho</button></section>`);
+  $("#lgSh", act).addEventListener("click", () => { const t = "Venha competir comigo no Nômade Bilíngue: " + location.origin + location.pathname + (c.grp ? "\nCódigo do grupo: " + c.grp : ""); if(navigator.share) navigator.share({text:t}).catch(() => {}); else { try{ navigator.clipboard.writeText(t); toast("Convite copiado"); }catch(e){} } });
+  $("#lgOut", act).addEventListener("click", () => { if(confirm("Sair da liga neste aparelho? Seu apelido continua reservado para quem tiver o código secreto deste aparelho.")){ state.league = null; persist(); render(); } });
+  el.appendChild(act);
+  return el;
+}
 function viewYou(){
   const voc = allVocab(), known = voc.filter(v=>L().known[v.id]).length, done = Object.keys(L().done).length;
   const el = h(`<div class="screen">
@@ -7729,6 +7796,7 @@ function viewYou(){
     </div><p class="sub" style="margin-top:10px;font-size:var(--fs-cap)">❄️ Congelamento de sequência: <b>${frzSync().n}</b> disponível por semana. Se você pular só um dia, a sequência é mantida.</p></section>
   </div>`);
   el.appendChild(profileCard());
+  { const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>Liga entre amigos</b><small>${lgCfg() ? "Ver o ranking da semana" : "Ranking semanal de XP com seus amigos"}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); }
   el.appendChild(errCard());
   el.appendChild(weekReportCard());
   el.appendChild(evolutionCard(true));
