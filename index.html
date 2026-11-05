@@ -1119,6 +1119,7 @@ function addXp(n){
     state.lastStudyDate = t;
   }
   state.best = Math.max(state.best||0, state.streak||0);
+  state.acts = (state.acts||0) + 1;
   persist();
   xpPop(n); achCheck(); try{ lgSoon(); }catch(e){}
   const lv1 = XP_LV(state.xp); if(lv1 > lv0) setTimeout(() => { try{ sfx.right(); }catch(e){} toast("⭐ Nível "+lv1+": "+lvName(lv1)+"!"); }, 900);
@@ -3284,9 +3285,7 @@ function viewHome(){
   /* status compacto */
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
   if(!first){
-    { const c = lgCfg(); let sub = "Ranking semanal de XP com seus amigos";
-      if(c && c.cache && c.cache.rows){ const rows = c.cache.rows.slice().sort((a,b) => b.week_xp - a.week_xp || b.total_xp - a.total_xp), i = rows.findIndex(r => r.me); if(i >= 0) sub = "Você está em " + (i+1) + "º na semana · " + rows[i].week_xp + " XP"; } else if(c) sub = "Ver o ranking da semana";
-      const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>Liga entre amigos</b><small>${esc(sub)}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); }
+    { const c = lgCfg(); const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>Liga entre amigos</b><small id="lgHS">${esc(lgHomeSub(c))}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); setTimeout(lgUnread, 400); }
   }
   if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); el.appendChild(learnCard()); el.appendChild(sixCard()); }
   else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); el.appendChild(sixCard()); }
@@ -6845,7 +6844,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v153";
+const APP_VER = "v154";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -7739,8 +7738,27 @@ function lgDays(){
 function lgMonday(){ const d = new Date(), w = (d.getDay() + 6) % 7, x = new Date(d.getFullYear(), d.getMonth(), d.getDate() - w); return x.getFullYear() + "-" + String(x.getMonth()+1).padStart(2,"0") + "-" + String(x.getDate()).padStart(2,"0"); }
 function lgSync(){
   const c = lgCfg(); if(!c || !navigator.onLine) return Promise.resolve(false);
-  return lgCall("nb_report", {p_nick:c.nick, p_secret:c.secret, p_days:lgDays(), p_streak:state.streak || 0}).then(r => !!(r && r.ok)).catch(() => false);
+  return lgCall("nb_report", {p_nick:c.nick, p_secret:c.secret, p_days:lgDays(), p_streak:state.streak || 0, p_stats:lgStats()}).then(r => !!(r && r.ok)).catch(() => false);
 }
+function lgStats(){
+  const lgs = Object.values(state.langs||{}), les = lgs.reduce((a,l) => a + Object.keys(l.done||{}).length, 0);
+  const days = Object.keys(state.daily||{}).filter(d => state.daily[d] > 0).length; let ach = 0;
+  try{ ach = achList().filter(a => a.ok).length; }catch(e){}
+  return {lv:XP_LV(state.xp||0), xp:state.xp||0, ach, les, act:state.acts||0, days, min:Math.round((state.usedSec||0)/60), best:Math.max(state.best||0, state.streak||0), cefr:userLevel()};
+}
+(function(){
+  let last = Date.now(), n = 0;
+  ["pointerdown","keydown","touchstart","scroll"].forEach(e => addEventListener(e, () => { last = Date.now(); }, {passive:true, capture:true}));
+  setInterval(() => {
+    try{
+      if(document.hidden) return;
+      let playing = false; try{ playing = !!(window.vozAud && !vozAud.paused); }catch(e){}
+      if(Date.now() - last > 90000 && !playing) return;
+      state.usedSec = (state.usedSec||0) + 10; if(++n % 6 === 0) persist();
+    }catch(e){}
+  }, 10000);
+})();
+const lgFmtMin = m => m >= 60 ? Math.floor(m/60) + "h " + String(m % 60).padStart(2,"0") + "min" : m + " min";
 let lgTimer = 0;
 function lgSoon(){ if(!lgCfg()) return; clearTimeout(lgTimer); lgTimer = setTimeout(lgSync, 6000); }
 const lgErr = e => { const m = String((e && e.message) || e); return m === "sem_banco" ? "O banco da liga ainda não foi configurado (falta rodar o script no Supabase)." : (!navigator.onLine || /fetch|network|Failed/i.test(m)) ? "Sem internet agora. Mostro o último ranking guardado." : "Não consegui falar com a liga agora. Tente de novo em instantes."; };
@@ -7766,28 +7784,124 @@ function viewLeague(){
     });
     el.appendChild(f); return el;
   }
-  const grpTxt = "Ranking de todos os amigos";
-  el.appendChild(h(`<div><h1 class="headline">Liga <span class="script" style="font-size:34px">${esc(c.nick)}</span></h1><p class="sub" style="margin-top:4px">${esc(grpTxt)}</p></div>`));
-  const tabs = h(`<div class="vz-chips"><button class="filter ${o.tabw==="week"?"on":""}" data-w="week">Esta semana</button><button class="filter ${o.tabw==="total"?"on":""}" data-w="total">Total</button></div>`);
+  el.appendChild(h(`<div><h1 class="headline">Liga <span class="script" style="font-size:34px">${esc(c.nick)}</span></h1><p class="sub" style="margin-top:4px">Ranking e conversa de todos os amigos</p></div>`));
+  const tabs = h(`<div class="vz-chips"><button class="filter ${o.tabw==="week"?"on":""}" data-w="week">Esta semana</button><button class="filter ${o.tabw==="total"?"on":""}" data-w="total">Total</button><button class="filter ${o.tabw==="chat"?"on":""}" data-w="chat">Chat</button></div>`);
   tabs.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", () => { o.tabw = b.dataset.w; render(); })); el.appendChild(tabs);
-  const box = h(`<section class="card"><div class="eyebrow">${o.tabw==="week" ? "XP da semana (segunda a domingo)" : "XP total"}</div><div id="lgR" style="margin-top:6px"><p class="sub">Carregando o ranking…</p></div><p id="lgS" class="sub" style="font-size:var(--fs-cap);margin-top:8px"></p></section>`);
+  const act = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-line btn-block" id="lgSh">Convidar amigos</button><button class="btn btn-line btn-block" id="lgOut">Sair da liga neste aparelho</button></section>`);
+  $("#lgSh", act).addEventListener("click", () => { const t = "Venha competir comigo no Nômade Bilíngue: " + location.origin + location.pathname; if(navigator.share) navigator.share({text:t}).catch(() => {}); else { try{ navigator.clipboard.writeText(t); toast("Convite copiado"); }catch(e){} } });
+  $("#lgOut", act).addEventListener("click", () => { if(confirm("Sair da liga neste aparelho? Seu apelido continua reservado para quem tiver o código secreto deste aparelho.")){ state.league = null; persist(); render(); } });
+  if(o.tabw === "chat"){ el.appendChild(lgChatBox(o, c)); el.appendChild(act); return el; }
+  const box = h(`<section class="card"><div class="eyebrow">${o.tabw==="week" ? "XP da semana (segunda a domingo). Toque num amigo para ver os detalhes" : "XP total. Toque num amigo para ver os detalhes"}</div><div id="lgR" style="margin-top:6px"><p class="sub">Carregando o ranking…</p></div><p id="lgS" class="sub" style="font-size:var(--fs-cap);margin-top:8px"></p></section>`);
   el.appendChild(box);
+  const det = r => { const x = r.stats || {}, v = (k, f) => x[k] == null ? "—" : (f ? f(x[k]) : x[k]);
+    const cell = (k, val) => `<div style="background:var(--surface-2);border-radius:12px;padding:8px 10px"><small style="display:block;color:var(--ink-3);font-size:11.5px">${k}</small><b>${val}</b></div>`;
+    return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 4px">${cell("Nível", x.lv == null ? "—" : x.lv + " · " + esc(lvName(x.lv)))}${cell("Nível de idioma", esc(x.cefr || "—"))}${cell("Conquistas", v("ach", n => n + " de 14"))}${cell("Lições concluídas", v("les"))}${cell("Atividades feitas", v("act"))}${cell("Dias de estudo", v("days"))}${cell("Tempo de uso", v("min", lgFmtMin))}${cell("Melhor ofensiva", v("best", n => n + " dias"))}</div>`; };
   const draw = (rows, note) => {
     const key = o.tabw === "week" ? "week_xp" : "total_xp";
     const list = rows.slice().sort((a, b) => b[key] - a[key] || b.total_xp - a.total_xp);
-    $("#lgR", box).innerHTML = list.length ? list.map((r, i) => `<div class="score-row" style="${r.me ? "background:var(--gold-soft,rgba(212,160,23,.14));border-radius:12px;padding-inline:10px;" : ""}"><span><b>${i+1}º</b> &nbsp;${esc(r.nick)}${r.me ? " (você)" : ""}<small style="display:block;color:var(--ink-3)">${r.streak || 0} dias seguidos · ${esc(r.lang === "it" ? "Italiano" : "Inglês")}</small></span><span><b>${r[key]}</b> XP</span></div>`).join("") : `<p class="sub">Ninguém no ranking ainda.</p>`;
+    const R = $("#lgR", box);
+    R.innerHTML = list.length ? list.map((r, i) => { const x = r.stats || {}; return `<div class="lg-it" data-i="${i}"><div class="score-row" style="cursor:pointer;${r.me ? "background:var(--gold-soft,rgba(212,160,23,.14));border-radius:12px;padding-inline:10px;" : ""}"><span><b>${i+1}º</b> &nbsp;${esc(r.nick)}${r.me ? " (você)" : ""}<small style="display:block;color:var(--ink-3)">${x.lv != null ? "Nv " + x.lv + " · " : ""}${r.streak || 0} dias seguidos · ${esc(r.lang === "it" ? "Italiano" : "Inglês")}</small></span><span><b>${r[key]}</b> XP</span></div><div class="lg-d" hidden>${det(r)}</div></div>`; }).join("") : `<p class="sub">Ninguém no ranking ainda.</p>`;
+    R.querySelectorAll(".lg-it").forEach(it => it.querySelector(".score-row").addEventListener("click", () => { const d = it.querySelector(".lg-d"); d.hidden = !d.hidden; }));
     $("#lgS", box).textContent = note || "";
   };
-  const cache = (c.cache || {})[o.tabw];
   if(c.cache && c.cache.rows) draw(c.cache.rows, "Último ranking guardado.");
   lgSync().then(() => lgCall("nb_board", {p_nick:c.nick, p_secret:c.secret, p_group:"", p_week:lgMonday()})).then(r => {
     if(!r || !r.ok) throw new Error(r && r.err || "erro"); c.cache = {rows:r.rows}; persist(); if(overlay === o) draw(r.rows, "Atualizado agora.");
   }).catch(e => { if(overlay === o) $("#lgS", box).textContent = lgErr(e); if(overlay === o && !(c.cache && c.cache.rows)) $("#lgR", box).innerHTML = ""; });
-  const act = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-line btn-block" id="lgSh">Convidar amigos</button><button class="btn btn-line btn-block" id="lgOut">Sair da liga neste aparelho</button></section>`);
-  $("#lgSh", act).addEventListener("click", () => { const t = "Venha competir comigo no Nômade Bilíngue: " + location.origin + location.pathname; if(navigator.share) navigator.share({text:t}).catch(() => {}); else { try{ navigator.clipboard.writeText(t); toast("Convite copiado"); }catch(e){} } });
-  $("#lgOut", act).addEventListener("click", () => { if(confirm("Sair da liga neste aparelho? Seu apelido continua reservado para quem tiver o código secreto deste aparelho.")){ state.league = null; persist(); render(); } });
   el.appendChild(act);
   return el;
+}
+/* ---- chat da liga: texto + fotos (reduzidas no aparelho) ---- */
+const lgImgs = new Map();
+let lgMsgs = [];
+const lgHM = t => { const d = new Date(t), n = new Date(), hm = String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); return d.toDateString() === n.toDateString() ? hm : String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + " " + hm; };
+function lgShrink(file){
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      try{
+        let w = im.naturalWidth, hh = im.naturalHeight, m = Math.max(w, hh), sc = m > 1000 ? 1000 / m : 1; w = Math.round(w*sc); hh = Math.round(hh*sc);
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = hh; cv.getContext("2d").drawImage(im, 0, 0, w, hh);
+        let q = 0.7, out = cv.toDataURL("image/jpeg", q);
+        while(out.length > 240000 && q > 0.3){ q -= 0.1; out = cv.toDataURL("image/jpeg", q); }
+        URL.revokeObjectURL(u); out.length > 250000 ? rej(new Error("grande")) : res(out);
+      }catch(e){ rej(e); }
+    };
+    im.onerror = () => { URL.revokeObjectURL(u); rej(new Error("img")); };
+    im.src = u;
+  });
+}
+function lgBig(src){
+  const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:12px";
+  const i = document.createElement("img"); i.src = src; i.style.cssText = "max-width:100%;max-height:100%;border-radius:10px"; d.appendChild(i); d.addEventListener("click", () => d.remove()); document.body.appendChild(d);
+}
+function lgChatBox(o, c){
+  const box = h(`<section class="card" style="display:flex;flex-direction:column;gap:8px"><div id="lgC" style="display:flex;flex-direction:column;gap:8px;max-height:50vh;min-height:150px;overflow:auto"><p class="sub">Carregando a conversa…</p></div><div id="lgPv" hidden style="position:relative;align-self:flex-start"><img style="height:72px;border-radius:10px;display:block"><button class="iconbtn" id="lgPx" aria-label="Tirar foto" style="position:absolute;top:-8px;right:-8px;width:26px;height:26px;min-width:26px;font-size:12px">✕</button></div><p id="lgCS" class="sub" style="font-size:var(--fs-cap);color:var(--bad);min-height:1.1em"></p><div style="display:flex;gap:8px;align-items:flex-end"><button class="iconbtn" id="lgPh" aria-label="Enviar foto"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.2h6.8L17 8h3v11H4Z"/><circle cx="12" cy="13.2" r="3.4"/></svg></button><input type="file" id="lgFile" accept="image/*" hidden><textarea id="lgT" rows="1" maxlength="500" placeholder="Escreva uma mensagem" style="flex:1;min-width:0;padding:10px 12px;border-radius:14px;border:1px solid var(--line);font:inherit;resize:none;height:44px;box-sizing:border-box"></textarea><button class="btn btn-dark" id="lgSend">Enviar</button></div></section>`);
+  const C = $("#lgC", box), S = $("#lgCS", box), T = $("#lgT", box), PV = $("#lgPv", box); let pend = null, busy = false, first = true, wasIn = false;
+  const line = m => {
+    const d = h(`<div style="display:flex;flex-direction:column;align-items:${m.me ? "flex-end" : "flex-start"}"><small style="color:var(--ink-3);font-size:11.5px">${m.me ? "" : esc(m.nick) + " · "}${lgHM(m.t)}</small><div class="lg-b" style="max-width:86%;padding:8px 12px;border-radius:14px;background:${m.me ? "var(--gold-soft,rgba(212,160,23,.18))" : "var(--surface-2)"};word-break:break-word;white-space:pre-wrap"></div></div>`);
+    const b = $(".lg-b", d); if(m.body) b.textContent = m.body; else if(!m.has_img) b.remove();
+    if(m.has_img){
+      const im = document.createElement("img"); im.alt = "Foto"; im.style.cssText = "display:block;max-width:100%;max-height:220px;border-radius:10px;margin-top:" + (m.body ? "6px" : "0") + ";background:var(--surface);min-height:60px;min-width:90px"; b.appendChild(im);
+      im.addEventListener("click", () => { if(im.src) lgBig(im.src); });
+      const go = (lgImgs.has(m.id) ? Promise.resolve(lgImgs.get(m.id)) : lgCall("nb_chat_img", {p_nick:c.nick, p_secret:c.secret, p_id:m.id}).then(r => { if(r && r.ok && r.img){ lgImgs.set(m.id, r.img); return r.img; } throw new Error("x"); }));
+      go.then(src => { im.src = src; if(near) C.scrollTop = C.scrollHeight; }).catch(() => { im.replaceWith(h(`<small style="color:var(--ink-3)">Foto indisponível</small>`)); });
+    }
+    return d;
+  };
+  let near = true; C.addEventListener("scroll", () => { near = C.scrollHeight - C.scrollTop - C.clientHeight < 80; });
+  const last = () => lgMsgs.length ? lgMsgs[lgMsgs.length-1].id : 0;
+  const addRows = rows => {
+    const fresh = rows.filter(r => !lgMsgs.some(x => x.id === r.id)); if(!fresh.length && !first) return;
+    if(first){ C.innerHTML = ""; if(!lgMsgs.length && !fresh.length) C.innerHTML = `<p class="sub">Ninguém escreveu ainda. Comece a conversa!</p>`; }
+    if(fresh.length && C.querySelector(":scope > p")) C.innerHTML = "";
+    fresh.forEach(r => { lgMsgs.push(r); C.appendChild(line(r)); });
+    if(first){ lgMsgs.slice(0, lgMsgs.length - fresh.length).forEach(r => C.appendChild(line(r))); }
+    first = false; if(lgMsgs.length){ c.seen = last(); c.unread = 0; } if(near || fresh.some(r => r.me)) C.scrollTop = C.scrollHeight;
+  };
+  const tick = async () => {
+    if(box.isConnected) wasIn = true;
+    if((wasIn && !box.isConnected) || overlay !== o){ clearInterval(iv); return; }
+    try{ const r = await lgCall("nb_chat_list", {p_nick:c.nick, p_secret:c.secret, p_after:first ? 0 : last()}); if(r && r.ok){ if(first && !r.rows.length) { addRows([]); } else addRows(r.rows); S.textContent = ""; } else throw new Error(r && r.err || "erro"); }
+    catch(e){ if(first){ C.innerHTML = `<p class="sub">${esc(lgErr(e))}</p>`; } else S.textContent = lgErr(e); }
+  };
+  if(lgMsgs.length){ const keep = lgMsgs.slice(); lgMsgs = []; first = true; addRows(keep.map(x => Object.assign({}, x))); }
+  const iv = setInterval(tick, 8000); tick();
+  $("#lgPh", box).addEventListener("click", () => $("#lgFile", box).click());
+  $("#lgFile", box).addEventListener("change", async ev => {
+    const f = ev.target.files && ev.target.files[0]; ev.target.value = ""; if(!f) return;
+    S.textContent = "Preparando a foto…";
+    try{ pend = await lgShrink(f); $("img", PV).src = pend; PV.hidden = false; S.textContent = ""; }catch(e){ pend = null; S.textContent = "Não consegui usar essa foto."; }
+  });
+  $("#lgPx", box).addEventListener("click", () => { pend = null; PV.hidden = true; });
+  const MSG = {devagar:"Calma, espere um instante.", foto_invalida:"Essa foto não foi aceita.", vazio:"Escreva algo ou escolha uma foto.", nao_autorizado:"Este aparelho não é o dono desse apelido."};
+  const send = async () => {
+    if(busy) return; const body = T.value.trim(); if(!body && !pend) return;
+    busy = true; S.style.color = "var(--ink-3)"; S.textContent = "Enviando…";
+    try{
+      const r = await lgCall("nb_chat_send", {p_nick:c.nick, p_secret:c.secret, p_body:body, p_img:pend});
+      if(!r || !r.ok){ S.style.color = "var(--bad)"; S.textContent = MSG[r && r.err] || "Não enviou."; }
+      else { T.value = ""; pend = null; PV.hidden = true; S.textContent = ""; near = true; await tick(); }
+    }catch(e){ S.style.color = "var(--bad)"; S.textContent = lgErr(e); }
+    busy = false;
+  };
+  $("#lgSend", box).addEventListener("click", send);
+  T.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); } });
+  return box;
+}
+let lgUnreadAt = 0;
+function lgHomeSub(c){
+  let sub = "Ranking semanal e chat com seus amigos";
+  if(c && c.cache && c.cache.rows){ const rows = c.cache.rows.slice().sort((a,b) => b.week_xp - a.week_xp || b.total_xp - a.total_xp), i = rows.findIndex(r => r.me); if(i >= 0) sub = "Você está em " + (i+1) + "º na semana · " + rows[i].week_xp + " XP"; } else if(c) sub = "Ver o ranking e o chat";
+  if(c && c.unread > 0) sub += " · " + c.unread + (c.unread === 1 ? " mensagem nova" : " mensagens novas");
+  return sub;
+}
+function lgUnread(){
+  const c = lgCfg(); if(!c || !navigator.onLine || Date.now() - lgUnreadAt < 60000) return; lgUnreadAt = Date.now();
+  lgCall("nb_chat_list", {p_nick:c.nick, p_secret:c.secret, p_after:c.seen || 0}).then(r => {
+    if(!r || !r.ok) return; c.unread = r.rows.filter(x => !x.me).length; if(c.unread && !c.seen) c.unread = 0;
+    const e = document.getElementById("lgHS"); if(e) e.textContent = lgHomeSub(c);
+  }).catch(() => {});
 }
 function viewYou(){
   const voc = allVocab(), known = voc.filter(v=>L().known[v.id]).length, done = Object.keys(L().done).length;
