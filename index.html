@@ -318,6 +318,42 @@ body.focus main{padding-bottom:32px}
 .capi-say{display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px; align-items:center}
 .capi-fig{animation:capiBob 3.2s ease-in-out infinite}
 @keyframes capiBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+/* Capi vivo: respira, pisca, acena e comemora */
+.capi{transform-origin:50% 100%; animation:cpBreath 3.6s ease-in-out infinite}
+.capi .cp-eyes{transform-box:fill-box; transform-origin:center; animation:cpBlink 4.6s infinite}
+.capi-hi .cp-arm-r, .capi-cheer .cp-arm-r{transform-box:fill-box; transform-origin:0% 100%; animation:cpWave 1.5s ease-in-out infinite}
+.capi-cheer .cp-arm-l{transform-box:fill-box; transform-origin:100% 100%; animation:cpWaveL 1.5s ease-in-out infinite}
+.capi-cheer{animation:cpJump 1.1s cubic-bezier(.3,.7,.4,1) infinite}
+.capi-think{animation:cpTilt 3.4s ease-in-out infinite}
+.capi-sad{animation:cpBreath 5s ease-in-out infinite}
+@keyframes cpBreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.985)}}
+@keyframes cpBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes cpWave{0%,100%{transform:rotate(0)}50%{transform:rotate(14deg)}}
+@keyframes cpWaveL{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg)}}
+@keyframes cpJump{0%,100%{transform:translateY(0) scale(1,1)}18%{transform:translateY(0) scale(1.04,.95)}50%{transform:translateY(-7px) scale(.98,1.03)}82%{transform:translateY(0) scale(1.03,.97)}}
+@keyframes cpTilt{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg)}}
+/* telas com cara de app: entrada das telas e resposta ao toque */
+@keyframes scrFade{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+@keyframes scrUp{from{opacity:0; transform:translateY(26px)}to{opacity:1; transform:none}}
+@keyframes scrStep{from{opacity:0; transform:translateX(22px)}to{opacity:1; transform:none}}
+@keyframes rise{from{opacity:0; transform:translateY(12px)}to{opacity:1; transform:none}}
+@keyframes navPop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.scr-tab{animation:scrFade .24s ease-out both}
+.scr-up{animation:scrUp .3s cubic-bezier(.2,.8,.3,1) both}
+.scr-step{animation:scrStep .24s ease-out both}
+.scr-tab > *, .scr-up > *{animation:rise .34s ease-out both}
+.scr-tab > *:nth-child(2), .scr-up > *:nth-child(2){animation-delay:.04s}
+.scr-tab > *:nth-child(3), .scr-up > *:nth-child(3){animation-delay:.08s}
+.scr-tab > *:nth-child(4), .scr-up > *:nth-child(4){animation-delay:.12s}
+.scr-tab > *:nth-child(5), .scr-up > *:nth-child(5){animation-delay:.16s}
+.scr-tab > *:nth-child(n+6), .scr-up > *:nth-child(n+6){animation-delay:.2s}
+.btn, .shrow, .ptile, .pl-row, .filter, .chap, .qk, .iconbtn, .nav button{transition:transform .12s ease, background-color .18s ease, box-shadow .18s ease}
+.btn:active, .shrow:active, .ptile:active, .pl-row:active, .chap:active, .qk:active{transform:scale(.97)}
+.filter:active, .iconbtn:active, .nav button:active{transform:scale(.93)}
+.nav button.on .nb{animation:navPop .28s ease-out}
+.steps i{transition:background-color .3s ease, transform .3s ease}
+.steps i.on{transform:scaleY(1.25)}
+@media (prefers-reduced-motion: reduce){ .capi, .capi *, .scr-tab, .scr-up, .scr-step, .scr-tab > *, .scr-up > *, .nav button.on .nb{animation:none !important} .btn:active, .shrow:active, .ptile:active, .pl-row:active{transform:none} }
 .capi-bubble{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:10px 13px; font-size:14px; line-height:1.45; color:var(--ink)}
 .capi-bubble::before{content:""; position:absolute; left:-7px; top:50%; width:12px; height:12px; background:var(--surface); border-left:1px solid var(--line); border-bottom:1px solid var(--line); transform:translateY(-50%) rotate(45deg)}
 @media (prefers-reduced-motion: reduce){ .capi-fig{animation:none} }
@@ -1696,6 +1732,7 @@ function a11yPass(){
     if(c){ c.setAttribute("role", "heading"); c.setAttribute("aria-level", "1"); }
   }catch(e){}
 }
+let scrKey = "";
 function render(){
   try{ mpBar(); }catch(e){}
   try{ if(!overlay && micS && ((micS.keep && micS.keep.active) || (micS.mr && micS.mr.state==="recording"))) micShutdown(); }catch(e){}
@@ -1709,11 +1746,14 @@ function render(){
   if(!state.lang){ view.appendChild(viewOnboard()); return; }
   if(overlay){
     const map = {league:viewLeague, progress:viewProgress, lesson:viewLesson, placement:viewPlacement, deck:viewDeck, memory:viewMemory, blitz:viewBlitz, scene:viewScene, article:viewArticle, gram:viewGram, cloze:viewCloze, pron:viewPron, place:viewPlace, quiz:viewQuiz, song:viewSong, review:viewReview, notebook:viewNotebook, srs:viewSrs, story:viewStory, ear:viewEar, search:viewSearch, welcome:viewWelcome, lad:viewLadder, cine:viewCinema, film:viewFilm, prep:viewPronRep, spc:viewSpaced, elab:viewErrLab, dict:viewDict, typed:viewTyped, cp:viewCheckpoint, intv:viewIntv, kara:viewKara, podp:viewPodp, vozes:viewVozes, vozit:viewVozIt, hub:viewHub, forca:viewForca, abooks:viewAbooks, mysong:viewMySong, celeb:viewCeleb};
-    view.appendChild(map[overlay.type]()); a11yPass(); return;
+    { const n = map[overlay.type](), k = "o:" + overlay.type, k2 = k + ":" + (overlay.stage||"") + ":" + (overlay.vi||0) + ":" + (overlay.ei||0) + ":" + (overlay.idx||0) + ":" + (overlay.vw?1:0) + ":" + (overlay.mi||0) + ":" + (overlay.fix?overlay.fix.i:"");
+      if(n && n.classList){ if(scrKey.split("|")[0] !== k) n.classList.add("scr-up"); else if(scrKey.split("|")[1] !== k2) n.classList.add("scr-step"); }
+      scrKey = k + "|" + k2; view.appendChild(n); }
+    a11yPass(); return;
   }
   $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab===tab));
   const map = {home:viewHome, learn:viewLearn, play:viewPlay, news:viewNews, chat:viewChat, you:viewYou};
-  view.appendChild(map[tab]());
+  { const n = map[tab](), k = "t:" + tab; if(n && n.classList && scrKey.split("|")[0] !== k) n.classList.add("scr-tab"); scrKey = k + "|"; view.appendChild(n); }
   view.appendChild(h(`<footer class="credit">Desenvolvido por Leandro Muniz</footer>`));
 }
 
@@ -1778,9 +1818,9 @@ function capi(mood, size){
   <rect x="38" y="61" width="44" height="29" rx="14.5" fill="${S}"/>
   <path d="M50.5 68q2.6 1.6 3.5 4.4M69.5 68q-2.6 1.6-3.5 4.4" stroke="var(--capi-light)" stroke-width="2.6" stroke-linecap="round" fill="none"/>
   <ellipse cx="32" cy="66" rx="4.5" ry="3" fill="${G}" opacity=".35"/><ellipse cx="88" cy="66" rx="4.5" ry="3" fill="${G}" opacity=".35"/>
-  ${eyes}${mouth}
+  <g class="cp-eyes">${eyes}</g>${mouth}
   <path d="M26 93q34 15 68 0l1 7.5q-35 15-70 0z" fill="${G}"/><path d="M75 99.5l8 14.5-7.5 1.2-5-14z" fill="${GD}"/>
-  ${armL}${armR}
+  <g class="cp-arm-l">${armL}</g><g class="cp-arm-r">${armR}</g>
   <g transform="rotate(-9 60 31)"><ellipse cx="58" cy="31" rx="26" ry="8.5" fill="${H}"/><circle cx="58" cy="21.5" r="2.8" fill="${H}"/></g>
 </svg>`;
 }
@@ -3654,6 +3694,29 @@ function genEx(u){
   });
   return out;
 }
+/* lição guiada: do reconhecer ao produzir */
+function fixQs(u, from, to){
+  const out = [], pts = u.vocab.map(x => x.pt);
+  for(let i = from; i <= to; i++){
+    const v = u.vocab[i]; if(!v || !v.t || !v.pt) continue;
+    const wrong = shuffle([...new Set(pts.filter(x => x !== v.pt))]).slice(0, 2); if(wrong.length < 2) continue;
+    const opts = shuffle([v.pt].concat(wrong));
+    out.push({type:"mcq", q:`O que significa “${baseT(v.t)}”?`, options:opts, correct:opts.indexOf(v.pt), explain:`“${baseT(v.t)}” = ${v.pt}.${v.note ? " " + v.note : ""}`, _k:"fx"});
+  }
+  return shuffle(out);
+}
+function gradedSession(u, extra){
+  const g = genEx(u), pick = (k, n) => shuffle(g.filter(e => e._k === k)).slice(0, n);
+  const rank = {mcq:0, listen:1, order:2};
+  const core = buildSession(u, extra).slice().sort((a, b) => (rank[a.type]||0) - (rank[b.type]||0));
+  const seen = new Set(core.map(exKey));
+  const warm = pick("vr", 3).concat(pick("vl", 2)).filter(e => { const k = exKey(e); if(seen.has(k)) return false; seen.add(k); return true; });
+  return warm.concat(core);
+}
+function memPick(u){
+  const idx = u.vocab.map((v, i) => i), clz = i => { const v = u.vocab[i], hl = v.ex && v.ex.hl ? v.ex.hl.replace(/[?!.…]+$/,"") : ""; return !!(v.ex && hl && v.ex.t.includes(hl)); };
+  return shuffle(idx.filter(clz)).concat(shuffle(idx.filter(i => !clz(i)))).slice(0, 3);
+}
 function buildSession(u, extra){
   const n = Math.max(6, (u.exercises||[]).length), seen = seenEx(), rev = L().rev || {};
   const pool = [].concat(
@@ -3810,12 +3873,14 @@ function profCard(){
 function viewLesson(){
   const o = overlay, u = o.unit;
   if(!o.practice && !o._pf){ o._pf = true; if((gmKey() || provAny() || keylessOn()) && navigator.onLine) aiFresh(u).then(a => { o.aiEx = a; }).catch(()=>{}); }
-  if(o.stage==="ex" && !o.exs) o.exs = o.practice ? u.exercises : buildSession(u, o.aiEx);
+  const guided = !o.practice && u.vocab.length >= 4 && String(u.id).charAt(0) !== "_";
+  if(o.stage==="ex" && !o.exs) o.exs = o.practice ? u.exercises : guided ? gradedSession(u, o.aiEx) : buildSession(u, o.aiEx);
   const EXS = o.exs || u.exercises;
-  const total = 2 + u.vocab.length + EXS.length;
-  const doneN = o.stage==="tip"?0 : o.stage==="vocab"?1+o.vi : o.stage==="dialogue"?1+u.vocab.length : o.stage==="ex"?2+u.vocab.length+o.ei : total;
+  const exN = o.exs ? EXS.length : guided ? 11 : EXS.length, memN = guided ? 3 : 0;
+  const total = 2 + u.vocab.length + exN + memN;
+  const doneN = o.stage==="tip"?0 : (o.stage==="vocab"||o.stage==="fix")?1+o.vi : o.stage==="dialogue"?1+u.vocab.length : o.stage==="ex"?2+u.vocab.length+o.ei : o.stage==="mem"?2+u.vocab.length+exN+o.mi : total;
   const el = h(`<div class="screen"></div>`);
-  const labels = {tip:"Antes de começar", vocab:`Expressão ${o.vi+1} de ${u.vocab.length}${o.vw?" · escreva":""}`, dialogue:"Diálogo", ex:`Exercício ${o.ei+1} de ${EXS.length}`, end:""};
+  const labels = {tip:"Antes de começar", vocab:`Expressão ${o.vi+1} de ${u.vocab.length}${o.vw?" · escreva":""}`, dialogue:"Diálogo", ex:`Exercício ${o.ei+1} de ${EXS.length}`, fix:"Fixando o que você viu", mem:`Desafio final ${(o.mi||0)+1} de ${(o.mem||[]).length}`, end:""};
   el.appendChild(runHead(total, doneN, `${u.icon} ${esc(u.title)}${labels[o.stage]?" · "+labels[o.stage]:""}`));
 
   if(o.stage==="tip"){
@@ -3826,10 +3891,20 @@ function viewLesson(){
     b.addEventListener("click", () => { o.stage="vocab"; render(); });
     el.appendChild(b);
   }
-  else if(o.stage==="vocab"){
+  else if(o.stage==="fix"){
+    const fx = o.fix, q = Object.assign(fx.list[fx.i], {_src:"u:"+u.id, _lvl:u.level});
+    if(fx.i === 0) el.appendChild(h(`<p class="sub">Antes de seguir, veja se ficou: ${fx.list.length} perguntas rápidas, só de reconhecer.</p>`));
+    el.appendChild(exerciseCard(q, () => {}, () => {
+      if(fx.i < fx.list.length-1) fx.i++; else { o.fix = null; if(fx.after === "vocab"){ o.vi++; o.stage = "vocab"; } else o.stage = "dialogue"; }
+      render(); scrollTo(0,0);
+    }, "Continuar"));
+  }
+  else if(o.stage==="vocab" || o.stage==="mem"){
+    const mem = o.stage==="mem"; if(mem){ o.vi = o.mem[o.mi]; o.vw = true; }
     const v = u.vocab[o.vi], vid = u.id+"-"+o.vi, lgn = LANGS[state.lang].name, last = o.vi >= u.vocab.length-1;
     const hl = v.ex && v.ex.hl ? v.ex.hl.replace(/[?!.…]+$/,"") : "", cloze = !!(v.ex && hl && v.ex.t.includes(hl));
-    const adv = () => { stopAudio(); seqToken++; o.vw = false; o.wr = null; if(!last) o.vi++; else o.stage = "dialogue"; render(); scrollTo(0,0); };
+    const adv = () => { stopAudio(); seqToken++; o.wr = null; if(mem){ if(o.mi < o.mem.length-1) o.mi++; else { finishLesson(); o.stage = "end"; } render(); scrollTo(0,0); return; } o.vw = false; if(!last) o.vi++; else o.stage = "dialogue"; render(); scrollTo(0,0); };
+    const advV = () => { stopAudio(); seqToken++; if(o.vi % 4 === 3 || last){ const from = o.vi - (o.vi % 4); o.fix = {list:fixQs(u, from, o.vi), i:0, after:last ? "dialogue" : "vocab"}; if(o.fix.list.length) o.stage = "fix"; else { o.fix = null; if(!last) o.vi++; else o.stage = "dialogue"; } } else o.vi++; render(); scrollTo(0,0); };
     if(!o.vw){
       /* 1) ver e ouvir (curto) */
       const card = h(`<div class="word-card">
@@ -3848,19 +3923,20 @@ function viewLesson(){
       }
       el.appendChild(moreBlock(v.t, v.pt));
       if(o.spk!==vid){ o.spk = vid; setTimeout(()=>speak(v.t), 150); }
-      { const mm = micMini(v.t, o, "mm"+o.vi, () => { stopAudio(); seqToken++; o.vw = true; render(); scrollTo(0,0); }); if(mm) el.appendChild(mm); }
+      { const mm = micMini(v.t, o, "mm"+o.vi, guided ? advV : () => { stopAudio(); seqToken++; o.vw = true; render(); scrollTo(0,0); }); if(mm) el.appendChild(mm); }
       const row = h(`<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px"></div>`);
       const back = h(`<button class="btn btn-line" ${o.vi===0?"disabled":""}>‹</button>`);
       back.addEventListener("click", () => { o.vi--; o.wr = null; render(); });
-      const next = h(`<button class="btn btn-dark btn-block">Esconder e escrever de memória <span class="arr">→</span></button>`);
-      next.addEventListener("click", () => { stopAudio(); seqToken++; o.vw = true; render(); scrollTo(0,0); });
+      const next = h(`<button class="btn btn-dark btn-block">${guided ? ((o.vi % 4 === 3 || last) ? "Fixar estas expressões" : "Próxima expressão") : "Esconder e escrever de memória"} <span class="arr">→</span></button>`);
+      next.addEventListener("click", guided ? advV : () => { stopAudio(); seqToken++; o.vw = true; render(); scrollTo(0,0); });
       row.appendChild(back); row.appendChild(next);
       el.appendChild(row);
-      const sk = h(`<button class="link" style="align-self:center">Pular a escrita desta expressão</button>`);
-      sk.addEventListener("click", adv); el.appendChild(sk);
+      if(!guided){ const sk = h(`<button class="link" style="align-self:center">Pular a escrita desta expressão</button>`);
+      sk.addEventListener("click", adv); el.appendChild(sk); }
     } else {
       /* 2) produzir: escrever de memória, sem olhar */
       const ans = cloze ? hl : v.t;
+      if(mem && !o.wr && o.mi === 0) el.appendChild(h(`<p class="sub">Para fechar: ${o.mem.length} expressões de memória. Use a dica se travar, o que conta é tentar.</p>`));
       const blank = cloze ? esc(v.ex.t).replace(esc(hl), `<span class="lad-blank">&nbsp;_____&nbsp;</span>`) : "";
       el.appendChild(h(`<div class="word-card"><div class="sub" style="margin-bottom:6px">De memória, sem olhar</div>${cloze ? `<div class="word-pt" style="font-size:22px;line-height:1.4">${blank}</div><div class="sub" style="margin-top:8px">${esc(v.ex.pt)}</div>` : `<div class="word-pt" style="font-size:24px">${esc(v.pt)}</div>`}<div class="sub" style="margin-top:8px">${cloze ? "Escreva a parte que falta." : "Escreva em "+lgn+"."}</div></div>`));
       { const hn = hintOnce("write", "Agora a expressão some e você escreve de memória. Errar aqui é bom: é assim que ela fica na cabeça."); if(hn && !o.wr) el.appendChild(hn); }
@@ -3869,7 +3945,8 @@ function viewLesson(){
           <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px"><button class="btn btn-line" id="wH">💡 Dica</button><button class="btn btn-dark" id="wGo">Verificar</button></div>
           <button class="link" id="wB" style="align-self:center">Ver a expressão de novo</button></section>`);
         $("#wH", f).addEventListener("click", () => { o.whint = true; hintShow($("#wH", f), ladAlts(ans)[0]); });
-        $("#wB", f).addEventListener("click", () => { o.vw = false; render(); });
+        if(mem) $("#wB", f).textContent = "Pular o desafio final";
+        $("#wB", f).addEventListener("click", () => { if(mem){ finishLesson(); o.stage = "end"; render(); scrollTo(0,0); return; } o.vw = false; render(); });
         $("#wGo", f).addEventListener("click", async () => {
           const val = $("#wIn", f).value.trim(); if(!val) return;
           let pct = ladBest(ans, val);
@@ -3887,7 +3964,7 @@ function viewLesson(){
         $("#wS", el).addEventListener("click", () => speak(cloze ? v.ex.t : v.t));
         const row = h(`<div style="display:grid;grid-template-columns:${r.sc>=1 ? "minmax(0,1fr)" : "minmax(0,1fr) minmax(0,1fr)"};gap:10px"></div>`);
         if(r.sc<1){ const again = h(`<button class="btn btn-line">Tentar de novo</button>`); again.addEventListener("click", () => { o.wr = null; render(); }); row.appendChild(again); }
-        const nx = h(`<button class="btn btn-dark btn-block">${last?"Ir para o diálogo":"Próxima"} <span class="arr">→</span></button>`);
+        const nx = h(`<button class="btn btn-dark btn-block">${mem ? (o.mi >= o.mem.length-1 ? "Concluir aula" : "Próxima") : last?"Ir para o diálogo":"Próxima"} <span class="arr">→</span></button>`);
         nx.addEventListener("click", adv); row.appendChild(nx); el.appendChild(row);
       }
     }
@@ -3919,9 +3996,11 @@ function viewLesson(){
   else if(o.stage==="ex"){
     const ex = Object.assign(EXS[o.ei],{_src:"u:"+u.id, _lvl:u.level});
     el.appendChild(exerciseCard(ex, ok => { if(ok) o.correct++; }, () => {
-      if(o.ei < EXS.length-1){ o.ei++; } else { finishLesson(); o.stage="end"; }
-      render();
-    }, o.ei===EXS.length-1 ? "Concluir aula" : "Continuar"));
+      if(o.ei < EXS.length-1){ o.ei++; }
+      else if(guided){ o.mem = memPick(u); o.mi = 0; o.wr = null; o.whint = false; if(o.mem.length) o.stage = "mem"; else { finishLesson(); o.stage = "end"; } }
+      else { finishLesson(); o.stage="end"; }
+      render(); scrollTo(0,0);
+    }, o.ei===EXS.length-1 ? (guided ? "Ir para o desafio final" : "Concluir aula") : "Continuar"));
   }
   else { el.appendChild(lessonEnd()); }
   return el;
@@ -3998,7 +4077,7 @@ function finishLesson(){
   const o = overlay, u = o.unit, prev = L().done[u.id];
   const score = o.correct+"/"+(o.exs||u.exercises).length;
   if(o.practice){ o.earned = 5 + o.correct*3; ensureDay().game = true; addXp(o.earned); setTimeout(()=>{ confetti(); sfx.win(); }, 100); return; }
-  o.earned = prev ? 5 : 10 + o.correct*5;
+  o.earned = prev ? 5 : 10 + Math.round(o.correct / Math.max(1, (o.exs||u.exercises).length) * 30);
   if(!prev || parseInt(score) > parseInt(prev)) L().done[u.id] = score;
   ensureDay().lesson = true;
   addXp(o.earned);
@@ -6853,7 +6932,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v157";
+const APP_VER = "v158";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
