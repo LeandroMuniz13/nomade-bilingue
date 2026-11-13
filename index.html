@@ -957,6 +957,7 @@ button:active:not(:disabled){transform:scale(.985)}
     <button data-tab="home"><span class="nb"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 9.5V20h4.5v-5h3v5H18V9.5"/></svg></span>Início</button>
     <button data-tab="learn"><span class="nb"><svg viewBox="0 0 24 24"><path d="M4 6.5C6.5 5 9.5 5 12 6.5 14.5 5 17.5 5 20 6.5V19c-2.5-1.5-5.5-1.5-8 0-2.5-1.5-5.5-1.5-8 0Z"/><path d="M12 6.5V19"/></svg></span>Jornada</button>
     <button data-tab="play"><span class="nb"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="14" rx="2.5"/><path d="M8 3h10.5A2.5 2.5 0 0 1 21 5.5V16"/></svg></span>Praticar</button>
+    <button data-tab="chat"><span class="nb"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4A8 8 0 1 1 20 12Z"/><path d="M9 11h.01M12 11h.01M15 11h.01"/></svg></span>Capi</button>
     <button data-tab="news"><span class="nb"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="14" height="15" rx="2"/><path d="M17.5 8.5h2a1 1 0 0 1 1 1V17a2.5 2.5 0 0 1-5 0M7 8.5h7M7 12h7M7 15.5h4"/></svg></span>Biblioteca</button>
     
   </nav></div>
@@ -3285,14 +3286,20 @@ function viewHome(){
   /* status compacto */
   el.appendChild(h(`<div class="status2"><span>🔥 <b>${streakShown()}</b> ${streakShown()===1?"dia":"dias"}</span><span class="st-goal"><span>Meta de hoje</span><span class="st-bar"><i style="width:${Math.round(pct*100)}%"></i></span><b>${dayXp}/${state.goal} XP</b></span></div>`));
   { const c = lgCfg(); const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>ChampionsNomade</b><small id="lgHS">${esc(lgHomeSub(c))}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); setTimeout(lgUnread, 400); }
-  if(!first){ const rc = returnCard(); if(rc) el.appendChild(rc); el.appendChild(planCard()); el.appendChild(learnCard()); el.appendChild(sixCard()); }
-  else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); el.appendChild(sixCard()); }
-  /* atalhos: no máximo 4, só depois da 1ª lição */
   if(!first){
-    el.appendChild(shelfCard(true));
-    { const jr = j.m ? `Capítulo ${j.ci+1} de ${j.total} · ${j.inf.done} de ${j.inf.us.length} lições` : `Nível ${userLevel()}`; const jb = h(`<button class="shrow"><span class="sh-ic">🗺️</span><span><b>Jornada</b><small>${esc(jr)}</small></span><span class="tl-chev">›</span></button>`); jb.addEventListener("click", () => go("learn")); el.appendChild(jb); }
-    if(!state.prof){ const pb = h(`<button class="shrow"><span class="sh-ic">✨</span><span><b>Personalize o estudo</b><small>Converse 2 min com a IA</small></span><span class="tl-chev">›</span></button>`); pb.addEventListener("click", () => open({type:"intv"})); el.appendChild(pb); }
+    const rc = returnCard(); if(rc) el.appendChild(rc);
+    el.appendChild(planCard());
+    /* depois da missão: só o que pede atenção hoje */
+    const more = h(`<section class="card" style="display:flex;flex-direction:column;gap:2px"><div class="eyebrow">Também hoje</div></section>`);
+    const row = (ic, t, sub, act) => { const b = h(`<button class="shrow"><span class="sh-ic">${ic}</span><span><b>${t}</b><small>${esc(sub)}</small></span><span class="tl-chev">›</span></button>`); b.addEventListener("click", act); more.appendChild(b); };
+    const sst = srsStats();
+    if(sst.due) row("🔁", "Revisão do dia", sst.due + (sst.due === 1 ? " cartão para revisar" : " cartões para revisar"), startSrs);
+    { const jr = j.m ? `Capítulo ${j.ci+1} de ${j.total} · ${j.inf.done} de ${j.inf.us.length} lições` : `Nível ${userLevel()}`; row("🗺️", "Sua jornada", jr, () => go("learn")); }
+    row("💬", "Conversar com o Capi", "5 min de conversa no seu nível", () => go("chat"));
+    if(!L().placement) row("🎯", "Descubra seu nível", "Teste de proficiência, rápido ou completo", () => open({type:"placement", idx:0, answers:[]}));
+    el.appendChild(more);
   }
+  else { const [md, tx] = capiTip(); el.appendChild(h(capiSay(md, tx, 60))); }
   if(false){
     const sst = srsStats();
     const quick = [
@@ -4685,6 +4692,10 @@ function viewPlay(){
     ["Escrever", ["Traduza e escreva","Monte a frase","Complete a frase"]],
     ["Jogos rápidos", ["Desafio relâmpago","Jogo da memória"]]
   ];
+  { const rec = sst.due ? G("Revisão do dia (Anki)") : (nbs.all && nbs.due) ? G("Meu caderno de erros") : spDue().length ? G("Treino espaçado de fala") : G("Ouça e escolha");
+    const why = sst.due ? "Você tem cartões vencendo hoje" : (nbs.all && nbs.due) ? "Erros seus prontos para revisar" : spDue().length ? "Frases suas voltam hoje" : "Um treino curto de escuta";
+    if(rec){ const rc = h(`<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="eyebrow">Recomendado agora</div><div style="display:flex;gap:12px;align-items:center"><span class="game-ic" style="background:${rec.bg}">${rec.ic}</span><span style="min-width:0"><b style="display:block">${short[rec.title]||rec.title}</b><small style="color:var(--ink-3)">${why}</small></span></div><button class="btn btn-dark btn-block">Começar <span class="arr">→</span></button></section>`); $("button", rc).addEventListener("click", rec.act); el.appendChild(rc); }
+    const vr = h(`<button class="shrow"><span class="sh-ic">🌱</span><span><b>Meu vocabulário</b><small>Palavras salvas, cartões e jogos com elas</small></span><span class="tl-chev">›</span></button>`); vr.addEventListener("click", () => open({type:"hub", k:"vocab"})); el.appendChild(vr); }
   const gs = h(`<section style="display:flex;flex-direction:column;gap:10px"></section>`);
   groups.forEach(([gn, list]) => {
     gs.appendChild(h(`<div class="sec-head" style="margin-top:6px"><h2>${gn}</h2></div>`));
@@ -6842,7 +6853,7 @@ const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform
 function SR_OK(){ return !!SR_CLS() && !IS_IOS; }
 function micOK(){ return !window.claude && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
 const micS = {mr:null, stream:null, sr:null};
-const APP_VER = "v156";
+const APP_VER = "v157";
 /* atualização automática: o iPhone reabre o app da memória sem recarregar; ao voltar para o app, confere se há versão nova */
 (function(){
   if(!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
@@ -7902,6 +7913,7 @@ function lgUnread(){
     const e = document.getElementById("lgHS"); if(e) e.textContent = lgHomeSub(c);
   }).catch(() => {});
 }
+let youSub = "prog";
 function viewYou(){
   const voc = allVocab(), known = voc.filter(v=>L().known[v.id]).length, done = Object.keys(L().done).length;
   const el = h(`<div class="screen">
@@ -7913,13 +7925,18 @@ function viewYou(){
       <div class="rc"><div class="rw">${smallRing(voc.length?known/voc.length:0,"var(--accent-ink)")}<div class="rl"><b>${known}</b><span>de ${voc.length}</span></div></div><div class="rn">Palavras</div></div>
     </div><p class="sub" style="margin-top:10px;font-size:var(--fs-cap)">❄️ Congelamento de sequência: <b>${frzSync().n}</b> disponível por semana. Se você pular só um dia, a sequência é mantida.</p></section>
   </div>`);
-  el.appendChild(profileCard());
-  { const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>ChampionsNomade</b><small>${lgCfg() ? "Ver o ranking da semana" : "Ranking semanal de XP com seus amigos"}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); el.appendChild(lb); }
-  el.appendChild(errCard());
-  el.appendChild(weekReportCard());
-  el.appendChild(evolutionCard(true));
-  { const nb = notebookCard(); if(nb) el.appendChild(nb); }
-  el.appendChild(weekCard());
+  const yt = h(`<div class="vz-chips"><button class="filter ${youSub==="prog"?"on":""}" data-y="prog">Progresso</button><button class="filter ${youSub==="set"?"on":""}" data-y="set">Ajustes</button></div>`);
+  yt.querySelectorAll("[data-y]").forEach(b => b.addEventListener("click", () => { youSub = b.dataset.y; render(); scrollTo(0, 0); }));
+  el.insertBefore(yt, el.children[1]);
+  const P = n => { if(youSub === "prog") el.appendChild(n); }, S = n => { if(youSub === "set") el.appendChild(n); };
+  if(youSub === "set"){ el.children[2].remove(); $(".headline", el).textContent = "Ajustes"; }
+  P(evolutionCard(true));
+  { const lb = h(`<button class="shrow"><span class="sh-ic">🏆</span><span><b>ChampionsNomade</b><small>${lgCfg() ? "Ver o ranking da semana" : "Ranking semanal de XP com seus amigos"}</small></span><span class="tl-chev">›</span></button>`); lb.addEventListener("click", startLeague); P(lb); }
+  P(weekCard());
+  P(weekReportCard());
+  P(profileCard());
+  P(errCard());
+  { const nb = notebookCard(); if(nb) P(nb); }
 
   const set = h(`<section class="card">
     <div class="sec-head"><h2>Ajustes</h2></div>
@@ -7961,19 +7978,19 @@ function viewYou(){
   $("#swap",set).addEventListener("click", () => { state.lang = state.lang==="en"?"it":"en"; persist(); go("home"); });
   $("#reprof",set).addEventListener("click", () => open({type:"intv"}));
   $("#retest",set).addEventListener("click", () => open({type:"placement", idx:0, answers:[]}));
-  el.appendChild(set);
-  { const ap = accentPicker(false); if(ap) el.appendChild(ap); }
-  if(!window.claude){ el.appendChild(gmKeyCard()); el.appendChild(provKeyCard()); }
+  S(set);
+  { const ap = accentPicker(false); if(ap) S(ap); }
+  if(!window.claude){ S(gmKeyCard()); S(provKeyCard()); }
 
   const sc = h(`<section class="card"><div class="sec-head"><h2>Notas por aula</h2><span class="sub">${LANGS[state.lang].name}</span></div><div style="margin-top:6px"></div></section>`);
   const box = $("div:last-child",sc);
   const doneUnits = units().filter(u=>L().done[u.id]);
   if(!doneUnits.length) box.appendChild(h(`<p class="sub" style="padding:6px 0">Nenhuma aula concluída ainda.</p>`));
   doneUnits.forEach(u => box.appendChild(h(`<div class="score-row"><span>${u.icon} ${esc(u.title)}</span><span>${esc(L().done[u.id])}</span></div>`)));
-  el.appendChild(sc);
+  P(sc);
   const cr = h(`<section class="card"><div class="sec-head"><h2>Créditos</h2></div><p class="sub" style="margin-top:6px">Ilustrações geradas com IA e editadas por Leandro Muniz. Fotos do Wikimedia Commons, com licença livre. Miniaturas dos vídeos: YouTube.</p><div style="margin-top:8px"></div></section>`);
   Object.keys(PHOTOS).forEach(k => { const x = PHOTOS[k]; cr.lastElementChild.appendChild(h(`<div class="score-row"><span style="min-width:0"><a href="${x.p}" target="_blank" rel="noopener noreferrer" style="color:inherit">${esc(k)}</a> · ${esc(x.a)}</span><span>${esc(x.l)}</span></div>`)); });
-  el.appendChild(cr);
+  S(cr);
   return el;
 }
 
